@@ -1,0 +1,392 @@
+/* ==============================================
+   ClassMate – Layout CSS
+   header.html + sidebar.html 공통 스타일
+   ============================================== */
+
+/* ── 디자인 토큰 ── */
+:root {
+  /* 브랜드 */
+  --cm-blue:          #4A7CF7;   /* 메인 액센트 – 이미지의 파란 계열 */
+  --cm-blue-light:    #EEF3FE;   /* active 배경 */
+  --cm-blue-dark:     #3563D4;   /* hover */
+
+  /* 중립 */
+  --cm-white:         #FFFFFF;
+  --cm-bg:            #F5F7FB;   /* 페이지 배경 */
+  --cm-sidebar-bg:    #FFFFFF;   /* 사이드바 흰 배경 */
+  --cm-header-bg:     #FFFFFF;
+  --cm-border:        #E8ECF4;
+  --cm-text-primary:  #1A2340;
+  --cm-text-secondary:#6B7A99;
+  --cm-text-muted:    #9DAABB;
+
+  /* 레이아웃 */
+  --sidebar-w:        200px;
+  --header-h:         60px;
+
+  /* 기타 */
+  --radius-sm:        8px;
+  --radius-md:        12px;
+  --shadow-card:      0 2px 8px rgba(74, 124, 247, 0.07);
+  --shadow-header:    0 1px 0 var(--cm-border);
+  --transition:       0.18s ease;
+}
+
+/* ── 기본 리셋 ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont,
+               'Segoe UI', sans-serif;
+  background: var(--cm-bg);
+  color: var(--cm-text-primary);
+  font-size: 14px;
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+button { cursor: pointer; }
+
+/* ==============================================
+   LAYOUT WRAPPER
+   ============================================== */
+.layout-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* 사이드바 자리만큼 밀기 */
+.layout-main {
+  margin-left: var(--sidebar-w);
+  padding-top: var(--header-h);
+  flex: 1;
+  min-width: 0;
+  transition: margin-left var(--transition);
+}
+
+.page-body {
+  padding: 28px 30px;
+}
+
+/* ==============================================
+   SIDEBAR
+   ============================================== */
+#sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--cm-sidebar-bg);
+  border-right: 1px solid var(--cm-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 300;
+  transition: transform var(--transition);
+}
+
+/* 메뉴 리스트 */
+.sidebar-menu {
+  padding: 12px 0;
+  flex: 1;
+}
+
+/* 각 메뉴 항목 */
+.sidebar-menu li > a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cm-text-secondary);
+  border-radius: 0;
+  transition: color var(--transition), background var(--transition);
+  position: relative;
+}
+
+.sidebar-menu li > a:hover {
+  color: var(--cm-blue);
+  background: var(--cm-blue-light);
+}
+
+/* 활성 메뉴 – 파란 배경 + 텍스트 강조 */
+.sidebar-menu li.active > a {
+  color: var(--cm-blue);
+  background: var(--cm-blue-light);
+  font-weight: 600;
+}
+
+/* 활성 메뉴 왼쪽 파란 인디케이터 바 */
+.sidebar-menu li.active > a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--cm-blue);
+  border-radius: 0 3px 3px 0;
+}
+
+/* 아이콘 */
+.sidebar-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+
+.sidebar-menu li.active > a .sidebar-icon,
+.sidebar-menu li > a:hover .sidebar-icon {
+  opacity: 1;
+}
+
+/* 그룹 레이블 (Admin 등) */
+.sidebar-group-label {
+  padding: 14px 20px 4px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--cm-text-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.9px !important;
+  pointer-events: none;
+}
+
+/* 구분선 */
+.sidebar-divider-item {
+  height: 1px !important;
+  background: var(--cm-border) !important;
+  margin: 8px 16px !important;
+  pointer-events: none;
+}
+
+.sidebar-divider-item > a { display: none !important; }
+
+/* ==============================================
+   HEADER
+   ============================================== */
+#main-header {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-w);
+  right: 0;
+  height: var(--header-h);
+  background: var(--cm-header-bg);
+  border-bottom: 1px solid var(--cm-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 28px 0 24px;
+  z-index: 200;
+  box-shadow: var(--shadow-header);
+  transition: left var(--transition);
+}
+
+/* ── 로고 ── */
+.header-logo-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.header-logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--cm-blue);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-logo-text {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--cm-text-primary);
+  letter-spacing: -0.4px;
+}
+
+/* ── 우측 액션 ── */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* 알림 벨 */
+.header-noti-wrap { position: relative; }
+
+.header-noti-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--cm-text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+
+.header-noti-btn:hover {
+  background: var(--cm-blue-light);
+  color: var(--cm-blue);
+}
+
+.noti-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  line-height: 17px;
+  text-align: center;
+  padding: 0 4px;
+  background: #E53935;
+  color: #fff;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 2px solid var(--cm-white);
+}
+
+/* ── 프로필 드롭다운 ── */
+.header-profile { position: relative; }
+
+.header-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.header-profile-btn:hover { background: var(--cm-blue-light); }
+
+/* 아바타 */
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--cm-blue), #7FA8FB);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-avatar-initial {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.header-username {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--cm-text-primary);
+  white-space: nowrap;
+}
+
+.header-chevron {
+  color: var(--cm-text-muted);
+  transition: transform var(--transition);
+}
+
+.header-profile-btn[aria-expanded="true"] .header-chevron {
+  transform: rotate(180deg);
+}
+
+/* 드롭다운 메뉴 */
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 160px;
+  background: var(--cm-white);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  overflow: hidden;
+  z-index: 400;
+}
+
+.profile-dropdown-menu li > a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--cm-text-primary);
+  transition: background var(--transition);
+}
+
+.profile-dropdown-menu li > a:hover { background: var(--cm-blue-light); color: var(--cm-blue); }
+.profile-dropdown-menu li > a:hover svg { stroke: var(--cm-blue); }
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--cm-border);
+  margin: 4px 0;
+  pointer-events: none;
+}
+
+.dropdown-logout { color: #E53935 !important; }
+.dropdown-logout:hover { background: #FFF0F0 !important; color: #C62828 !important; }
+.dropdown-logout svg { stroke: #E53935; }
+
+/* ── Logout 버튼 (헤더 우상단 별도) ── */
+.header-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  background: var(--cm-white);
+  border: 1px solid var(--cm-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cm-text-primary);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.header-logout-btn:hover {
+  background: #FFF0F0;
+  border-color: #FFCDD2;
+  color: #E53935;
+}
+
+/* ==============================================
+   RESPONSIVE
+   ============================================== */
+@media (max-width: 768px) {
+  #sidebar {
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+  #sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.12);
+  }
+  #main-header {
+    left: 0 !important;
+    padding-left: 16px;
+  }
+  .layout-main {
+    margin-left: 0 !important;
+  }
+  .header-logo { display: flex; }
+}

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+</head>
+<body>
+
+
+<div class="layout-wrapper">
+    <!-- 사이드바 -->
+    <div th:replace="~{fragments/sidebar :: sidebar('home')}"></div>
+
+    <div class="layout-content">
+        <!-- 헤더 -->
+        <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
+
+        <!-- 본문 -->
+        <main class="page-body">
+        	1
+        </main>
+    </div>
+</div>
+<script th:src="@{/js/layout.js}"></script>
+</body>
+</html>
