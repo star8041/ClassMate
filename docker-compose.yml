@@ -1,0 +1,40 @@
+services:
+  rdb:
+    image: postgres:18-trixie
+    container_name: classmate-rdb
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: classmate
+      POSTGRES_USER: classmate
+      POSTGRES_PASSWORD: classmate1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - rdb_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U classmate -d classmate"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  vector-db:
+    image: pgvector/pgvector:pg18-trixie
+    container_name: classmate-vector-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: classmate_vector
+      POSTGRES_USER: classmate
+      POSTGRES_PASSWORD: classmate1234
+    ports:
+      - "5433:5432"
+    volumes:
+      - vector_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U classmate -d classmate_vector"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  rdb_data:
+  vector_data:
