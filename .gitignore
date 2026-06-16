@@ -35,3 +35,26 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Claude / AI tools ###
+.claude/
+.cursor/
+.aider*
+
+### Logs ###
+logs/
+*.log
+*.log.*
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### 환경변수 / 시크릿 (API 키 등) ###
+.env
+.env.*
+*.local
+application-secret.*
+
+### 기획 문서 (로컬 참고용, 커밋 금지) ###
+노션.pdf
