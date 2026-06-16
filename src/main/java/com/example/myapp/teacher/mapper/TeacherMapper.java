@@ -53,6 +53,14 @@ public class TeacherMapper {
         return keyHolder.getKey().longValue();
     }
 
+    /** 특정 로그인 ID의 권한(role)을 변경한다. (관리자 보장용) */
+    public int updateRoleByLoginId(String loginId, String role) {
+        return jdbcClient.sql("UPDATE teacher SET role = ? WHERE login_id = ?")
+                .param(role)
+                .param(loginId)
+                .update();
+    }
+
     /** 로그인 ID로 조회 */
     public Optional<Teacher> findByLoginId(String loginId) {
         return jdbcClient.sql("SELECT * FROM teacher WHERE login_id = ?")

@@ -50,7 +50,9 @@ public class AdminAccountInitializer implements ApplicationRunner {
             return;
         }
         if (teacherMapper.existsByLoginId(loginId)) {
-            log.info("관리자 계정 '{}' 이(가) 이미 존재하여 시더를 건너뜁니다.", loginId);
+            // 이미 있으면 role 이 ADMIN 인지 보장 (예: 예전 DB에서 USER 로 생성된 경우 승격)
+            teacherMapper.updateRoleByLoginId(loginId, "ADMIN");
+            log.info("관리자 계정 '{}' 존재 확인 — ROLE_ADMIN 보장 처리.", loginId);
             return;
         }
         Teacher admin = Teacher.builder()
