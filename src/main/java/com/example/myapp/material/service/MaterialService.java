@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -119,7 +121,7 @@ public class MaterialService {
                         .build());
             }
 
-            // 4) 벡터DB: 임베딩 저장 (실패해도 업로드 자체는 성공 — 베스트에포트)
+            // 4) 벡터DB: 임베딩 저장 (RDB·벡터 둘 다 성공해야 함 — 실패 시 전체 롤백)
             ingestToVectorStore(material, pageTexts);
 
             return MaterialResponse.from(materialMapper.findById(id).orElse(material));
@@ -178,13 +180,16 @@ public class MaterialService {
         }
     }
 
-    /** PDF 삭제: material_page → material(FK CASCADE) + 실제 파일 제거. */
+    /**
+     * PDF 삭제: RDB(material→material_page CASCADE) + 벡터DB 임베딩 + 실제 파일을 모두 제거한다.
+     * 벡터 삭제가 실패하면 예외가 전파되어 RDB 삭제도 롤백된다 (둘 다 성공해야 함).
+     */
     @Transactional
     public void delete(Long materialId) {
         Material material = getEntityOrThrow(materialId);
-        materialMapper.deleteById(materialId); // material_page 는 FK ON DELETE CASCADE 로 함께 삭제
-        deleteQuietly(Paths.get(material.getStoragePath()));
-        // 참고: 벡터DB에 저장된 임베딩 정리는 별도 처리 필요 (TODO: materialId 메타로 삭제)
+        materialMapper.deleteById(materialId);   // RDB: material_page 는 FK ON DELETE CASCADE 로 함께 삭제
+        deleteVectorsByMaterialId(materialId);   // 벡터DB: 실패 시 예외 → 위 RDB 삭제 롤백
+        deleteQuietly(Paths.get(material.getStoragePath())); // 실제 파일
     }
 
     // ===== 내부 헬퍼 =====
@@ -231,8 +236,25 @@ public class MaterialService {
             vectorStore.add(documents); // 내부에서 임베딩 생성 후 vector_store 에 저장
             log.info("벡터 저장 완료: materialId={}, documents={}", material.getMaterialId(), documents.size());
         } catch (Exception e) {
-            log.warn("벡터 저장 실패 (RDB 저장은 완료). materialId={}, 원인={}",
-                    material.getMaterialId(), e.getMessage());
+            // 부분 저장분 정리 후 예외 전파 → RDB 트랜잭션도 함께 롤백 (둘 다 성공해야 함)
+            safeDeleteVectors(material.getMaterialId());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "벡터 저장에 실패하여 업로드를 롤백했습니다.", e);
+        }
+    }
+
+    /** 특정 자료의 임베딩을 벡터 스토어에서 삭제한다. (metadata.materialId 기준) */
+    private void deleteVectorsByMaterialId(Long materialId) {
+        Filter.Expression expr = new FilterExpressionBuilder().eq("materialId", materialId).build();
+        vectorStore.delete(expr);
+    }
+
+    /** 롤백/정리용 — 벡터 삭제 실패는 무시한다. */
+    private void safeDeleteVectors(Long materialId) {
+        try {
+            deleteVectorsByMaterialId(materialId);
+        } catch (Exception ignore) {
+            log.warn("롤백 중 벡터 정리 실패 (무시). materialId={}", materialId);
         }
     }
 
