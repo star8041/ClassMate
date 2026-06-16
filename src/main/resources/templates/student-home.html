@@ -12,23 +12,10 @@
   body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
   a { text-decoration: none; color: inherit; }
 
-  .wrap { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-
-  /* ── 사이드바 (학생) ── */
-  .side { background: #fff; border-right: 1px solid #EEF1F6; padding: 22px 16px; display: flex; flex-direction: column; }
-  .logo { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 800; color: var(--blue); padding: 0 8px 22px; }
-  .logo .star { font-size: 24px; }
-  .nav { display: flex; flex-direction: column; gap: 4px; }
-  .nav a { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; font-size: 15px; font-weight: 600; color: #6B7280; }
-  .nav a:hover { background: #F5F7FB; }
-  .nav a.active { background: var(--blue-soft); color: var(--blue); }
-  .nav a .dot { width: 7px; height: 7px; border-radius: 50%; background: #EF4444; margin-left: auto; }
-  .points { margin-top: auto; background: #FFF7E0; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
-  .points .big { font-size: 18px; font-weight: 800; color: #F59E0B; }
-  .points .sub { font-size: 11px; color: #B6924A; }
+  /* 사이드바는 fragments/student-sidebar (.s-wrap/.s-side) 공통 사용 — 다른 학생 페이지와 동일 */
 
   /* ── 본문 ── */
-  .main { display: flex; flex-direction: column; min-width: 0; }
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   .topbar { height: 72px; background: #fff; border-bottom: 1px solid #EEF1F6; display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 0 28px; }
   .me { display: flex; align-items: center; gap: 10px; }
   .me .avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg,#a5c8ff,#dbe8ff); display:flex; align-items:center; justify-content:center; font-size:18px; }
@@ -120,24 +107,10 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="s-wrap">
 
-  <!-- 사이드바 -->
-  <aside class="side">
-    <div class="logo"><span class="star">⭐</span> ClassMate</div>
-    <nav class="nav">
-      <a href="/student/home" class="active">🏠 <span>홈</span></a>
-      <a href="/student/quiz">⭐ <span>퀴즈</span></a>
-      <a href="/student/materials">🎬 <span>강의자료</span></a>
-      <a href="#" onclick="comingSoon('시간표'); return false;">📅 <span>시간표</span></a>
-      <a href="#" onclick="comingSoon('공지사항'); return false;">📣 <span>공지사항</span><span class="dot"></span></a>
-      <a href="#" onclick="comingSoon('설정'); return false;">⚙️ <span>설정</span></a>
-    </nav>
-    <div class="points">
-      <span style="font-size:26px">🌟</span>
-      <div><div class="big">120</div><div class="sub">포인트</div></div>
-    </div>
-  </aside>
+  <!-- 사이드바 (다른 학생 페이지와 동일한 공통 프래그먼트) -->
+  <div th:replace="~{fragments/student-sidebar :: studentSidebar('home')}"></div>
 
   <div class="toast" id="toast"></div>
 
