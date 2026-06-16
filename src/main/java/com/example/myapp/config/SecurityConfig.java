@@ -24,6 +24,7 @@ public class SecurityConfig {
                     "/archive",
                     "/quiz",
                     "/quiz/student",
+                    "/quiz/student/solve",
                     "/student",
                     "/counseling",
                     "/schedule",
