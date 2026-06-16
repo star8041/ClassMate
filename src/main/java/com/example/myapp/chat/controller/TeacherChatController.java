@@ -54,6 +54,25 @@ public class TeacherChatController {
                 chatSessionService.getSessions(teacherId, ChatRole.TEACHER)));
     }
 
+    @PatchMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> updateTitle(
+            @AuthenticationPrincipal Long teacherId,
+            @PathVariable Long sessionId,
+            @RequestBody java.util.Map<String, String> body) {
+
+        chatSessionService.updateTitle(sessionId, teacherId, body.get("title"));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> deleteSession(
+            @AuthenticationPrincipal Long teacherId,
+            @PathVariable Long sessionId) {
+
+        chatSessionService.deleteSession(sessionId, teacherId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/sessions/{sessionId}/messages")
     public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getMessages(
             @AuthenticationPrincipal Long teacherId,
