@@ -1,0 +1,103 @@
+#sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--cm-sidebar-bg);
+  border-right: 1px solid var(--cm-border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 300;
+  transition: transform var(--transition);
+}
+
+#sidebar h2 { 
+    height: 100px; 
+    display: flex; 
+    align-items: center; 
+    padding: 0 25px; 
+    border-bottom: 1px solid rgba(255,255,255,0.05); 
+    color: #000000; /* 로고 색상 */
+}
+
+/* 메뉴 리스트 */
+.sidebar-menu {
+  padding: 12px 0;
+  flex: 1;
+}
+
+/* 각 메뉴 항목 */
+.sidebar-menu li > a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cm-text-secondary);
+  border-radius: 0;
+  transition: color var(--transition), background var(--transition);
+  position: relative;
+}
+
+.sidebar-menu li > a:hover {
+  color: var(--cm-blue);
+  background: var(--cm-blue-light);
+}
+
+/* 활성 메뉴 – 파란 배경 + 텍스트 강조 */
+.sidebar-menu li.active > a {
+  color: var(--cm-blue);
+  background: var(--cm-blue-light);
+  font-weight: 600;
+}
+
+/* 활성 메뉴 왼쪽 파란 인디케이터 바 */
+.sidebar-menu li.active > a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background: var(--cm-blue);
+  border-radius: 0 3px 3px 0;
+}
+
+/* 아이콘 */
+.sidebar-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+
+.sidebar-menu li.active > a .sidebar-icon,
+.sidebar-menu li > a:hover .sidebar-icon {
+  opacity: 1;
+}
+
+/* 그룹 레이블 (Admin 등) */
+.sidebar-group-label {
+  padding: 14px 20px 4px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--cm-text-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.9px !important;
+  pointer-events: none;
+}
+
+/* 구분선 */
+.sidebar-divider-item {
+  height: 1px !important;
+  background: var(--cm-border) !important;
+  margin: 8px 16px !important;
+  pointer-events: none;
+}
+
+.sidebar-divider-item > a { display: none !important; }
