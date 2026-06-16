@@ -25,6 +25,18 @@ public class TestController {
         return "quiz";
     }
     
+    @GetMapping("/quiz/student")
+    public String quizStudent(Model model) {
+    	model.addAttribute("userName", "홍길동");
+        return "quiz_student";
+    }
+    
+    @GetMapping("/quiz/student/solve")
+    public String quizStudentSolve(Model model) {
+    	model.addAttribute("userName", "홍길동");
+        return "quiz_student_solve";
+    }
+    
     @GetMapping("/student")
     public String student(Model model) {
     	model.addAttribute("userName", "홍길동");
@@ -41,11 +53,5 @@ public class TestController {
     public String schedule(Model model) {
     	model.addAttribute("userName", "홍길동");
         return "schedule";
-    }
-    
-    @GetMapping("/quiz/student")
-    public String quizStudent(Model model) {
-    	model.addAttribute("userName", "홍길동");
-        return "quiz_student";
     }
 }
