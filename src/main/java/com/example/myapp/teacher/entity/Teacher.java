@@ -25,6 +25,7 @@ public class Teacher {
     private String email;
     private String question;       // 비밀번호 찾기용 질문
     private String answer;         // 비밀번호 찾기용 답
+    private String role;           // USER(교사) / ADMIN(관리자)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
