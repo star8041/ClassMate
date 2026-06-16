@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강의자료</title>
+<link rel="stylesheet" th:href="@{/css/layout.css}">
+<link rel="stylesheet" th:href="@{/css/sidebar.css}">
+<link rel="stylesheet" th:href="@{/css/fonts.css}">
+<link rel="stylesheet" th:href="@{/css/archive.css}">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: #f4f5f7; color: #1a1a1a; font-size: 14px; }
+
+  .page-title    { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+  .page-subtitle { font-size: 13px; color: #999; margin-bottom: 22px; }
+
+  /* ── 필터 + 검색 행 ── */
+  .filter-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 4px; }
+  .tab-btn {
+    padding: 7px 18px; border-radius: 8px; border: none; background: none;
+    font-size: 13px; font-weight: 500; color: #777; cursor: pointer; transition: all 0.15s;
+  }
+  .tab-btn:hover { background: #f0f0f0; }
+  .tab-btn.active { background: #4f80f7; color: #fff; font-weight: 600; }
+
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 210px; height: 36px; border: 1px solid #ddd; border-radius: 8px;
+    padding: 0 12px 0 32px; font-size: 13px; outline: none; background: #fff;
+    transition: border-color 0.15s;
+  }
+  .search-wrap input:focus { border-color: #4f80f7; }
+  .search-wrap input::placeholder { color: #bbb; }
+  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #bbb; pointer-events: none; }
+
+  /* ── 자료 목록 카드 ── */
+  .list-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+
+  /* 테이블 헤더 */
+  .list-head {
+    display: grid; grid-template-columns: 1fr 140px 110px;
+    padding: 10px 20px; border-bottom: 0.5px solid #f0f0f0;
+    font-size: 12px; color: #aaa; font-weight: 500;
+  }
+  .sort-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 12px; color: #aaa; font-weight: 500;
+    display: flex; align-items: center; gap: 4px; padding: 0;
+    transition: color 0.15s;
+  }
+  .sort-btn:hover { color: #555; }
+  .sort-btn.active { color: #4f80f7; font-weight: 600; }
+  .sort-arrow { font-size: 11px; }
+
+  /* 자료 행 */
+  .list-row {
+    display: grid; grid-template-columns: 1fr 140px 110px;
+    align-items: center; padding: 14px 20px;
+    border-bottom: 0.5px solid #f5f5f5; transition: background 0.12s;
+  }
+  .list-row:last-child { border-bottom: none; }
+  .list-row:hover { background: #fafbff; }
+
+  /* 자료 정보 영역 */
+  .file-info { display: flex; align-items: center; gap: 14px; }
+  .subject-chip {
+    flex-shrink: 0; width: 44px; height: 26px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .sc-korean  { background: #fde8ec; color: #c0394b; }
+  .sc-math    { background: #e8f0fe; color: #2c5cc5; }
+  .sc-science { background: #e8f5e9; color: #2e7d32; }
+  .sc-english { background: #fff3e0; color: #e65100; }
+  .sc-social  { background: #fce4ec; color: #c2185b; }
+
+  .file-icon { flex-shrink: 0; color: #e53935; }
+  .file-details { min-width: 0; }
+  .file-name { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-meta { font-size: 12px; color: #aaa; display: flex; align-items: center; gap: 6px; }
+  .meta-sep  { color: #ddd; }
+
+  /* 업로드일 */
+  .upload-date { font-size: 13px; color: #666; }
+
+  /* 액션 버튼 */
+  .action-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; padding: 7px 0; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid #ddd; background: #fff; color: #333;
+    width: 86px; transition: all 0.15s; gap: 4px;
+  }
+  .action-btn:hover { background: #f5f5f5; }
+
+  /* 빈 상태 */
+  .empty-state {
+    display: none; flex-direction: column; align-items: center;
+    padding: 52px 20px; color: #bbb; gap: 10px; text-align: center;
+  }
+  .empty-state.show { display: flex; }
+  .empty-state p { font-size: 14px; }
+
+  /* ── 최근 본 자료 ── */
+  .recent-section { }
+  .recent-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .recent-title { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+  .link-more { font-size: 12px; color: #4f80f7; text-decoration: none; display: flex; align-items: center; gap: 3px; cursor: pointer; }
+  .link-more:hover { text-decoration: underline; }
+
+  .recent-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .recent-card {
+    background: #fff; border: 0.5px solid #e0e0e0; border-radius: 10px;
+    padding: 14px 16px; display: flex; align-items: center; gap: 12px;
+    transition: box-shadow 0.15s;
+  }
+  .recent-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+  .recent-icon { color: #e53935; flex-shrink: 0; }
+  .recent-info { min-width: 0; flex: 1; }
+  .recent-name { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .recent-meta { font-size: 11px; color: #aaa; }
+
+  .empty-recent { font-size: 13px; color: #bbb; padding: 20px 0; text-align: center; }
+</style>
+</head>
+<body>
+<div class="layout-wrapper">
+
+  <div th:replace="~{fragments/sidebar :: sidebar('archive')}"></div>
+  
+  <div class="layout-main">
+  
+  	<div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
+  
+	<main class="page-body">
+	
+	<h1 class="page-title">강의자료</h1>
+	<p class="page-subtitle">선생님이 올린 학습 자료를 확인하고 다운로드해보세요.</p>
+	
+	<!-- 필터 + 검색 -->
+	<div class="filter-row">
+	  <div class="tabs">
+	    <button class="tab-btn active" data-filter="전체" onclick="setFilter('전체')">전체</button>
+	    <button class="tab-btn" data-filter="수업 자료" onclick="setFilter('수업 자료')">수업 자료</button>
+	    <button class="tab-btn" data-filter="참고 자료" onclick="setFilter('참고 자료')">참고 자료</button>
+	  </div>
+	  <div class="search-wrap">
+	    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+	    <input type="text" id="searchInput" placeholder="자료 제목 검색" oninput="applyFilters()">
+	  </div>
+	</div>
+	
+	<!-- 자료 목록 -->
+	<div class="list-card">
+	  <div class="list-head">
+	    <span>자료 정보</span>
+	    <button class="sort-btn active" id="sortBtn" onclick="toggleSort()">
+	      업로드일
+	      <span class="sort-arrow" id="sortArrow">↓</span>
+	    </button>
+	    <span></span>
+	  </div>
+	  <div id="fileList"></div>
+	  <div class="empty-state" id="emptyState">
+	    <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+	    <p>해당하는 자료가 없습니다.</p>
+	  </div>
+	</div>
+	
+	<!-- 최근 본 자료 -->
+	<div class="recent-section">
+	  <div class="recent-header">
+	    <div class="recent-title">최근 본 자료</div>
+	    <span class="link-more">
+	      더보기
+	      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+	    </span>
+	  </div>
+	  <div class="recent-grid" id="recentGrid"></div>
+	</div>
+	
+	</main>
+  </div>
+</div>
+
+<script>
+  /* ══ 데이터 (archive.html의 5개 파일 기반) ══ */
+  const files = [
+    {
+      id: 1,
+      subject: '국어', subjectClass: 'sc-korean',
+      name: '4단원 읽기 자료',
+      filename: '1주차_오리엔테이션.pdf',
+      type: 'PDF', detail: '12페이지',
+      category: '수업 자료',
+      uploadDate: '2024.05.28',
+      uploadTs: 20240528,
+      url: '/files/1주차_오리엔테이션.pdf',
+      action: 'view'
+    },
+    {
+      id: 2,
+      subject: '수학', subjectClass: 'sc-math',
+      name: '분수의 덧셈 정리',
+      filename: '2주차_변수와_자료형.pdf',
+      type: 'PDF', detail: '핵심 개념 정리',
+      category: '참고 자료',
+      uploadDate: '2024.05.27',
+      uploadTs: 20240527,
+      url: '/files/2주차_변수와_자료형.pdf',
+      action: 'download'
+    },
+    {
+      id: 3,
+      subject: '과학', subjectClass: 'sc-science',
+      name: '식물의 한살이 관찰 자료',
+      filename: '3주차_조건문과_반복문.pdf',
+      type: 'PDF', detail: '8페이지',
+      category: '수업 자료',
+      uploadDate: '2024.05.26',
+      uploadTs: 20240526,
+      url: '/files/3주차_조건문과_반복문.pdf',
+      action: 'view'
+    },
+    {
+      id: 4,
+      subject: '영어', subjectClass: 'sc-english',
+      name: 'Unit 3 단어 학습지',
+      filename: '4주차_정렬_알고리즘.pdf',
+      type: 'PDF', detail: '단어 목록 및 연습 문제',
+      category: '수업 자료',
+      uploadDate: '2024.05.24',
+      uploadTs: 20240524,
+      url: '/files/4주차_정렬_알고리즘.pdf',
+      action: 'download'
+    },
+    {
+      id: 5,
+      subject: '사회', subjectClass: 'sc-social',
+      name: '중간고사 범위 안내',
+      filename: '중간고사_범위안내.pdf',
+      type: 'PDF', detail: '시험 준비 자료',
+      category: '참고 자료',
+      uploadDate: '2024.05.23',
+      uploadTs: 20240523,
+      url: '/files/중간고사_범위안내.pdf',
+      action: 'download'
+    }
+  ];
+
+  /* ── 상태 ── */
+  let currentFilter = '전체';
+  let sortAsc = false; // false = 내림차순(최신순)
+  let recentList = []; // id 배열, 최대 3개
+
+  /* ── 필터 탭 ── */
+  function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+    applyFilters();
+  }
+
+  /* ── 정렬 토글 ── */
+  function toggleSort() {
+    sortAsc = !sortAsc;
+    document.getElementById('sortArrow').textContent = sortAsc ? '↑' : '↓';
+    applyFilters();
+  }
+
+  /* ── 필터 + 검색 + 정렬 적용 ── */
+  function applyFilters() {
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    let list = files.filter(f => {
+      const matchCat  = currentFilter === '전체' || f.category === currentFilter;
+      const matchName = f.name.toLowerCase().includes(query);
+      return matchCat && matchName;
+    });
+    list = list.sort((a, b) => sortAsc ? a.uploadTs - b.uploadTs : b.uploadTs - a.uploadTs);
+    renderList(list);
+  }
+
+  /* ── 목록 렌더링 ── */
+  function renderList(list) {
+    const container = document.getElementById('fileList');
+    const empty     = document.getElementById('emptyState');
+
+    if (!list.length) {
+      container.innerHTML = '';
+      empty.classList.add('show');
+      return;
+    }
+    empty.classList.remove('show');
+
+    container.innerHTML = list.map(f => `
+      <div class="list-row">
+        <div class="file-info">
+          <span class="subject-chip ${f.subjectClass}">${f.subject}</span>
+          <svg class="file-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <div class="file-details">
+            <div class="file-name">${f.name}</div>
+            <div class="file-meta">
+              <span>${f.type}</span>
+              <span class="meta-sep">｜</span>
+              <span>${f.detail}</span>
+            </div>
+          </div>
+        </div>
+        <div class="upload-date">${f.uploadDate}</div>
+        <div>
+          ${f.action === 'view'
+            ? `<button class="action-btn" onclick="viewFile(${f.id})">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                 보기
+               </button>`
+            : `<button class="action-btn" onclick="downloadFile(${f.id})">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                 다운로드
+               </button>`
+          }
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /* ── 보기 ── */
+  function viewFile(id) {
+    const f = files.find(x => x.id === id);
+    if (!f) return;
+    addRecent(id);
+    window.open(f.url, '_blank');
+  }
+
+  /* ── 다운로드 ── */
+  function downloadFile(id) {
+    const f = files.find(x => x.id === id);
+    if (!f) return;
+    addRecent(id);
+    const a = document.createElement('a');
+    a.href     = f.url;
+    a.download = f.filename;
+    a.click();
+  }
+
+  /* ── 최근 본 자료 업데이트 ── */
+  function addRecent(id) {
+    // 이미 있으면 제거 후 맨 앞에 삽입
+    recentList = recentList.filter(x => x !== id);
+    recentList.unshift(id);
+    if (recentList.length > 3) recentList = recentList.slice(0, 3);
+    renderRecent();
+  }
+
+  /* ── 최근 본 자료 렌더링 ── */
+  function renderRecent() {
+    const grid = document.getElementById('recentGrid');
+    if (!recentList.length) {
+      grid.innerHTML = '<p class="empty-recent" style="grid-column:1/-1;">최근 본 자료가 없습니다.</p>';
+      return;
+    }
+    grid.innerHTML = recentList.map(id => {
+      const f = files.find(x => x.id === id);
+      return `
+        <div class="recent-card">
+          <svg class="recent-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <div class="recent-info">
+            <div class="recent-name">${f.name}</div>
+            <div class="recent-meta">${f.type} &nbsp;·&nbsp; ${f.uploadDate}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ── 초기 렌더 ── */
+  applyFilters();
+  renderRecent();
+</script>
+</body>
+</html>
