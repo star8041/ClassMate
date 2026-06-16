@@ -1,0 +1,429 @@
+/* ==============================================
+   archive.css – 강의자료 관리 페이지 스타일
+   layout.css 의 변수(--cm-*)를 재사용합니다.
+   ============================================== */
+
+/* ── 페이지 전체 래퍼 ── */
+.archive-page {
+    max-width: none;
+    width: 100%;
+    padding: 0 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ==============================================
+   ① 페이지 헤더
+   ============================================== */
+.arc-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.arc-page-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--arc-text-1, #1A2340);
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+}
+
+.arc-page-subtitle {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--arc-text-2, #6B7A99);
+}
+
+.arc-page-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+/* 공통 버튼 베이스 */
+.arc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: var(--arc-radius-sm, 8px);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* Primary – 어두운 배경 (이미지의 짙은 버튼) */
+.arc-btn-primary {
+    background: #2B3245;
+    color: #FFFFFF;
+}
+.arc-btn-primary:hover {
+    background: #1A2340;
+    box-shadow: 0 3px 10px rgba(43,50,69,0.25);
+}
+
+/* Outline – 테두리 버튼 */
+.arc-btn-outline {
+    background: var(--arc-white, #fff);
+    color: var(--arc-text-1, #1A2340);
+    border: 1.5px solid var(--arc-border, #E4E8F0);
+}
+.arc-btn-outline:hover {
+    border-color: #b0bbd0;
+    background: #FAFBFD;
+}
+
+/* ==============================================
+   ② 드래그앤드롭 업로드 영역
+   ============================================== */
+.arc-upload-zone {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 22px 28px;
+    background: var(--arc-white, #fff);
+    border: 1.8px dashed #CDD4E0;
+    border-radius: var(--arc-radius, 14px);
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s;
+    user-select: none;
+}
+
+.arc-upload-zone:hover,
+.arc-upload-zone.drag-over {
+    border-color: var(--arc-blue, #3D6EF5);
+    background: var(--arc-blue-light, #EEF3FE);
+}
+
+.arc-upload-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--arc-thumb-bg, #F0F2F7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--arc-text-2, #6B7A99);
+    transition: background 0.18s, color 0.18s;
+}
+
+.arc-upload-zone:hover .arc-upload-icon,
+.arc-upload-zone.drag-over .arc-upload-icon {
+    background: var(--arc-blue-light, #EEF3FE);
+    color: var(--arc-blue, #3D6EF5);
+}
+
+.arc-upload-text { flex: 1; }
+
+.arc-upload-main {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--arc-text-1, #1A2340);
+    margin-bottom: 3px;
+}
+
+.arc-upload-sub {
+    font-size: 12.5px;
+    color: var(--arc-text-2, #6B7A99);
+}
+
+.arc-upload-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--arc-text-3, #9DAABB);
+    text-align: right;
+    flex-shrink: 0;
+    border-left: 1px solid var(--arc-border, #E4E8F0);
+    padding-left: 24px;
+    line-height: 1.8;
+}
+
+/* ==============================================
+   ③ 목록 섹션 헤더
+   ============================================== */
+.arc-list-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.arc-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.arc-list-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--arc-text-1, #1A2340);
+}
+
+.arc-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 9px;
+    background: var(--arc-thumb-bg, #F0F2F7);
+    color: var(--arc-text-2, #6B7A99);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.arc-sort-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--arc-text-2, #6B7A99);
+}
+
+.arc-sort-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 7px 32px 7px 12px;
+    border: 1.5px solid var(--arc-border, #E4E8F0);
+    border-radius: var(--arc-radius-xs, 6px);
+    font-size: 13px;
+    color: var(--arc-text-1, #1A2340);
+    background: var(--arc-white, #fff)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7A99' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")
+        no-repeat right 10px center;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+    min-width: 130px;
+}
+
+.arc-sort-select:hover,
+.arc-sort-select:focus {
+    border-color: var(--arc-blue, #3D6EF5);
+}
+
+/* ==============================================
+   ④ 파일 카드 그리드
+   ============================================== */
+.arc-file-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+/* 홀수 마지막 카드 – 절반 너비 유지 (이미지 레이아웃 동일하게) */
+/* 전체 너비가 필요할 경우 .arc-file-card--full 사용 */
+.arc-file-card--full {
+    grid-column: 1 / 2;   /* 첫 번째 컬럼만 차지 (이미지와 동일) */
+}
+
+/* 카드 */
+.arc-file-card {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: var(--arc-white, #fff);
+    border: 1.5px solid var(--arc-border, #E4E8F0);
+    border-radius: var(--arc-radius, 14px);
+    overflow: visible;
+    box-shadow: var(--arc-shadow-card, 0 2px 8px rgba(0,0,0,0.06));
+    transition: box-shadow 0.18s, border-color 0.18s;
+}
+
+.arc-file-card:hover {
+    border-color: #c5cfe0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.09);
+}
+
+/* 썸네일 영역 */
+.arc-file-thumb {
+    width: 100px;
+    min-height: 110px;
+    background: var(--arc-thumb-bg, #F0F2F7);
+    border-radius: calc(var(--arc-radius, 14px) - 1.5px) 0 0 calc(var(--arc-radius, 14px) - 1.5px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex-shrink: 0;
+    padding: 12px 8px;
+}
+
+.arc-thumb-num {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--arc-thumb-text, #8896B0);
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
+.arc-thumb-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--arc-thumb-text, #8896B0);
+    text-align: center;
+    line-height: 1.4;
+    word-break: keep-all;
+    padding: 0 4px;
+}
+
+/* 파일 정보 영역 */
+.arc-file-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 14px 14px 14px 16px;
+    min-width: 0;
+}
+
+.arc-file-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.arc-file-name-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+/* PDF 레이블 */
+.arc-pdf-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--arc-blue, #3D6EF5);
+    background: var(--arc-blue-light, #EEF3FE);
+    padding: 2px 7px 2px 5px;
+    border-radius: 4px;
+    line-height: 1.6;
+    width: fit-content;
+}
+
+.arc-file-name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--arc-text-1, #1A2340);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* 더보기 버튼 */
+.arc-more-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--arc-text-3, #9DAABB);
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.arc-more-btn:hover {
+    background: var(--arc-thumb-bg, #F0F2F7);
+    color: var(--arc-text-1, #1A2340);
+}
+
+/* 날짜·크기 메타 */
+.arc-file-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--arc-text-2, #6B7A99);
+    margin-top: 2px;
+}
+
+.arc-dot {
+    color: var(--arc-text-3, #9DAABB);
+}
+
+/* 다운로드 버튼 */
+.arc-download-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 7px 14px;
+    background: var(--arc-white, #fff);
+    border: 1.5px solid var(--arc-border, #E4E8F0);
+    border-radius: var(--arc-radius-xs, 6px);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--arc-text-1, #1A2340);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.arc-download-btn:hover {
+    background: var(--arc-blue-light, #EEF3FE);
+    border-color: var(--arc-blue, #3D6EF5);
+    color: var(--arc-blue, #3D6EF5);
+}
+
+/* ==============================================
+   컨텍스트 메뉴 (더보기 드롭다운)
+   ============================================== */
+.arc-context-menu {
+    position: absolute;
+    top: 36px;
+    right: 14px;
+    background: var(--arc-white, #fff);
+    border: 1.5px solid var(--arc-border, #E4E8F0);
+    border-radius: var(--arc-radius-xs, 6px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+    z-index: 100;
+    overflow: hidden;
+    min-width: 120px;
+}
+
+.arc-context-menu button {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: var(--arc-text-1, #1A2340);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.arc-context-menu button:hover {
+    background: var(--arc-thumb-bg, #F0F2F7);
+}
+
+.arc-context-menu button.danger {
+    color: #E53935;
+}
+
+.arc-context-menu button.danger:hover {
+    background: #FFF0F0;
+}
