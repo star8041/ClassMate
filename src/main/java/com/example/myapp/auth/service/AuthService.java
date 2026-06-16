@@ -46,8 +46,8 @@ public class AuthService {
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
 
-        String role = teacher.getRole() == null ? "USER" : teacher.getRole();
-        String token = jwtTokenProvider.createToken(teacher.getLoginId(), role);
+        // 교사/학생 테이블 분리 → 이 메서드 호출 자체가 교사임을 보장
+        String token = jwtTokenProvider.createToken(teacher.getLoginId(), "TEACHER", teacher.getTeacherName());
         return TokenResponse.bearer(token);
     }
 

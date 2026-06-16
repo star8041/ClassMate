@@ -60,7 +60,6 @@ public class AdminAccountInitializer implements ApplicationRunner {
                 .email(loginId + "@classmate.local")
                 .question("")
                 .answer("")
-                .role("ADMIN")
                 .build();
         teacherMapper.insert(admin);
         log.warn("관리자 계정 '{}' 생성 완료 (ROLE_ADMIN). 개발용 기본 비밀번호이니 운영 전 변경하세요.", loginId);
