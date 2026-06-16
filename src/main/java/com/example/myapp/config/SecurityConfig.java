@@ -15,29 +15,11 @@ public class SecurityConfig {
             throws Exception {
 
         http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/login",
-                    "/signup",
-                    "/test",
-                    "/archive",
-                    "/quiz",
-                    "/quiz/student",
-                    "/student",
-                    "/counseling",
-                    "/schedule",
-                    "/css/**",
-                    "/js/**",
-                    "/images/**",
-                    "/error",
-                    // TODO: 인증 연동 전까지 PDF 자료 / 학생 API 임시 허용
-                    "/api/materials/**",
-                    "/api/v1/**"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form.disable());
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                )
+                .formLogin(form -> form.disable());
 
         return http.build();
     }

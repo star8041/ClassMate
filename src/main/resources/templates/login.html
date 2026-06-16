@@ -195,9 +195,9 @@
         document.getElementById('errorMsg').style.display = 'none';
     }
 
-    // 이미 로그인된 경우 메인으로
+    // 이미 로그인된 경우 대시보드로
     if (localStorage.getItem('accessToken')) {
-        location.href = '/';
+        location.href = '/teacher/dashboard';
     }
 
     // 엔터키 로그인
@@ -231,7 +231,7 @@
                 if (document.getElementById('rememberMe').checked) {
                     localStorage.setItem('rememberLogin', 'true');
                 }
-                location.href = '/';
+                location.href = '/teacher/dashboard';
             } else {
                 const err = await res.json().catch(() => ({}));
                 showError(err.message ?? '아이디 또는 비밀번호가 올바르지 않습니다.');
