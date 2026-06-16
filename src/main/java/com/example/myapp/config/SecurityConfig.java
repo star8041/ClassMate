@@ -19,7 +19,10 @@ public class SecurityConfig {
                     "/test",
                     "/css/**",
                     "/js/**",
-                    "/images/**"
+                    "/images/**",
+                    "/error",
+                    // TODO: 인증 연동 전까지 PDF 자료 API 임시 허용
+                    "/api/materials/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
