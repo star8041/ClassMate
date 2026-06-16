@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 모드 선택 - ClassMate</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background: #F0F2F5; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center; padding: 24px;
+        }
+        .wrap { width: 100%; max-width: 720px; text-align: center; }
+        .brand h1 { font-size: 28px; font-weight: 700; color: #2563EB; letter-spacing: -0.5px; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
+            background: #EEF2FF; color: #4338CA; font-size: 12px; font-weight: 700;
+            padding: 5px 12px; border-radius: 20px;
+        }
+        .title { font-size: 20px; font-weight: 700; color: #1F2937; margin-top: 18px; }
+        .subtitle { font-size: 14px; color: #6B7280; margin-top: 6px; margin-bottom: 28px; }
+
+        .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .choice {
+            background: #fff; border: 1.5px solid #E5E7EB; border-radius: 18px;
+            padding: 32px 24px; cursor: pointer; text-align: center;
+            transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+        }
+        .choice:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(37,99,235,0.14); border-color: #2563EB; }
+        .choice-icon {
+            width: 64px; height: 64px; border-radius: 16px; margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .choice.teacher .choice-icon { background: #EFF6FF; color: #2563EB; }
+        .choice.student .choice-icon { background: #ECFDF5; color: #059669; }
+        .choice h3 { font-size: 17px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+        .choice p { font-size: 13px; color: #6B7280; line-height: 1.5; }
+        .enter {
+            display: inline-flex; align-items: center; gap: 5px; margin-top: 16px;
+            font-size: 13px; font-weight: 600; color: #2563EB;
+        }
+        .choice.student .enter { color: #059669; }
+
+        .logout { margin-top: 26px; font-size: 13px; color: #9CA3AF; }
+        .logout a { color: #6B7280; text-decoration: none; cursor: pointer; }
+        .logout a:hover { text-decoration: underline; }
+
+        @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="brand"><h1>ClassMate</h1></div>
+    <div class="badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        관리자 모드
+    </div>
+    <div class="title">어느 화면으로 들어갈까요?</div>
+    <div class="subtitle">관리자 계정은 선생님 화면과 학생 화면 모두 둘러볼 수 있어요.</div>
+
+    <div class="cards">
+        <div class="choice teacher" onclick="go('/teacher/dashboard', 'teacher')">
+            <div class="choice-icon">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            </div>
+            <h3>선생님 화면</h3>
+            <p>대시보드 · 강의자료 · 퀴즈 · 학생/상담 관리</p>
+            <span class="enter">들어가기
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </span>
+        </div>
+
+        <div class="choice student" onclick="go('/quiz/student', 'student')">
+            <div class="choice-icon">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3>학생 화면</h3>
+            <p>학생 학습 공간 · 퀴즈 풀이 미리보기</p>
+            <span class="enter">들어가기
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </span>
+        </div>
+    </div>
+
+    <div class="logout">관리자: <span th:text="${userName} ?: 'admin'">admin</span> · <a onclick="logout()">로그아웃</a></div>
+</div>
+
+<script>
+    // 관리자 토큰이 없으면 로그인으로
+    if (!localStorage.getItem('accessToken')) {
+        location.href = '/login';
+    }
+    function go(url, role) {
+        localStorage.setItem('loginRole', role);
+        location.href = url;
+    }
+    function logout() {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('loginRole');
+        location.href = '/login';
+    }
+</script>
+</body>
+</html>

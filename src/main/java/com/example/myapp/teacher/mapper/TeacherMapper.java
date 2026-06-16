@@ -29,6 +29,7 @@ public class TeacherMapper {
             .email(rs.getString("email"))
             .question(rs.getString("question"))
             .answer(rs.getString("answer"))
+            .role(rs.getString("role"))
             .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
             .updatedAt(rs.getTimestamp("updated_at") == null
                     ? null : rs.getTimestamp("updated_at").toLocalDateTime())
@@ -38,8 +39,8 @@ public class TeacherMapper {
     public Long insert(Teacher teacher) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcClient.sql("""
-                        INSERT INTO teacher (login_id, password, teacher_name, email, question, answer)
-                        VALUES (?, ?, ?, ?, ?, ?)
+                        INSERT INTO teacher (login_id, password, teacher_name, email, question, answer, role)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
                         """)
                 .param(teacher.getLoginId())
                 .param(teacher.getPassword())
@@ -47,6 +48,7 @@ public class TeacherMapper {
                 .param(teacher.getEmail())
                 .param(teacher.getQuestion())
                 .param(teacher.getAnswer())
+                .param(teacher.getRole() == null ? "USER" : teacher.getRole())
                 .update(keyHolder, "teacher_id");
         return keyHolder.getKey().longValue();
     }

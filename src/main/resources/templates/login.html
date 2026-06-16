@@ -251,6 +251,15 @@
         document.getElementById('studentForm').style.display = role === 'student' ? 'block' : 'none';
         hideError();
     }
+    // JWT payload 의 role 클레임 추출 (ADMIN/TEACHER)
+    function decodeRole(token) {
+        try {
+            const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            const json = decodeURIComponent(Array.prototype.map.call(atob(b64),
+                c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            return JSON.parse(json).role;
+        } catch (e) { return null; }
+    }
     function roleDest() {
         return selectedRole === 'student' ? '/quiz/student' : '/teacher/dashboard';
     }
@@ -305,11 +314,17 @@
                 const data = await res.json();
                 localStorage.setItem('accessToken', data.accessToken);
                 localStorage.setItem('tokenType', data.tokenType ?? 'Bearer');
-                localStorage.setItem('loginRole', selectedRole);
                 if (document.getElementById('rememberMe').checked) {
                     localStorage.setItem('rememberLogin', 'true');
                 }
-                location.href = roleDest();
+                // 관리자(ADMIN)면 전용 선택 화면으로, 일반 교사는 바로 대시보드로
+                if (decodeRole(data.accessToken) === 'ADMIN') {
+                    localStorage.removeItem('loginRole');
+                    location.href = '/admin/select';
+                } else {
+                    localStorage.setItem('loginRole', 'teacher');
+                    location.href = '/teacher/dashboard';
+                }
             } else {
                 const err = await res.json().catch(() => ({}));
                 showError(err.message ?? '아이디 또는 비밀번호가 올바르지 않습니다.');
