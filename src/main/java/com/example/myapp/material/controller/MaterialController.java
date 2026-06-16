@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,19 +23,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * 강의자료(PDF) 관리 REST API.
+ * 강의자료(PDF) 관리 REST API. (PDF 명세서 기준)
  *
  * <pre>
- * POST   /api/materials               PDF 업로드
- * GET    /api/materials               PDF 목록 조회
- * GET    /api/materials/{id}          PDF 상세 조회
- * GET    /api/materials/{id}/download PDF 다운로드
- * GET    /api/materials/download      PDF 전체 다운로드(ZIP)
- * POST   /api/materials/{id}/delete   PDF 삭제
+ * POST   /api/v1/materials                       PDF 업로드
+ * GET    /api/v1/materials                       PDF 목록 조회
+ * GET    /api/v1/materials/{materialId}          PDF 상세 조회
+ * GET    /api/v1/materials/{materialId}/download PDF 다운로드
+ * GET    /api/v1/materials/download/all          PDF 전체 다운로드(ZIP)
+ * DELETE /api/v1/materials/{materialId}          PDF 삭제
  * </pre>
  */
 @RestController
-@RequestMapping("/api/materials")
+@RequestMapping("/api/v1/materials")
 public class MaterialController {
 
     private final MaterialService materialService;
@@ -60,24 +61,8 @@ public class MaterialController {
         return materialService.list(teacherId);
     }
 
-    /** PDF 상세 조회 */
-    @GetMapping("/{id}")
-    public MaterialResponse detail(@PathVariable("id") Long id) {
-        return materialService.get(id);
-    }
-
-    /** PDF 단건 다운로드 */
-    @GetMapping("/{id}/download")
-    public ResponseEntity<Resource> download(@PathVariable("id") Long id) {
-        MaterialFile file = materialService.download(id);
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF)
-                .header(HttpHeaders.CONTENT_DISPOSITION, attachment(file.fileName()))
-                .body(file.resource());
-    }
-
     /** PDF 전체 다운로드 (ZIP) */
-    @GetMapping("/download")
+    @GetMapping("/download/all")
     public ResponseEntity<byte[]> downloadAll(
             @RequestParam(value = "teacherId", required = false) Long teacherId) {
         byte[] zip = materialService.downloadAllAsZip(teacherId);
@@ -87,11 +72,27 @@ public class MaterialController {
                 .body(zip);
     }
 
-    /** PDF 삭제 (스펙에 따라 POST) */
-    @PostMapping("/{id}/delete")
+    /** PDF 상세 조회 */
+    @GetMapping("/{materialId}")
+    public MaterialResponse detail(@PathVariable("materialId") Long materialId) {
+        return materialService.get(materialId);
+    }
+
+    /** PDF 단건 다운로드 */
+    @GetMapping("/{materialId}/download")
+    public ResponseEntity<Resource> download(@PathVariable("materialId") Long materialId) {
+        MaterialFile file = materialService.download(materialId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, attachment(file.fileName()))
+                .body(file.resource());
+    }
+
+    /** PDF 삭제 */
+    @DeleteMapping("/{materialId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable("id") Long id) {
-        materialService.delete(id);
+    public void delete(@PathVariable("materialId") Long materialId) {
+        materialService.delete(materialId);
     }
 
     /** 한글 파일명을 위해 RFC 5987 인코딩으로 Content-Disposition 헤더를 만든다. */
