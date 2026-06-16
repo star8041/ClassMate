@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학생 지도 리포트</title>
+<link rel="stylesheet" th:href="@{/css/layout.css}">
+<link rel="stylesheet" th:href="@{/css/sidebar.css}">
+<link rel="stylesheet" th:href="@{/css/fonts.css}">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: #f4f5f7; color: #1a1a1a; font-size: 14px; }
+
+  .page-body { padding: 32px 36px; }
+  .page-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+  .page-subtitle { font-size: 13px; color: #999; margin-bottom: 20px; }
+
+  .card { background: #fff; border-radius: 12px; border: 0.5px solid #e0e0e0; }
+
+  /* ── 상단 컨트롤 바 ── */
+  .control-bar { display: flex; align-items: flex-end; gap: 20px; padding: 18px 22px; margin-bottom: 18px; flex-wrap: wrap; }
+  .control-field { display: flex; flex-direction: column; gap: 6px; }
+  .control-label { font-size: 12px; color: #888; font-weight: 500; }
+  .select-native { min-width: 260px; height: 44px; border: 1px solid #ddd; border-radius: 10px; padding: 0 12px; font-size: 13px; color: #1a1a1a; background: #fff; font-family: inherit; cursor: pointer; }
+  .date-box { height: 44px; border: 1px solid #ddd; border-radius: 10px; background: #fff; display: flex; align-items: center; gap: 8px; padding: 0 12px; }
+  .date-range { display: flex; align-items: center; gap: 8px; }
+  .date-box input { border: none; outline: none; font-size: 13px; color: #1a1a1a; background: transparent; font-family: inherit; }
+  .date-sep { color: #bbb; }
+
+  .control-actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn { border-radius: 10px; padding: 0 16px; height: 44px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; border: none; }
+  .btn-outline { background: #fff; border: 1px solid #4f80f7; color: #4f80f7; }
+  .btn-outline:hover { background: #f0f4ff; }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-primary:hover { background: #1d4fd7; }
+
+  /* ── 메인 2컬럼 ── */
+  .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  .col-title { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+  .col-title .meta { font-size: 11px; color: #aaa; font-weight: 400; display: flex; align-items: center; gap: 10px; }
+  .btn-regen { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 4px 10px; font-size: 11px; color: #555; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .btn-regen:hover { background: #f5f5f5; }
+
+  .block { padding: 18px 20px; margin-bottom: 14px; }
+  .block-title { font-size: 13px; font-weight: 700; color: #1a1a1a; margin-bottom: 14px; }
+  .block-title .sub { font-size: 11px; color: #aaa; font-weight: 400; margin-left: 6px; }
+
+  .quiz-summary { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: center; }
+  .donut-wrap { position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+  .donut-center { position: absolute; text-align: center; }
+  .donut-center .label { font-size: 10px; color: #aaa; }
+  .donut-center .val { font-size: 22px; font-weight: 700; color: #1a1a1a; }
+  .donut-center .unit { font-size: 11px; color: #aaa; }
+  .stat-mini-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .stat-mini { background: #f8f9fc; border-radius: 10px; padding: 12px 10px; text-align: center; }
+  .stat-mini .l { font-size: 11px; color: #aaa; margin-bottom: 6px; }
+  .stat-mini .v { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .stat-mini .v small { font-size: 12px; color: #888; font-weight: 600; }
+
+  .trend-row { display: grid; grid-template-columns: 1fr 200px; gap: 16px; align-items: start; }
+  .trend-title, .recent-title { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 10px; }
+  .recent-list { display: flex; flex-direction: column; gap: 2px; }
+  .recent-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 0.5px solid #f2f2f2; }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-item .name { color: #444; }
+  .recent-item .score { font-weight: 700; color: #1a1a1a; }
+
+  .counsel-grid { display: grid; grid-template-columns: 150px 1fr; gap: 16px; }
+  .counsel-meta-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+  .counsel-meta-item .ic { color: #4f80f7; margin-top: 2px; }
+  .counsel-meta-item .k { font-size: 11px; color: #aaa; }
+  .counsel-meta-item .vv { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+  .counsel-sub-title { font-size: 12px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+  .counsel-text { font-size: 12px; color: #555; line-height: 1.6; margin-bottom: 12px; }
+  .data-note { font-size: 11px; color: #bbb; margin-top: 2px; }
+
+  .report-card { padding: 16px 18px; margin-bottom: 12px; }
+  .report-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .rc-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .rc-title { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+  .report-card p { font-size: 12.5px; color: #555; line-height: 1.7; white-space: pre-line; }
+
+  .prev-section { margin-top: 22px; }
+  .prev-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { text-align: center; font-size: 12px; color: #999; font-weight: 500; padding: 12px 8px; border-bottom: 0.5px solid #e8e8e8; }
+  tbody td { padding: 14px 8px; font-size: 13px; color: #333; border-bottom: 0.5px solid #f4f4f4; text-align: center; }
+  tbody tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-saved { background: #e7f6ec; color: #1f9d55; }
+  .row-actions { display: inline-flex; align-items: center; gap: 6px; }
+  .mini-btn { border: 1px solid #ddd; background: #fff; border-radius: 7px; padding: 5px 10px; font-size: 12px; color: #555; cursor: pointer; }
+  .mini-btn:hover { background: #f5f5f5; }
+</style>
+</head>
+<body>
+<div class="layout-wrapper">
+
+  <div th:replace="~{fragments/sidebar :: sidebar('student')}"></div>
+
+  <div class="layout-main">
+    <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
+
+    <main class="page-body">
+      <h1 class="page-title">학생 지도 리포트</h1>
+      <p class="page-subtitle">퀴즈 점수와 상담 기록을 분석하여 AI가 맞춤형 학생 지도 리포트를 생성합니다.</p>
+
+      <!-- 상단 컨트롤 바 -->
+      <div class="card control-bar">
+        <div class="control-field">
+          <span class="control-label">학생 선택</span>
+          <select id="studentSelect" class="select-native" onchange="onStudentChange()">
+            <option value="">학생 불러오는 중…</option>
+          </select>
+        </div>
+
+        <div class="control-field">
+          <span class="control-label">분석 기간</span>
+          <div class="date-range">
+            <div class="date-box"><input type="date" id="periodStart" value="2024-05-01"></div>
+            <span class="date-sep">~</span>
+            <div class="date-box"><input type="date" id="periodEnd" value="2024-05-29"></div>
+          </div>
+        </div>
+
+        <div class="control-actions">
+          <button class="btn btn-outline" onclick="generateReport()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 5.8L20 9.5l-4.6 3.6L17 19l-5-3.3L7 19l1.6-5.9L4 9.5l6.1-1.7z"/></svg>
+            AI 리포트 생성
+          </button>
+          <button class="btn btn-primary" onclick="alert('리포트는 생성 시 자동 저장됩니다.')">저장</button>
+          <button class="btn btn-primary" onclick="window.print()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            리포트 다운로드
+          </button>
+        </div>
+      </div>
+
+      <!-- 메인 2컬럼 -->
+      <div class="report-grid">
+
+        <!-- ── 좌: 분석 데이터 요약 (요약 표시용 샘플 — 별도 집계 API 영역) ── -->
+        <div>
+          <div class="col-title">분석 데이터 요약</div>
+
+          <div class="card block">
+            <div class="block-title">퀴즈 분석 요약 <span class="sub">총 5회 퀴즈 기준</span></div>
+            <div class="quiz-summary">
+              <div class="donut-wrap">
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="48" fill="none" stroke="#eef0f4" stroke-width="14"/>
+                  <circle cx="60" cy="60" r="48" fill="none" stroke="#4f80f7" stroke-width="14"
+                          stroke-linecap="round" stroke-dasharray="249.1 301.6" transform="rotate(-90 60 60)"/>
+                </svg>
+                <div class="donut-center"><div class="label">평균 점수</div><div class="val">82.6</div><div class="unit">/100</div></div>
+              </div>
+              <div class="stat-mini-cards">
+                <div class="stat-mini"><div class="l">정답률</div><div class="v">82<small>%</small></div></div>
+                <div class="stat-mini"><div class="l">퀴즈 응시 수</div><div class="v">5<small>회</small></div></div>
+                <div class="stat-mini"><div class="l">평균 소요 시간</div><div class="v">18<small>분</small></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card block">
+            <div class="trend-row">
+              <div>
+                <div class="trend-title">최근 퀴즈 성과 추이</div>
+                <svg width="100%" height="150" viewBox="0 0 320 150" preserveAspectRatio="none">
+                  <line x1="30" y1="20" x2="30" y2="120" stroke="#eee"/>
+                  <line x1="30" y1="120" x2="310" y2="120" stroke="#eee"/>
+                  <text x="10" y="25" font-size="9" fill="#bbb">100</text>
+                  <text x="14" y="74" font-size="9" fill="#bbb">50</text>
+                  <text x="20" y="123" font-size="9" fill="#bbb">0</text>
+                  <polyline points="55,50 120,40 185,30 250,45 305,25" fill="none" stroke="#4f80f7" stroke-width="2.5"/>
+                  <circle cx="55"  cy="50" r="3.5" fill="#4f80f7"/><circle cx="120" cy="40" r="3.5" fill="#4f80f7"/>
+                  <circle cx="185" cy="30" r="3.5" fill="#4f80f7"/><circle cx="250" cy="45" r="3.5" fill="#4f80f7"/>
+                  <circle cx="305" cy="25" r="3.5" fill="#4f80f7"/>
+                  <text x="40"  y="138" font-size="9" fill="#bbb">05.01</text><text x="105" y="138" font-size="9" fill="#bbb">05.08</text>
+                  <text x="170" y="138" font-size="9" fill="#bbb">05.15</text><text x="235" y="138" font-size="9" fill="#bbb">05.22</text>
+                  <text x="288" y="138" font-size="9" fill="#bbb">05.29</text>
+                </svg>
+              </div>
+              <div>
+                <div class="recent-title">최근 퀴즈</div>
+                <div class="recent-list">
+                  <div class="recent-item"><span class="name">Unit 3 Listening</span><span class="score">95점</span></div>
+                  <div class="recent-item"><span class="name">Unit 2 Writing</span><span class="score">75점</span></div>
+                  <div class="recent-item"><span class="name">Unit 2 Grammar</span><span class="score">90점</span></div>
+                  <div class="recent-item"><span class="name">Unit 1 Reading</span><span class="score">80점</span></div>
+                  <div class="recent-item"><span class="name">Unit 1 Vocabulary</span><span class="score">70점</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card block">
+            <div class="block-title">상담 요약 <span class="sub">상담 기록 2건 사용</span></div>
+            <div class="counsel-grid">
+              <div>
+                <div class="counsel-meta-item">
+                  <span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                  <div><div class="k">최근 상담일</div><div class="vv">2024.05.22</div></div>
+                </div>
+                <div class="counsel-meta-item">
+                  <span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+                  <div><div class="k">상담 기록 수</div><div class="vv">2건</div></div>
+                </div>
+              </div>
+              <div>
+                <div class="counsel-sub-title">상담 주요 내용 (요약)</div>
+                <div class="counsel-text">영어 문법 학습에 자신감이 낮고, 시험 시간 관리가 어려움을 느끼고 있음. 특히 시제와 문장 구성에서 실수가 잦으며, 문제를 꼼꼼히 읽는 습관이 필요함.</div>
+                <div class="counsel-sub-title">다음 단계 / 후속 조치</div>
+                <div class="counsel-text">주요 시제 개념 정리 및 기출 문제 반복 연습, 시간 관리 연습 병행 권장.</div>
+              </div>
+            </div>
+            <div class="data-note">※ 좌측 요약은 표시용 예시입니다. 우측 리포트는 실제 리포트 API와 연동됩니다.</div>
+          </div>
+        </div>
+
+        <!-- ── 우: 생성된 학생 지도 리포트 (실제 API 연동) ── -->
+        <div>
+          <div class="col-title">
+            생성된 학생 지도 리포트
+            <span class="meta">
+              <span id="reportMeta">생성일: -</span>
+              <button class="btn-regen" onclick="generateReport()"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> 다시 생성</button>
+            </span>
+          </div>
+
+          <div class="card report-card">
+            <div class="report-card-head">
+              <span class="rc-icon" style="background:#eef2ff;color:#4f80f7"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H3v10h6zM21 3h-6v18h6zM15 7H9v14h6z"/></svg></span>
+              <span class="rc-title">종합 분석</span>
+            </div>
+            <p id="summaryText">학생을 선택하면 리포트가 표시됩니다.</p>
+          </div>
+
+          <div class="card report-card">
+            <div class="report-card-head">
+              <span class="rc-icon" style="background:#fff7e6;color:#f5a623"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+              <span class="rc-title">강점 분석</span>
+            </div>
+            <p id="strengthText">-</p>
+          </div>
+
+          <div class="card report-card">
+            <div class="report-card-head">
+              <span class="rc-icon" style="background:#fdecec;color:#e25555"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
+              <span class="rc-title">보완 필요 영역</span>
+            </div>
+            <p id="weaknessText">-</p>
+          </div>
+
+          <div class="card report-card">
+            <div class="report-card-head">
+              <span class="rc-icon" style="background:#e8f0fe;color:#2563eb"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+              <span class="rc-title">학습 코멘트</span>
+            </div>
+            <p id="commentText">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 이전 리포트 목록 (실제 API 연동) -->
+      <div class="prev-section">
+        <div class="prev-title">이전 리포트 목록</div>
+        <div class="card" style="padding: 8px 18px 18px;">
+          <table>
+            <thead>
+              <tr><th>생성일</th><th>학생</th><th>분석기간</th><th>상태</th><th>관리</th></tr>
+            </thead>
+            <tbody id="reportTbody">
+              <tr><td colspan="5" style="color:#aaa">불러오는 중…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  function token() { return localStorage.getItem('accessToken'); }
+  function authHeaders(extra) {
+    const h = Object.assign({}, extra || {});
+    const t = token();
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  }
+  function fmtDt(dt) { return dt ? String(dt).replace('T', ' ').slice(0, 16) : '-'; }
+
+  let teacherId = null;
+  let currentStudentId = null;
+
+  async function init() {
+    if (!token()) {
+      document.getElementById('summaryText').textContent = '로그인이 필요합니다. /login 에서 로그인 후 이용해 주세요.';
+      document.getElementById('studentSelect').innerHTML = '<option value="">로그인 필요</option>';
+      return;
+    }
+    try {
+      const me = await fetch('/api/v1/users/me', { headers: authHeaders() });
+      if (me.ok) { const d = await me.json(); teacherId = d.userId; }
+    } catch (e) {}
+    await loadStudents();
+  }
+
+  async function loadStudents() {
+    const sel = document.getElementById('studentSelect');
+    if (!teacherId) { sel.innerHTML = '<option value="">교사 정보를 불러오지 못했습니다</option>'; return; }
+    try {
+      const res = await fetch('/api/v1/teachers/me/students', { headers: authHeaders({ 'X-Teacher-Id': teacherId }) });
+      if (!res.ok) { sel.innerHTML = '<option value="">학생 목록 조회 실패</option>'; return; }
+      const list = await res.json();
+      if (!list.length) { sel.innerHTML = '<option value="">등록된 학생이 없습니다</option>'; return; }
+      sel.innerHTML = '';
+      list.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.studentId;
+        o.textContent = s.studentName + (s.studentNumber ? ' · ' + s.studentNumber : '');
+        sel.appendChild(o);
+      });
+      currentStudentId = list[0].studentId;
+      sel.value = currentStudentId;
+      await loadReports();
+    } catch (e) {
+      sel.innerHTML = '<option value="">오류: ' + e.message + '</option>';
+    }
+  }
+
+  function onStudentChange() {
+    currentStudentId = document.getElementById('studentSelect').value;
+    loadReports();
+  }
+
+  async function loadReports() {
+    if (!currentStudentId) return;
+    try {
+      const res = await fetch('/api/v1/reports/students/' + currentStudentId, { headers: authHeaders() });
+      const body = await res.json();
+      const reports = (body && body.data) || [];
+      renderReportList(reports);
+      if (reports.length) renderReport(reports[0]); else clearReport();
+    } catch (e) {}
+  }
+
+  function renderReport(r) {
+    document.getElementById('summaryText').textContent  = r.summaryText  || '-';
+    document.getElementById('strengthText').textContent = r.strengthText || '-';
+    document.getElementById('weaknessText').textContent = r.weaknessText || '-';
+    document.getElementById('commentText').textContent  = r.commentText  || '-';
+    document.getElementById('reportMeta').textContent = '생성일: ' + fmtDt(r.createdAt);
+  }
+  function clearReport() {
+    document.getElementById('summaryText').textContent = '아직 생성된 리포트가 없습니다. [AI 리포트 생성]을 눌러주세요.';
+    ['strengthText', 'weaknessText', 'commentText'].forEach(id => document.getElementById(id).textContent = '-');
+    document.getElementById('reportMeta').textContent = '생성일: -';
+  }
+
+  function renderReportList(reports) {
+    const tb = document.getElementById('reportTbody');
+    if (!reports.length) { tb.innerHTML = '<tr><td colspan="5" style="color:#aaa">이전 리포트가 없습니다.</td></tr>'; return; }
+    tb.innerHTML = '';
+    reports.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + fmtDt(r.createdAt) + '</td>' +
+        '<td>학생 #' + r.studentId + '</td>' +
+        '<td>' + r.periodStart + ' ~ ' + r.periodEnd + '</td>' +
+        '<td><span class="badge badge-saved">저장됨</span></td>' +
+        '<td><div class="row-actions">' +
+          '<button class="mini-btn" onclick="viewReport(' + r.achievementReportId + ')">보기</button>' +
+          '<button class="mini-btn" onclick="removeReport(' + r.achievementReportId + ')">삭제</button>' +
+        '</div></td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  async function generateReport() {
+    if (!currentStudentId) { alert('학생을 선택하세요.'); return; }
+    const periodStart = document.getElementById('periodStart').value;
+    const periodEnd   = document.getElementById('periodEnd').value;
+    if (!periodStart || !periodEnd) { alert('분석 기간을 입력하세요.'); return; }
+    document.getElementById('summaryText').textContent = 'AI가 리포트를 생성하는 중입니다…';
+    try {
+      const res = await fetch('/api/v1/reports/students/' + currentStudentId + '/generate', {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ periodStart, periodEnd })
+      });
+      const body = await res.json();
+      if (res.ok && body.data) { renderReport(body.data); await loadReports(); }
+      else { alert('리포트 생성 실패: ' + (body.message || ('HTTP ' + res.status))); clearReport(); }
+    } catch (e) { alert('리포트 생성 오류: ' + e.message); }
+  }
+
+  async function viewReport(id) {
+    try {
+      const res = await fetch('/api/v1/reports/' + id, { headers: authHeaders() });
+      const body = await res.json();
+      if (body.data) { renderReport(body.data); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    } catch (e) {}
+  }
+
+  async function removeReport(id) {
+    if (!confirm('이 리포트를 삭제할까요?')) return;
+    try {
+      await fetch('/api/v1/reports/' + id, { method: 'DELETE', headers: authHeaders() });
+      await loadReports();
+    } catch (e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

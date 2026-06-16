@@ -67,6 +67,13 @@ public class TeacherMapper {
                 .optional();
     }
 
+    /** 전체 교사 목록 (관리자용) */
+    public java.util.List<Teacher> findAll() {
+        return jdbcClient.sql("SELECT * FROM teacher ORDER BY teacher_id")
+                .query(ROW_MAPPER)
+                .list();
+    }
+
     /** 로그인 ID 중복 여부 */
     public boolean existsByLoginId(String loginId) {
         Integer count = jdbcClient.sql("SELECT COUNT(*) FROM teacher WHERE login_id = ?")

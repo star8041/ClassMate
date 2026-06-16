@@ -18,9 +18,11 @@ CREATE TABLE teacher (
                          email          VARCHAR(50),
                          question       VARCHAR(100) NOT NULL,
                          answer         VARCHAR(255) NOT NULL,
+                         role           VARCHAR(20) NOT NULL DEFAULT 'USER',
                          created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+-- role: USER(교사) / ADMIN(관리자)
 
 -- student: 학생 정보를 관리한다.
 CREATE TABLE student (
@@ -240,7 +242,8 @@ answer
 )
 VALUES (
 'teacher1',
-'1234',
+-- BCrypt 해시 (평문 비밀번호는 '1234'). 앱이 BCrypt 로 비교하므로 시드도 해시여야 로그인된다.
+'$2a$10$dpTCc6N0CaSOY.kZeDUtYu7ymHXzWcA1aaKlc4esyLJ/vPICTIWN.',
 '테스트교사',
 'teacher1@classmate.com',
 '가장 좋아하는 색은?',

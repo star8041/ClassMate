@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입 - ClassMate</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #F0F2F5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 16px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+            display: flex;
+            width: 820px;
+            overflow: hidden;
+        }
+
+        /* 오른쪽 일러스트 영역 */
+        .illust {
+            width: 240px;
+            background: linear-gradient(145deg, #EFF6FF 0%, #DBEAFE 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            order: 2;
+        }
+
+        .illust svg { width: 150px; height: 180px; }
+
+        /* 왼쪽 폼 영역 */
+        .form-area {
+            flex: 1;
+            padding: 44px 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand { text-align: center; margin-bottom: 28px; }
+        .brand h1 { font-size: 26px; font-weight: 700; color: #2563EB; letter-spacing: -0.5px; }
+        .brand p  { font-size: 13px; color: #6B7280; margin-top: 4px; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+
+        .field { margin-bottom: 14px; }
+        .field label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px; }
+        .field label .req { color: #EF4444; margin-left: 2px; }
+
+        .field input, .field select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #111827;
+            outline: none;
+            transition: border-color 0.2s;
+            background: #fff;
+        }
+        .field input:focus, .field select:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
+        }
+        .field input::placeholder { color: #9CA3AF; }
+        .field input.error-input { border-color: #EF4444; }
+
+        .field .hint { font-size: 11px; color: #9CA3AF; margin-top: 4px; }
+        .field .field-error { font-size: 11px; color: #EF4444; margin-top: 4px; display: none; }
+
+        .pw-wrap { position: relative; }
+        .pw-wrap input { padding-right: 40px; }
+        .pw-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: #9CA3AF; padding: 0;
+        }
+
+        .section-label {
+            font-size: 12px; font-weight: 700; color: #6B7280;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin: 6px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .agree-row {
+            display: flex; align-items: center; gap: 8px;
+            margin: 14px 0 18px;
+        }
+        .agree-row input[type=checkbox] { accent-color: #2563EB; width: 15px; height: 15px; flex-shrink: 0; }
+        .agree-row label { font-size: 13px; color: #6B7280; cursor: pointer; }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #2563EB;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover { background: #1D4ED8; }
+        .btn-primary:disabled { background: #93C5FD; cursor: not-allowed; }
+
+        .login-row { text-align: center; margin-top: 14px; font-size: 13px; color: #6B7280; }
+        .link { color: #2563EB; text-decoration: none; font-weight: 600; }
+        .link:hover { text-decoration: underline; }
+
+        .alert {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 14px;
+            display: none;
+        }
+        .alert-error   { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+        .alert-success { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <!-- 폼 -->
+    <div class="form-area">
+        <div class="brand">
+            <h1>ClassMate</h1>
+            <p>교사용 AI 업무 비서</p>
+        </div>
+
+        <div class="alert alert-error"   id="errorMsg"></div>
+        <div class="alert alert-success" id="successMsg"></div>
+
+        <!-- 기본 정보 -->
+        <div class="section-label">기본 정보</div>
+        <div class="grid-2">
+            <div class="field">
+                <label>이름 <span class="req">*</span></label>
+                <input type="text" id="teacherName" placeholder="이름을 입력하세요">
+                <div class="field-error" id="err-teacherName"></div>
+            </div>
+            <div class="field">
+                <label>아이디 <span class="req">*</span></label>
+                <input type="text" id="loginId" placeholder="아이디를 입력하세요">
+                <div class="field-error" id="err-loginId"></div>
+            </div>
+        </div>
+
+        <div class="field">
+            <label>이메일</label>
+            <input type="email" id="email" placeholder="이메일을 입력하세요">
+            <div class="field-error" id="err-email"></div>
+        </div>
+
+        <div class="grid-2">
+            <div class="field">
+                <label>비밀번호 <span class="req">*</span></label>
+                <div class="pw-wrap">
+                    <input type="password" id="password" placeholder="비밀번호를 입력하세요">
+                    <button type="button" class="pw-toggle" onclick="togglePassword('password', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="field-error" id="err-password"></div>
+            </div>
+            <div class="field">
+                <label>비밀번호 확인 <span class="req">*</span></label>
+                <div class="pw-wrap">
+                    <input type="password" id="passwordConfirm" placeholder="비밀번호를 다시 입력하세요">
+                    <button type="button" class="pw-toggle" onclick="togglePassword('passwordConfirm', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="field-error" id="err-passwordConfirm"></div>
+            </div>
+        </div>
+
+        <!-- 비밀번호 찾기 -->
+        <div class="section-label">비밀번호 찾기</div>
+        <div class="field">
+            <label>질문 <span class="req">*</span></label>
+            <select id="question">
+                <option value="">질문을 선택하세요</option>
+                <option value="가장 좋아하는 음식은 무엇인가요?">가장 좋아하는 음식은 무엇인가요?</option>
+                <option value="어머니의 성함은 무엇인가요?">어머니의 성함은 무엇인가요?</option>
+                <option value="처음 다닌 학교 이름은 무엇인가요?">처음 다닌 학교 이름은 무엇인가요?</option>
+                <option value="가장 좋아하는 색깔은 무엇인가요?">가장 좋아하는 색깔은 무엇인가요?</option>
+                <option value="태어난 도시는 어디인가요?">태어난 도시는 어디인가요?</option>
+                <option value="어릴 때 키우던 반려동물 이름은 무엇인가요?">어릴 때 키우던 반려동물 이름은 무엇인가요?</option>
+            </select>
+            <div class="field-error" id="err-question"></div>
+        </div>
+        <div class="field">
+            <label>답변 <span class="req">*</span></label>
+            <input type="text" id="answer" placeholder="답변을 입력하세요">
+            <div class="hint">비밀번호 분실 시 본인 확인에 사용됩니다.</div>
+            <div class="field-error" id="err-answer"></div>
+        </div>
+
+        <div class="agree-row">
+            <input type="checkbox" id="agree">
+            <label for="agree">이용약관 및 개인정보처리방침에 동의합니다.</label>
+        </div>
+
+        <button class="btn-primary" id="signupBtn" onclick="doSignup()">회원가입</button>
+
+        <div class="login-row">
+            이미 계정이 있으신가요? <a href="/login" class="link">로그인</a>
+        </div>
+    </div>
+
+    <!-- 일러스트 -->
+    <div class="illust">
+        <svg viewBox="0 0 150 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 클립보드 -->
+            <rect x="25" y="20" width="100" height="140" rx="8" fill="#DBEAFE"/>
+            <rect x="25" y="20" width="100" height="140" rx="8" stroke="#93C5FD" stroke-width="2"/>
+            <!-- 클립 -->
+            <rect x="55" y="12" width="40" height="18" rx="9" fill="#3B82F6"/>
+            <rect x="62" y="16" width="26" height="10" rx="5" fill="#BFDBFE"/>
+            <!-- 체크 항목들 -->
+            <rect x="42" y="55" width="66" height="10" rx="3" fill="#BFDBFE"/>
+            <rect x="42" y="55" width="14" height="10" rx="3" fill="#3B82F6"/>
+            <path d="M44 60 L47 63 L53 57" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <rect x="42" y="75" width="66" height="10" rx="3" fill="#BFDBFE"/>
+            <rect x="42" y="75" width="14" height="10" rx="3" fill="#3B82F6"/>
+            <path d="M44 80 L47 83 L53 77" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+            <rect x="42" y="95" width="66" height="10" rx="3" fill="#BFDBFE"/>
+            <rect x="42" y="95" width="14" height="10" rx="3" fill="#60A5FA"/>
+
+            <rect x="42" y="115" width="50" height="10" rx="3" fill="#DBEAFE"/>
+            <!-- 연필 -->
+            <rect x="105" y="118" width="8" height="36" rx="3" fill="#FCD34D" transform="rotate(-20 105 118)"/>
+            <polygon points="101,148 109,148 105,158" fill="#F59E0B" transform="rotate(-20 105 118) translate(0, 0)"/>
+        </svg>
+    </div>
+</div>
+
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        btn.style.color = isHidden ? '#2563EB' : '#9CA3AF';
+    }
+
+    function showAlert(id, msg) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    function hideAlerts() {
+        ['errorMsg', 'successMsg'].forEach(id => {
+            document.getElementById(id).style.display = 'none';
+        });
+    }
+
+    function showFieldError(fieldId, msg) {
+        const el = document.getElementById('err-' + fieldId);
+        if (el) { el.textContent = msg; el.style.display = 'block'; }
+        const input = document.getElementById(fieldId);
+        if (input) input.classList.add('error-input');
+    }
+
+    function clearFieldErrors() {
+        document.querySelectorAll('.field-error').forEach(el => {
+            el.textContent = '';
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.error-input').forEach(el => el.classList.remove('error-input'));
+    }
+
+    function validate() {
+        clearFieldErrors();
+        let valid = true;
+
+        const teacherName    = document.getElementById('teacherName').value.trim();
+        const loginId        = document.getElementById('loginId').value.trim();
+        const password       = document.getElementById('password').value;
+        const passwordConfirm= document.getElementById('passwordConfirm').value;
+        const question       = document.getElementById('question').value;
+        const answer         = document.getElementById('answer').value.trim();
+        const agree          = document.getElementById('agree').checked;
+
+        if (!teacherName) { showFieldError('teacherName', '이름을 입력해 주세요.'); valid = false; }
+        if (!loginId)     { showFieldError('loginId', '아이디를 입력해 주세요.'); valid = false; }
+        if (!password)    { showFieldError('password', '비밀번호를 입력해 주세요.'); valid = false; }
+        if (password && password.length < 8) {
+            showFieldError('password', '비밀번호는 8자 이상이어야 합니다.'); valid = false;
+        }
+        if (password !== passwordConfirm) {
+            showFieldError('passwordConfirm', '비밀번호가 일치하지 않습니다.'); valid = false;
+        }
+        if (!question) { showFieldError('question', '비밀번호 찾기 질문을 선택해 주세요.'); valid = false; }
+        if (!answer)   { showFieldError('answer', '비밀번호 찾기 답변을 입력해 주세요.'); valid = false; }
+        if (!agree)    { showAlert('errorMsg', '이용약관 및 개인정보처리방침에 동의해 주세요.'); valid = false; }
+
+        return valid;
+    }
+
+    async function doSignup() {
+        hideAlerts();
+        if (!validate()) return;
+
+        const btn = document.getElementById('signupBtn');
+        btn.disabled = true;
+        btn.textContent = '가입 중...';
+
+        const body = {
+            teacherName:     document.getElementById('teacherName').value.trim(),
+            loginId:         document.getElementById('loginId').value.trim(),
+            email:           document.getElementById('email').value.trim(),
+            password:        document.getElementById('password').value,
+            passwordConfirm: document.getElementById('passwordConfirm').value,
+            question:        document.getElementById('question').value,
+            answer:          document.getElementById('answer').value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/v1/teachers/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok || res.status === 201) {
+                showAlert('successMsg', '회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+                setTimeout(() => location.href = '/login', 1500);
+            } else {
+                const err = await res.json().catch(() => ({}));
+                showAlert('errorMsg', err.message ?? '회원가입에 실패했습니다. 다시 시도해 주세요.');
+            }
+        } catch (e) {
+            showAlert('errorMsg', '서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '회원가입';
+        }
+    }
+</script>
+</body>
+</html>

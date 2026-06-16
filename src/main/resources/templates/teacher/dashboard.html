@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈 - ClassMate</title>
+    <link rel="stylesheet" th:href="@{/css/layout.css}">
+    <link rel="stylesheet" th:href="@{/css/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/fonts.css}">
+    <style>
+        /* ── 대시보드 전용 레이아웃 ── */
+        .dashboard-body {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - var(--header-h));
+            padding: 24px 28px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .page-title-section {
+            flex-shrink: 0;
+            margin-bottom: 18px;
+        }
+        .page-title-section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--cm-text-primary);
+            letter-spacing: -0.3px;
+        }
+        .page-title-section p {
+            font-size: 13px;
+            color: var(--cm-text-secondary);
+            margin-top: 4px;
+        }
+
+        /* ── 학생 초대코드 위젯 ── */
+        .title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+        .invite-widget {
+            background: linear-gradient(135deg, #eef3ff 0%, #f7f9ff 100%);
+            border: 1px solid #dbe4ff; border-radius: 14px;
+            padding: 12px 16px; min-width: 270px; flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(59, 91, 219, 0.06);
+        }
+        .invite-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .invite-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #3b5bdb; }
+        .invite-timer { font-size: 11px; font-weight: 700; color: #f06595; white-space: nowrap; }
+        .invite-body { display: flex; align-items: center; gap: 10px; min-height: 38px; }
+        .invite-gen-btn {
+            background: #2563eb; color: #fff; border: none; border-radius: 10px;
+            padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+        .invite-gen-btn:hover { background: #1d4fd7; }
+        .invite-code {
+            font-family: 'Menlo', 'Consolas', monospace; font-size: 26px; font-weight: 800;
+            letter-spacing: 6px; color: #1a2b4a;
+        }
+        .invite-actions { display: flex; gap: 6px; margin-left: auto; }
+        .invite-icon-btn {
+            background: #fff; border: 1px solid #cdd6f4; border-radius: 8px;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            color: #3b5bdb; cursor: pointer;
+        }
+        .invite-icon-btn:hover { background: #eef3ff; }
+        .invite-expired { font-size: 13px; color: #e25555; font-weight: 700; }
+        .invite-hint { font-size: 11px; color: #aab; margin-top: 7px; }
+
+        .dashboard-grid {
+            display: flex;
+            gap: 18px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ── 채팅 패널 ── */
+        .chat-panel {
+            flex: 7;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid var(--cm-border);
+            overflow: hidden;
+        }
+
+        .chat-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--cm-border);
+            flex-shrink: 0;
+        }
+        .chat-panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chat-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--cm-blue), #7FA8FB);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .chat-panel-title h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--cm-text-primary);
+        }
+        .chat-session-subtitle {
+            font-size: 11px;
+            color: var(--cm-text-muted);
+            margin-top: 1px;
+        }
+
+        .btn-new-chat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 14px;
+            background: var(--cm-blue);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .btn-new-chat:hover { background: var(--cm-blue-dark); }
+
+        /* 메시지 영역 */
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: #F9FAFB;
+            min-height: 0;
+        }
+        .messages-area::-webkit-scrollbar { width: 4px; }
+        .messages-area::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+
+        /* 환영 메시지 */
+        .welcome-msg {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+            padding: 30px;
+            color: var(--cm-text-secondary);
+        }
+        .welcome-msg .ai-circle {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--cm-blue), #7FA8FB);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+        }
+        .welcome-msg h4 { font-size: 16px; font-weight: 600; color: var(--cm-text-primary); margin-bottom: 6px; }
+        .welcome-msg p  { font-size: 13px; line-height: 1.7; }
+
+        /* 메시지 말풍선 */
+        .message-row {
+            display: flex;
+            gap: 10px;
+            max-width: 82%;
+        }
+        .message-row.user  { align-self: flex-end;   flex-direction: row-reverse; }
+        .message-row.ai    { align-self: flex-start; }
+
+        .msg-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .msg-avatar.ai   { background: linear-gradient(135deg, var(--cm-blue), #7FA8FB); color: #fff; }
+        .msg-avatar.user { background: var(--cm-border); color: var(--cm-text-primary); }
+
+        .msg-bubble {
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 13.5px;
+            line-height: 1.65;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .msg-bubble.ai   { background: #fff; border: 1px solid var(--cm-border); color: var(--cm-text-primary); border-top-left-radius: 3px; }
+        .msg-bubble.user { background: var(--cm-blue); color: #fff; border-top-right-radius: 3px; }
+        .msg-bubble.thinking { color: var(--cm-text-muted); font-style: italic; }
+
+        /* 빠른 액션 */
+        .quick-actions {
+            padding: 10px 18px;
+            border-top: 1px solid #F3F4F6;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            flex-shrink: 0;
+            background: #fff;
+        }
+        .quick-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 11px;
+            border: 1px solid var(--cm-border);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--cm-text-secondary);
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .quick-chip:hover { border-color: var(--cm-blue); color: var(--cm-blue); background: var(--cm-blue-light); }
+
+        /* 입력 영역 */
+        .chat-input-area {
+            padding: 14px 18px;
+            border-top: 1px solid var(--cm-border);
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-shrink: 0;
+            background: #fff;
+        }
+        .chat-input-wrap { flex: 1; }
+        .chat-input-wrap textarea {
+            width: 100%;
+            min-height: 42px;
+            max-height: 130px;
+            padding: 10px 14px;
+            border: 1px solid #D1D5DB;
+            border-radius: 10px;
+            font-size: 13.5px;
+            color: var(--cm-text-primary);
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            line-height: 1.5;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .chat-input-wrap textarea:focus {
+            border-color: var(--cm-blue);
+            box-shadow: 0 0 0 3px rgba(74,124,247,0.10);
+        }
+        .chat-input-wrap textarea::placeholder { color: var(--cm-text-muted); }
+
+        .btn-send {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: var(--cm-blue);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition);
+            flex-shrink: 0;
+        }
+        .btn-send:hover    { background: var(--cm-blue-dark); }
+        .btn-send:disabled { background: #93C5FD; cursor: not-allowed; }
+
+        /* ── 세션 목록 패널 ── */
+        .sessions-panel {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid var(--cm-border);
+            overflow: hidden;
+        }
+
+        .sessions-header {
+            padding: 14px 18px 12px;
+            border-bottom: 1px solid var(--cm-border);
+            flex-shrink: 0;
+        }
+        .sessions-header h3 {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: var(--cm-text-primary);
+            margin-bottom: 10px;
+        }
+        .sessions-search { position: relative; }
+        .sessions-search input {
+            width: 100%;
+            padding: 7px 11px 7px 32px;
+            border: 1px solid var(--cm-border);
+            border-radius: 8px;
+            font-size: 12.5px;
+            outline: none;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+            color: var(--cm-text-primary);
+        }
+        .sessions-search input:focus { border-color: var(--cm-blue); }
+        .sessions-search .s-icon {
+            position: absolute;
+            left: 9px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--cm-text-muted);
+        }
+
+        .sessions-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        .sessions-list::-webkit-scrollbar { width: 4px; }
+        .sessions-list::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 4px; }
+
+        .session-item {
+            padding: 13px 18px;
+            border-bottom: 1px solid #F3F4F6;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .session-item:hover  { background: #F9FAFB; }
+        .session-item.active {
+            background: var(--cm-blue-light);
+            border-left: 3px solid var(--cm-blue);
+        }
+        .session-item-title {
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--cm-text-primary);
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .session-item-date { font-size: 11px; color: var(--cm-text-muted); }
+
+        .sessions-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: var(--cm-text-muted);
+            font-size: 12.5px;
+            text-align: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout-wrapper">
+    <div th:replace="~{fragments/sidebar :: sidebar('home')}"></div>
+
+    <div class="layout-main">
+        <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
+
+        <main class="page-body dashboard-body">
+            <div class="page-title-section">
+                <div class="title-row">
+                    <div>
+                        <h2>교사용 대시보드</h2>
+                        <p>ClassMate AI와 함께 수업 준비부터 학생 지도까지 더 스마트하게 관리해 보세요.</p>
+                    </div>
+
+                    <!-- 학생 초대코드 위젯 -->
+                    <div class="invite-widget">
+                        <div class="invite-head">
+                            <span class="invite-label">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                                학생 초대코드
+                            </span>
+                            <span class="invite-timer" id="inviteTimer"></span>
+                        </div>
+                        <div class="invite-body" id="inviteBody">
+                            <button class="invite-gen-btn" onclick="generateInvite()">코드 생성</button>
+                        </div>
+                        <div class="invite-hint">생성 후 10분간 유효 · 학생이 이 코드로 가입</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- 채팅 패널 -->
+                <div class="chat-panel">
+                    <div class="chat-panel-header">
+                        <div class="chat-panel-title">
+                            <div class="chat-icon">
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3>질의응답 챗봇</h3>
+                                <div class="chat-session-subtitle" id="sessionSubtitle">새 대화를 시작해 보세요</div>
+                            </div>
+                        </div>
+                        <button class="btn-new-chat" onclick="newChat()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            새 대화
+                        </button>
+                    </div>
+
+                    <div class="messages-area" id="messagesArea">
+                        <div class="welcome-msg" id="welcomeMsg">
+                            <div class="ai-circle">
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                </svg>
+                            </div>
+                            <h4 id="welcomeTitle">안녕하세요, 선생님!</h4>
+                            <p>수업 준비, 학생 지도, 퀴즈 제작 등<br>무엇이든 편하게 질문해 주세요.</p>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <div class="chat-input-wrap">
+                            <textarea id="chatInput"
+                                      placeholder="선생님께서 궁금한 내용을 입력해 주세요..."
+                                      rows="1"
+                                      onkeydown="handleKey(event)"
+                                      oninput="autoResize(this)"></textarea>
+                        </div>
+                        <button class="btn-send" id="sendBtn" onclick="sendMessage()" title="전송">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+                                <line x1="22" y1="2" x2="11" y2="13"/>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 세션 목록 패널 -->
+                <div class="sessions-panel">
+                    <div class="sessions-header">
+                        <h3>채팅 목록</h3>
+                        <div class="sessions-search">
+                            <svg class="s-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            <input type="text" id="sessionSearch" placeholder="채팅 검색..." oninput="filterSessions(this.value)">
+                        </div>
+                    </div>
+                    <div class="sessions-list" id="sessionsList">
+                        <div class="sessions-empty">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            채팅 기록이 없습니다
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script th:src="@{/js/layout.js}"></script>
+<script>
+    let currentSessionId = null;
+    let allSessions = [];
+    let isStreaming = false;
+    let teacherName = '선생님';
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) location.href = '/login';
+
+    (function checkRole() {
+        const p = jwtPayload(token);
+        if (p && p.role === 'STUDENT') location.href = '/student/dashboard';
+    })();
+
+    function authHeaders() {
+        return { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+    }
+
+    function jwtPayload(jwt) {
+        try {
+            const base64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            const json = decodeURIComponent(
+                atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+            );
+            return JSON.parse(json);
+        } catch { return null; }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const p = jwtPayload(token);
+        if (p) {
+            teacherName = p.name || p.sub || '선생님';
+            document.getElementById('welcomeTitle').textContent = '안녕하세요, ' + teacherName + ' 선생님!';
+            const initial = document.querySelector('.header-avatar-initial');
+            const uname   = document.querySelector('.header-username');
+            if (initial) initial.textContent = teacherName.charAt(0);
+            if (uname)   uname.textContent   = teacherName + ' 선생님';
+        }
+        document.querySelectorAll('.dropdown-logout, .header-logout-btn').forEach(el => {
+            el.addEventListener('click', e => { e.preventDefault(); doLogout(); });
+        });
+        await loadSessions();
+    });
+
+    function doLogout() {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('tokenType');
+        location.href = '/login';
+    }
+
+    async function loadSessions() {
+        try {
+            const res = await fetch('/api/v1/teacher-chat/sessions', { headers: authHeaders() });
+            if (!res.ok) return;
+            const data = await res.json();
+            allSessions = (data.data || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            renderSessions(allSessions);
+            if (allSessions.length > 0) selectSession(allSessions[0]);
+        } catch (e) { console.error('세션 목록 로드 실패:', e); }
+    }
+
+    function renderSessions(list) {
+        const el = document.getElementById('sessionsList');
+        if (list.length === 0) {
+            el.innerHTML = `<div class="sessions-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>채팅 기록이 없습니다</div>`;
+            return;
+        }
+        el.innerHTML = list.map(s => `
+            <div class="session-item${s.chatSessionId === currentSessionId ? ' active' : ''}"
+                 onclick="selectSession(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+                <div class="session-item-title">${esc(s.title || '새 대화')}</div>
+                <div class="session-item-date">${fmtDate(s.createdAt)}</div>
+            </div>`).join('');
+    }
+
+    function filterSessions(q) {
+        const kw = q.trim().toLowerCase();
+        renderSessions(kw ? allSessions.filter(s => (s.title || '').toLowerCase().includes(kw)) : allSessions);
+    }
+
+    function selectSession(session) {
+        if (typeof session === 'string') session = JSON.parse(session);
+        currentSessionId = session.chatSessionId;
+        document.getElementById('sessionSubtitle').textContent = session.title || '새 대화';
+        renderSessions(allSessions);
+        const area = document.getElementById('messagesArea');
+        area.innerHTML = `<div class="welcome-msg" id="welcomeMsg">
+            <div class="ai-circle"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+            <h4>${esc(session.title || '새 대화')}</h4>
+            <p>이 채팅 세션에서 이어서 질문하거나<br>새 대화를 시작하실 수 있어요.</p>
+        </div>`;
+    }
+
+    async function newChat() {
+        if (isStreaming) return;
+        try {
+            const title = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + ' 대화';
+            const res = await fetch('/api/v1/teacher-chat/sessions', {
+                method: 'POST', headers: authHeaders(),
+                body: JSON.stringify({ materialId: null, title })
+            });
+            if (!res.ok) { alert('새 대화를 시작할 수 없습니다.'); return; }
+            const session = (await res.json()).data;
+            allSessions.unshift(session);
+            renderSessions(allSessions);
+            selectSession(session);
+        } catch { alert('서버 오류가 발생했습니다.'); }
+    }
+
+    const QUICK_PROMPTS = {
+        lesson:     '초등학교 수업에 활용할 수 있는 창의적인 수업 아이디어를 추천해 주세요. 학년과 과목을 알려 주시면 더 구체적으로 도와드릴 수 있어요.',
+        feedback:   '학생에게 전달할 격려와 발전 방향이 담긴 피드백 문구를 작성하는 것을 도와드릴게요. 학생의 특성이나 상황을 알려 주세요.',
+        counseling: '학생 상담을 준비하는 데 도움을 드릴게요. 상담 목적이나 학생 상황을 알려 주시면 상담 방향과 주요 질문을 정리해 드릴게요.',
+        quiz:       '수업 내용에 맞는 퀴즈 문항을 만들어 드릴게요. 학년, 과목, 학습 주제를 알려 주세요.',
+        notice:     '학부모나 학생에게 전달할 공지문 초안을 작성해 드릴게요. 공지 내용과 대상을 알려 주세요.'
+    };
+
+    function quickAction(key) {
+        const ta = document.getElementById('chatInput');
+        ta.value = QUICK_PROMPTS[key] || '';
+        autoResize(ta);
+        ta.focus();
+    }
+
+    function handleKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    }
+
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+    }
+
+    async function ensureSession() {
+        if (currentSessionId) return true;
+        try {
+            const title = new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) + ' 대화';
+            const res = await fetch('/api/v1/teacher-chat/sessions', {
+                method: 'POST', headers: authHeaders(),
+                body: JSON.stringify({ materialId: null, title })
+            });
+            if (!res.ok) return false;
+            const session = (await res.json()).data;
+            currentSessionId = session.chatSessionId;
+            allSessions.unshift(session);
+            renderSessions(allSessions);
+            document.getElementById('sessionSubtitle').textContent = session.title;
+            return true;
+        } catch { return false; }
+    }
+
+    async function sendMessage() {
+        if (isStreaming) return;
+        const ta   = document.getElementById('chatInput');
+        const text = ta.value.trim();
+        if (!text) return;
+        if (!await ensureSession()) { alert('세션을 생성할 수 없습니다.'); return; }
+
+        ta.value = '';
+        ta.style.height = 'auto';
+        document.getElementById('welcomeMsg')?.remove();
+
+        const area     = document.getElementById('messagesArea');
+        appendMsg(area, 'user', text);
+        const aiRow    = appendMsg(area, 'ai', '답변을 생성하는 중...', true);
+        const aiBubble = aiRow.querySelector('.msg-bubble');
+
+        isStreaming = true;
+        document.getElementById('sendBtn').disabled = true;
+
+        try {
+            const res = await fetch(`/api/v1/teacher-chat/sessions/${currentSessionId}/messages`, {
+                method: 'POST', headers: authHeaders(),
+                body: JSON.stringify({ messageText: text })
+            });
+            if (!res.ok) {
+                aiBubble.textContent = '죄송합니다. 응답을 받지 못했습니다. 잠시 후 다시 시도해 주세요.';
+                aiBubble.classList.remove('thinking');
+                return;
+            }
+
+            const reader  = res.body.getReader();
+            const decoder = new TextDecoder();
+            aiBubble.classList.remove('thinking');
+            aiBubble.textContent = '';
+
+            let fullText = '', buf = '';
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buf += decoder.decode(value, { stream: true });
+                const lines = buf.split('\n');
+                buf = lines.pop();
+                for (const line of lines) {
+                    if (!line.startsWith('data:')) continue;
+                    const chunk = line.slice(5);
+                    if (!chunk || chunk.trim() === '[DONE]') continue;
+                    fullText += chunk;
+                    aiBubble.textContent = fullText;
+                    area.scrollTop = area.scrollHeight;
+                }
+            }
+            if (buf.startsWith('data:')) {
+                const chunk = buf.slice(5);
+                if (chunk && chunk.trim() !== '[DONE]') { fullText += chunk; aiBubble.textContent = fullText; }
+            }
+            if (!fullText) aiBubble.textContent = '응답을 받지 못했습니다.';
+
+        } catch {
+            aiBubble.textContent = '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+            aiBubble.classList.remove('thinking');
+        } finally {
+            isStreaming = false;
+            document.getElementById('sendBtn').disabled = false;
+            area.scrollTop = area.scrollHeight;
+        }
+    }
+
+    function appendMsg(area, role, text, thinking = false) {
+        const initial = role === 'user' ? (teacherName.charAt(0) || 'T') : 'AI';
+        const row = document.createElement('div');
+        row.className = 'message-row ' + role;
+        row.innerHTML = `<div class="msg-avatar ${role}">${initial}</div><div class="msg-bubble ${role}${thinking ? ' thinking' : ''}">${esc(text)}</div>`;
+        area.appendChild(row);
+        area.scrollTop = area.scrollHeight;
+        return row;
+    }
+
+    function esc(s) {
+        if (!s) return '';
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function fmtDate(str) {
+        if (!str) return '';
+        try { return new Date(str).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }); }
+        catch { return str; }
+    }
+</script>
+<script>
+    /* ── 학생 초대코드 위젯 ── */
+    let inviteTimerInterval = null;
+
+    async function generateInvite() {
+        const t = localStorage.getItem('accessToken');
+        const body = document.getElementById('inviteBody');
+        if (!t) { body.innerHTML = '<span class="invite-expired">로그인이 필요합니다.</span>'; return; }
+        body.innerHTML = '<span style="font-size:13px;color:#888">생성 중…</span>';
+        try {
+            const res = await fetch('/api/v1/teachers/me/invite-code', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + t }
+            });
+            if (!res.ok) {
+                body.innerHTML = '<span class="invite-expired">생성 실패 (다시 로그인해 주세요)</span>'
+                    + '<button class="invite-gen-btn" style="margin-left:auto" onclick="generateInvite()">다시 시도</button>';
+                return;
+            }
+            const data = await res.json();
+            showInviteCode(data.code, data.expiresAt);
+        } catch (e) {
+            body.innerHTML = '<span class="invite-expired">오류: ' + e.message + '</span>';
+        }
+    }
+
+    function showInviteCode(code, expiresAt) {
+        document.getElementById('inviteBody').innerHTML =
+            '<span class="invite-code">' + code + '</span>' +
+            '<div class="invite-actions">' +
+                '<button class="invite-icon-btn" title="복사" onclick="copyInvite(\'' + code + '\', this)">' +
+                    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+                '</button>' +
+                '<button class="invite-icon-btn" title="재생성" onclick="generateInvite()">' +
+                    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' +
+                '</button>' +
+            '</div>';
+        startInviteTimer(new Date(expiresAt).getTime());
+    }
+
+    function startInviteTimer(expiryMs) {
+        if (inviteTimerInterval) clearInterval(inviteTimerInterval);
+        const timerEl = document.getElementById('inviteTimer');
+        function tick() {
+            const remain = Math.floor((expiryMs - Date.now()) / 1000);
+            if (remain <= 0) {
+                clearInterval(inviteTimerInterval);
+                timerEl.textContent = '';
+                document.getElementById('inviteBody').innerHTML =
+                    '<span class="invite-expired">코드 만료됨</span>' +
+                    '<button class="invite-gen-btn" style="margin-left:auto" onclick="generateInvite()">다시 생성</button>';
+                return;
+            }
+            const m = String(Math.floor(remain / 60)).padStart(2, '0');
+            const s = String(remain % 60).padStart(2, '0');
+            timerEl.textContent = '⏱ ' + m + ':' + s + ' 후 만료';
+        }
+        tick();
+        inviteTimerInterval = setInterval(tick, 1000);
+    }
+
+    function copyInvite(code, btn) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(code).then(function () {
+                if (btn) { btn.style.color = '#1f9d55'; setTimeout(function () { btn.style.color = '#3b5bdb'; }, 1200); }
+            });
+        }
+    }
+</script>
+</body>
+</html>

@@ -25,12 +25,13 @@ public class JwtTokenProvider {
         this.expirationMs = expirationMs;
     }
 
-    /** subject(로그인 ID)와 role 클레임을 담은 액세스 토큰을 발급한다. */
-    public String createToken(String subject, String role) {
+    /** subject(로그인 ID)와 role, 이름 클레임을 담은 액세스 토큰을 발급한다. */
+    public String createToken(String subject, String role, String name) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(subject)
                 .claim("role", role)
+                .claim("name", name)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expirationMs))
                 .signWith(key)

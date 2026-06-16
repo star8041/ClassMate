@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>퀴즈 풀이</title>
+<link rel="stylesheet" th:href="@{/css/layout.css}">
+<link rel="stylesheet" th:href="@{/css/sidebar.css}">
+<link rel="stylesheet" th:href="@{/css/fonts.css}">
+<link rel="stylesheet" th:href="@{/css/archive.css}">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: #f4f5f7; color: #1a1a1a; font-size: 14px; }
+  
+  .solve-container {
+    width:900px;
+    margin:0 auto;
+    padding:40px 0;
+  }
+
+  /* 페이지 타이틀 */
+  .page-title    { font-size: 24px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+  .page-subtitle { font-size: 13px; color: #999; margin-bottom: 20px; }
+
+  /* ── 퀴즈 메타 바 ── */
+  .meta-bar {
+    background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px;
+    padding: 12px 20px; display: flex; align-items: center; gap: 0;
+    margin-bottom: 16px;
+  }
+  .meta-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #555; }
+  .meta-divider { width: 1px; height: 16px; background: #e0e0e0; margin: 0 18px; flex-shrink: 0; }
+  .subject-chip {
+    background: #eef2ff; color: #4f80f7; font-size: 12px; font-weight: 700;
+    border-radius: 7px; padding: 3px 10px;
+  }
+  .timer-wrap { display: flex; align-items: center; gap: 7px; }
+  #timerDisplay { font-size: 14px; font-weight: 700; color: #1a1a1a; font-variant-numeric: tabular-nums; }
+  #timerDisplay.warning { color: #f44336; }
+
+  /* ── 진행 바 ── */
+  .progress-wrap { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 14px 20px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px; }
+  .progress-label { font-size: 14px; font-weight: 700; color: #1a1a1a; white-space: nowrap; }
+  .progress-track { flex: 1; height: 8px; background: #e8e8e8; border-radius: 8px; overflow: hidden; }
+  .progress-fill  { height: 100%; background: #4f80f7; border-radius: 8px; transition: width 0.3s ease; }
+
+  /* ── 문제 카드 ── */
+  .question-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 28px 28px 20px; margin-bottom: 16px; }
+  .q-number { font-size: 14px; font-weight: 700; color: #4f80f7; margin-bottom: 10px; }
+  .q-instruction { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 16px; line-height: 1.5; }
+
+  /* 지문 박스 */
+  .passage-box {
+    background: #f8f9fc; border: 1px solid #e8e8e8; border-radius: 8px;
+    padding: 14px 18px; font-size: 13px; color: #444; line-height: 1.8;
+    margin-bottom: 18px;
+  }
+
+  .q-question { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 12px; }
+
+  /* 보기 선택지 */
+  .choice-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .choice-item {
+    display: flex; align-items: center; gap: 12px;
+    border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 13px 16px;
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .choice-item:hover { border-color: #b0c4f8; background: #f5f8ff; }
+  .choice-item.selected { border-color: #4f80f7; background: #eef2ff; }
+  .choice-num {
+    width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid #d0d0d0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: #888; flex-shrink: 0; transition: all 0.15s;
+  }
+  .choice-item.selected .choice-num { background: #4f80f7; border-color: #4f80f7; color: #fff; }
+  .choice-text { font-size: 14px; color: #333; line-height: 1.5; }
+  .choice-item.selected .choice-text { color: #1a1a1a; font-weight: 500; }
+
+  /* 힌트 */
+  .hint-wrap { border: 1px solid #e8e8e8; border-radius: 10px; overflow: hidden; }
+  .hint-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; cursor: pointer; background: #fff; user-select: none;
+    transition: background 0.15s;
+  }
+  .hint-header:hover { background: #fafafa; }
+  .hint-header-left { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #777; font-weight: 500; }
+  .hint-chevron { transition: transform 0.25s; color: #aaa; }
+  .hint-chevron.open { transform: rotate(180deg); }
+  .hint-body {
+    max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease;
+    background: #fafafa; border-top: 0px solid #e8e8e8;
+  }
+  .hint-body.open { max-height: 200px; border-top-width: 1px; }
+  .hint-text { padding: 14px 16px; font-size: 13px; color: #555; line-height: 1.7; }
+
+  /* ── 하단 버튼 ── */
+  .bottom-nav { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+  .btn-prev {
+    background: #fff; border: 1.5px solid #d0d0d0; border-radius: 10px;
+    padding: 11px 28px; font-size: 14px; font-weight: 600; color: #555;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-prev:hover { background: #f5f5f5; }
+  .btn-prev:disabled { opacity: 0.4; cursor: default; }
+  .btn-next {
+    background: #4f80f7; border: none; border-radius: 10px;
+    padding: 11px 28px; font-size: 14px; font-weight: 600; color: #fff;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .btn-next:hover { background: #3a6ae0; }
+  .btn-submit {
+    background: #22c55e; border: none; border-radius: 10px;
+    padding: 11px 28px; font-size: 14px; font-weight: 600; color: #fff;
+    cursor: pointer; transition: background 0.15s;
+  }
+  .btn-submit:hover { background: #16a34a; }
+
+  /* ── 팝업 오버레이 ── */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .overlay.show { display: flex; }
+  .popup {
+    background: #fff; border-radius: 14px; padding: 32px 28px; width: 320px;
+    text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .popup-icon { margin-bottom: 14px; }
+  .popup-title { font-size: 17px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+  .popup-desc  { font-size: 13px; color: #888; margin-bottom: 22px; line-height: 1.6; }
+  .popup-btn {
+    width: 100%; padding: 12px; background: #4f80f7; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 600; color: #fff; cursor: pointer;
+  }
+  .popup-btn:hover { background: #3a6ae0; }
+</style>
+</head>
+<body>
+<!-- <div class="layout-wrapper"> -->
+
+  <!-- <div th:replace="~{fragments/sidebar :: sidebar('quiz')}"></div> -->
+  
+  <!-- <div class="layout-main"> -->
+  
+	<!-- <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div> -->
+	
+	<!-- <main class="page-body">   -->
+	<main class="solve-container">
+	
+	  <h1 class="page-title">퀴즈 풀이</h1>
+	  <p class="page-subtitle">차분하게 읽고 답을 골라보세요.</p>
+	
+	  <!-- 메타 바 -->
+	  <div class="meta-bar">
+	    <div class="meta-item"><span class="subject-chip" id="metaSubject">국어</span></div>
+	    <div class="meta-divider"></div>
+	    <div class="meta-item">
+	      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+	      <span id="metaTitle">4단원 복습 퀴즈</span>
+	    </div>
+	    <div class="meta-divider"></div>
+	    <div class="meta-item">
+	      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+	      <span id="metaCount">10문제</span>
+	    </div>
+	    <div class="meta-divider"></div>
+	    <div class="timer-wrap meta-item">
+	      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+	      <span id="timerDisplay">10:00</span>
+	    </div>
+	  </div>
+	
+	  <!-- 진행 바 -->
+	  <div class="progress-wrap">
+	    <span class="progress-label" id="progressLabel">1 / 10</span>
+	    <div class="progress-track">
+	      <div class="progress-fill" id="progressFill" style="width:10%"></div>
+	    </div>
+	  </div>
+	
+	  <!-- 문제 카드 -->
+	  <div class="question-card" id="questionCard">
+	    <!-- JS로 렌더링 -->
+	  </div>
+	
+	  <!-- 하단 네비게이션 -->
+	  <div class="bottom-nav">
+	    <button class="btn-prev" id="btnPrev" onclick="prevQuestion()">이전 문제</button>
+	    <button class="btn-next" id="btnNext" onclick="nextQuestion()">다음 문제</button>
+	  </div>
+	</main>
+  <!-- </div>
+</div> -->
+
+<!-- 시간 종료 팝업 -->
+<div class="overlay" id="timeupOverlay">
+  <div class="popup">
+    <div class="popup-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="popup-title">시험이 종료되었습니다.</div>
+    <div class="popup-desc">제한 시간이 초과되어<br>퀴즈가 자동 종료되었습니다.</div>
+    <button class="popup-btn" onclick="goBack()">확인</button>
+  </div>
+</div>
+
+<!-- 제출 확인 팝업 -->
+<div class="overlay" id="submitOverlay">
+  <div class="popup">
+    <div class="popup-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#4f80f7" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+    </div>
+    <div class="popup-title">퀴즈를 제출할까요?</div>
+    <div class="popup-desc">제출 후에는 답변을 수정할 수 없습니다.<br>정말 제출하시겠습니까?</div>
+    <div style="display:flex;gap:8px;">
+      <button class="popup-btn" style="background:#fff;color:#555;border:1px solid #ddd;" onclick="closeSubmit()">취소</button>
+      <button class="popup-btn" onclick="submitQuiz()">제출하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── 퀴즈 데이터 ── */
+  const quiz = {
+    subject: '국어',
+    title: '4단원 복습 퀴즈',
+    totalTime: 20, // 10:00 in seconds
+    questions: [
+      {
+        instruction: '다음 글을 읽고 알맞은 것을 골라보세요.',
+        passage: '따뜻한 봄날, 나는 친구와 함께 공원에 갔습니다. 꽃도 보고, 맛있는 도시락도 먹어서 정말 즐거웠습니다.',
+        question: '이 글의 내용으로 알맞은 것은 무엇인가요?',
+        choices: ['나는 비 오는 날 집에 있었다.', '나는 친구와 공원에 가서 즐거운 시간을 보냈다.', '나는 학교에서 시험을 보았다.', '나는 책을 읽고 숙제를 했다.'],
+        hint: '글에서 날씨와 장소, 한 일을 잘 확인해보세요.',
+        answer: 1
+      },
+      {
+        instruction: '다음 문장에서 밑줄 친 낱말의 뜻으로 알맞은 것을 고르세요.',
+        passage: '할머니께서는 항상 온화한 목소리로 이야기해 주십니다.',
+        question: '\'온화한\'의 뜻으로 알맞은 것은 무엇인가요?',
+        choices: ['크고 우렁찬', '부드럽고 따뜻한', '빠르고 날카로운', '조용하고 무거운'],
+        hint: '\'온화\'는 성격이나 날씨를 표현할 때 쓰는 단어예요.',
+        answer: 1
+      },
+      {
+        instruction: '다음 중 문장 부호가 바르게 쓰인 것을 고르세요.',
+        passage: null,
+        question: '문장 부호가 올바르게 사용된 문장은 무엇인가요?',
+        choices: ['나는 밥을, 먹었다.', '"내일 만나자." 라고 말했다.', '그는 말했다, "고마워."', '"정말이야?" 그가 물었다.'],
+        hint: '대화를 나타낼 때는 큰따옴표를 사용하고, 묻는 문장 끝에는 물음표를 써요.',
+        answer: 3
+      },
+      {
+        instruction: '다음 글을 읽고 중심 문장을 고르세요.',
+        passage: '운동은 건강에 매우 좋습니다. 규칙적인 운동은 체력을 키우고 면역력을 높여줍니다. 또한 스트레스 해소에도 도움이 됩니다.',
+        question: '이 글의 중심 문장은 무엇인가요?',
+        choices: ['규칙적인 운동은 체력을 키운다.', '운동은 스트레스 해소에 도움이 된다.', '운동은 건강에 매우 좋습니다.', '면역력을 높이려면 잠을 자야 한다.'],
+        hint: '중심 문장은 글 전체의 내용을 대표하는 문장이에요.',
+        answer: 2
+      },
+      {
+        instruction: '다음 낱말과 반대되는 낱말을 고르세요.',
+        passage: null,
+        question: '\'기쁨\'과 반대되는 낱말은 무엇인가요?',
+        choices: ['행복', '슬픔', '즐거움', '설렘'],
+        hint: '기쁨은 긍정적인 감정이에요. 반대는 부정적인 감정을 찾아보세요.',
+        answer: 1
+      },
+      {
+        instruction: '다음 글의 흐름에 맞게 빈칸에 들어갈 말을 고르세요.',
+        passage: '지수는 도서관에서 책을 빌렸습니다. 집에 돌아와 바로 책을 읽기 시작했고, _____ 밤새 다 읽어버렸습니다.',
+        question: '빈칸에 들어갈 말로 가장 알맞은 것은 무엇인가요?',
+        choices: ['그러나', '그래서', '하지만', '왜냐하면'],
+        hint: '앞 문장과 이어지는 흐름을 생각해 보세요. 원인과 결과를 연결하는 말을 찾아보세요.',
+        answer: 1
+      },
+      {
+        instruction: '다음 그림일기의 내용으로 알 수 없는 것을 고르세요.',
+        passage: '오늘은 가족과 함께 바닷가에 갔다. 파도가 높고 바람이 많이 불었다. 모래성을 쌓고 조개도 주웠다. 저녁에는 회를 먹었는데 정말 맛있었다.',
+        question: '이 글에서 알 수 없는 내용은 무엇인가요?',
+        choices: ['간 장소', '날씨 상태', '저녁에 먹은 음식', '바닷가까지 이동한 방법'],
+        hint: '글에 직접 나와 있지 않은 정보를 찾아보세요.',
+        answer: 3
+      },
+      {
+        instruction: '다음 중 높임말이 바르게 쓰인 것을 고르세요.',
+        passage: null,
+        question: '높임말이 올바르게 쓰인 문장은 무엇인가요?',
+        choices: ['할머니가 밥을 먹는다.', '선생님이 교실에 있다.', '할아버지께서 진지를 드십니다.', '어머니가 오신다고 했다.'],
+        hint: '어른을 높일 때는 \'께서\', \'드시다\', \'진지\' 같은 높임 표현을 써요.',
+        answer: 2
+      },
+      {
+        instruction: '다음 시를 읽고 알맞은 것을 고르세요.',
+        passage: '봄비가 내립니다.\n꽃씨 깨우러\n살금살금.',
+        question: '이 시에서 봄비가 하는 일은 무엇인가요?',
+        choices: ['나뭇잎을 떨어뜨린다.', '꽃씨를 깨운다.', '구름을 만든다.', '땅을 차갑게 한다.'],
+        hint: '시 속에서 봄비가 어디로 가는지 찾아보세요.',
+        answer: 1
+      },
+      {
+        instruction: '다음 글을 읽고 글쓴이의 마음을 고르세요.',
+        passage: '오늘 발표 시간에 목소리가 너무 떨렸습니다. 준비를 많이 했는데도 실수를 해버렸습니다. 다음에는 더 잘 할 수 있을 것 같습니다.',
+        question: '이 글에서 글쓴이의 마음으로 알맞은 것은 무엇인가요?',
+        choices: ['자신감 넘치고 신남', '아쉽지만 다시 도전하려 함', '발표가 너무 싫어서 포기하고 싶음', '친구들이 부러워서 질투남'],
+        hint: '마지막 문장에서 글쓴이의 다짐을 확인해보세요.',
+        answer: 1
+      }
+    ]
+  };
+
+  /* ── 상태 ── */
+  let currentIndex = 0;
+  let answers = new Array(quiz.questions.length).fill(null);
+  let timeLeft = quiz.totalTime;
+  let timerInterval = null;
+  let hintOpen = false;
+
+  /* ── 초기화 ── */
+  document.getElementById('metaSubject').textContent = quiz.subject;
+  document.getElementById('metaTitle').textContent   = quiz.title;
+  document.getElementById('metaCount').textContent   = quiz.questions.length + '문제';
+
+  /* ── 타이머 ── */
+  function formatTime(sec) {
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function startTimer() {
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      const el = document.getElementById('timerDisplay');
+      el.textContent = formatTime(timeLeft);
+      el.classList.toggle('warning', timeLeft <= 60);
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        document.getElementById('timeupOverlay').classList.add('show');
+      }
+    }, 1000);
+  }
+
+  /* ── 문제 렌더링 ── */
+  function renderQuestion() {
+    const q   = quiz.questions[currentIndex];
+    const total = quiz.questions.length;
+    hintOpen  = false;
+
+    // 진행 바
+    document.getElementById('progressLabel').textContent = `${currentIndex + 1} / ${total}`;
+    document.getElementById('progressFill').style.width  = `${((currentIndex + 1) / total) * 100}%`;
+
+    // 이전 버튼
+    const btnPrev = document.getElementById('btnPrev');
+    btnPrev.disabled = currentIndex === 0;
+
+    // 다음/제출 버튼
+    const btnNext = document.getElementById('btnNext');
+    if (currentIndex === total - 1) {
+      btnNext.textContent  = '제출하기';
+      btnNext.className    = 'btn-submit';
+      btnNext.onclick      = openSubmit;
+    } else {
+      btnNext.textContent  = '다음 문제';
+      btnNext.className    = 'btn-next';
+      btnNext.onclick      = nextQuestion;
+    }
+
+    // 지문 (없으면 숨김)
+    const passageHtml = q.passage
+      ? `<div class="passage-box">${q.passage.replace(/\n/g, '<br>')}</div>`
+      : '';
+
+    // 선택지
+    const choicesHtml = q.choices.map((c, i) => `
+      <div class="choice-item ${answers[currentIndex] === i ? 'selected' : ''}"
+           onclick="selectAnswer(${i})">
+        <div class="choice-num">${i + 1}</div>
+        <div class="choice-text">${c}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('questionCard').innerHTML = `
+      <div class="q-number">문제 ${currentIndex + 1}</div>
+      <div class="q-instruction">${q.instruction}</div>
+      ${passageHtml}
+      <div class="q-question">${q.question}</div>
+      <div class="choice-list">${choicesHtml}</div>
+      <div class="hint-wrap">
+        <div class="hint-header" onclick="toggleHint()">
+          <div class="hint-header-left">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            힌트
+          </div>
+          <svg class="hint-chevron" id="hintChevron" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="hint-body" id="hintBody">
+          <div class="hint-text">${q.hint}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* ── 답 선택 ── */
+  function selectAnswer(idx) {
+    answers[currentIndex] = idx;
+    document.querySelectorAll('.choice-item').forEach((el, i) => {
+      el.classList.toggle('selected', i === idx);
+      el.querySelector('.choice-num').style.background      = i === idx ? '#4f80f7' : '';
+      el.querySelector('.choice-num').style.borderColor     = i === idx ? '#4f80f7' : '';
+      el.querySelector('.choice-num').style.color           = i === idx ? '#fff'    : '';
+    });
+  }
+
+  /* ── 힌트 토글 ── */
+  function toggleHint() {
+    hintOpen = !hintOpen;
+    document.getElementById('hintBody').classList.toggle('open', hintOpen);
+    document.getElementById('hintChevron').classList.toggle('open', hintOpen);
+  }
+
+  /* ── 이전 / 다음 ── */
+  function prevQuestion() {
+    if (currentIndex > 0) { currentIndex--; renderQuestion(); }
+  }
+  function nextQuestion() {
+    if (currentIndex < quiz.questions.length - 1) { currentIndex++; renderQuestion(); }
+  }
+
+  /* ── 제출 팝업 ── */
+  function openSubmit()  { document.getElementById('submitOverlay').classList.add('show'); }
+  function closeSubmit() { document.getElementById('submitOverlay').classList.remove('show'); }
+  function submitQuiz()  { window.location.href = '/quiz/student'; }
+
+  /* ── 시간 종료 이동 ── */
+  function goBack() { window.location.href = '/quiz/student'; }
+
+  /* ── 시작 ── */
+  renderQuestion();
+  startTimer();
+</script>
+</body>
+</html>
