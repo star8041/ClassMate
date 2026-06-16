@@ -9,14 +9,16 @@ public record TeacherResponse(
         Long teacherId,
         String loginId,
         String teacherName,
-        String email
+        String email,
+        String role
 ) {
     public static TeacherResponse from(Teacher teacher) {
         return new TeacherResponse(
                 teacher.getTeacherId(),
                 teacher.getLoginId(),
                 teacher.getTeacherName(),
-                teacher.getEmail()
+                teacher.getEmail(),
+                teacher.getRole()
         );
     }
 }
