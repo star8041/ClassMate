@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>퀴즈 생성 - 미리보기</title>
+<link rel="stylesheet" th:href="@{/css/layout.css}">
+<link rel="stylesheet" th:href="@{/css/sidebar.css}">
+<link rel="stylesheet" th:href="@{/css/fonts.css}">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: #f4f5f7; color: #1a1a1a; font-size: 14px; }
+
+  .page-body { padding: 32px 36px; }
+
+  /* 페이지 타이틀 */
+  .page-title { font-size: 22px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+  .page-subtitle { font-size: 13px; color: #888; margin-bottom: 24px; }
+
+  /* 상단 2컬럼 */
+  .top-grid { display: grid; grid-template-columns: 1fr 360px; gap: 16px; margin-bottom: 20px; }
+
+  /* 카드 공통 */
+  .card { background: #fff; border-radius: 12px; border: 0.5px solid #e0e0e0; padding: 20px 24px; }
+  .card-title { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 16px; }
+
+  /* 퀴즈 설정 */
+  .setting-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .setting-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .field-label { font-size: 12px; color: #666; margin-bottom: 6px; }
+  select {
+    width: 100%; height: 36px; border: 1px solid #ddd; border-radius: 8px;
+    padding: 0 10px; font-size: 13px; color: #1a1a1a; background: #fff;
+    appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; cursor: pointer;
+  }
+  select:focus { outline: none; border-color: #4f80f7; }
+
+  /* 토글 행 */
+  .toggle-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .toggle-item { border: 1px solid #e8e8e8; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .toggle-label { font-size: 12px; font-weight: 500; color: #333; margin-bottom: 2px; }
+  .toggle-desc { font-size: 11px; color: #aaa; }
+  .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; border-radius: 22px; background: #ccc; cursor: pointer; transition: background 0.2s; }
+  .slider::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; border-radius: 50%; background: #fff; transition: transform 0.2s; }
+  input:checked + .slider { background: #4f80f7; }
+  input:checked + .slider::before { transform: translateX(18px); }
+
+  /* 퀴즈 생성 버튼 */
+  .btn-generate {
+    width: 100%; height: 44px; background: #4f80f7; border: none; border-radius: 10px;
+    color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; gap: 8px; transition: background 0.15s;
+  }
+  .btn-generate:hover { background: #3a6ae0; }
+  .btn-generate svg { width: 16px; height: 16px; }
+
+  /* 생성 옵션 요약 */
+  .summary-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .summary-title { font-size: 14px; font-weight: 600; }
+  .btn-reset { background: none; border: 1px solid #e0e0e0; border-radius: 8px; padding: 5px 10px; font-size: 12px; color: #555; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .btn-reset:hover { background: #f5f5f5; }
+  .summary-table { width: 100%; border-collapse: collapse; }
+  .summary-table tr td { padding: 7px 0; font-size: 13px; border-bottom: 0.5px solid #f0f0f0; }
+  .summary-table tr:last-child td { border-bottom: none; }
+  .summary-table td:first-child { color: #888; width: 90px; }
+  .summary-table td:last-child { color: #1a1a1a; font-weight: 500; }
+  .badge-pub { display: inline-block; background: #eaf3e0; color: #3b7a1d; font-size: 11px; font-weight: 600; border-radius: 6px; padding: 2px 8px; }
+
+  /* 미리보기 섹션 */
+  .preview-section { }
+  .preview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .preview-title { font-size: 16px; font-weight: 600; }
+  .preview-count { font-size: 13px; color: #888; margin-left: 6px; font-weight: 400; }
+  .preview-actions { display: flex; align-items: center; gap: 8px; }
+  .btn-outline { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 7px 14px; font-size: 13px; color: #333; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.15s; }
+  .btn-outline:hover { background: #f5f5f5; }
+  .btn-primary { background: #4f80f7; border: none; border-radius: 8px; padding: 7px 14px; font-size: 13px; color: #fff; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+  .btn-primary:hover { background: #3a6ae0; }
+  .btn-arrow { background: #2f5fd4; border: none; border-radius: 8px; padding: 7px 10px; font-size: 13px; color: #fff; cursor: pointer; }
+
+  /* 통계 카드 */
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; border: 1px solid #e8e8e8; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+  .stat-item { padding: 14px 18px; background: #fff; }
+  .stat-item:not(:last-child) { border-right: 1px solid #e8e8e8; }
+  .stat-icon { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .stat-label { font-size: 11px; color: #aaa; }
+  .stat-val { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .stat-unit { font-size: 12px; color: #888; }
+  .icon-q { width: 22px; height: 22px; border-radius: 50%; background: #e8f0fe; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #4f80f7; }
+  .icon-c { width: 22px; height: 22px; border-radius: 50%; background: #fff3e0; display: flex; align-items: center; justify-content: center; }
+  .icon-p { width: 22px; height: 22px; border-radius: 50%; background: #e8f5e9; display: flex; align-items: center; justify-content: center; }
+
+  /* 문제 카드 */
+  .question-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; }
+  .q-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .q-num { font-size: 15px; font-weight: 700; color: #1a1a1a; min-width: 20px; }
+  .q-badge { display: inline-block; background: #eef2ff; color: #4f80f7; font-size: 11px; font-weight: 600; border-radius: 6px; padding: 2px 7px; margin-right: 6px; }
+  .q-text { font-size: 14px; color: #1a1a1a; line-height: 1.5; flex: 1; }
+  .q-eng { font-size: 13px; color: #555; margin-bottom: 10px; margin-left: 32px; font-style: italic; }
+  .q-choices { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-left: 32px; margin-bottom: 12px; }
+  .choice { font-size: 13px; color: #555; }
+  .choice.correct { color: #2e7d32; font-weight: 600; }
+  .q-cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-left: 32px; border-top: 0.5px solid #f0f0f0; padding-top: 10px; }
+  .q-col-title { font-size: 11px; color: #aaa; margin-bottom: 4px; }
+  .q-col-val { font-size: 13px; color: #1a1a1a; font-weight: 500; }
+  .q-col-val.correct { color: #388e3c; }
+  .q-col-desc { font-size: 12px; color: #555; margin-top: 4px; line-height: 1.5; }
+  .q-expand { float: right; background: none; border: none; cursor: pointer; color: #aaa; padding: 0; }
+  .q-divider { height: 0.5px; background: #f0f0f0; margin: 10px 0; }
+
+  /* 더보기 버튼 */
+  .btn-more { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 12px; background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; font-size: 13px; color: #444; cursor: pointer; margin-top: 4px; }
+  .btn-more:hover { background: #f5f5f5; }
+</style>
+</head>
+<body>
+<div class="layout-wrapper">
+
+  <div th:replace="~{fragments/sidebar :: sidebar('quiz')}"></div>
+  
+  <div class="layout-main">
+    <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
+    <main class="page-body">
+  	  <h1 class="page-title">퀴즈 생성</h1>
+	  <p class="page-subtitle">과목, 단원, 난이도를 설정하면 AI가 맞춤형 퀴즈를 자동으로 생성해 드립니다.</p>
+	
+	  <!-- 상단 2컬럼 -->
+	  <div class="top-grid">
+	
+	    <!-- 퀴즈 설정 카드 -->
+	    <div class="card">
+	      <div class="card-title">퀴즈 설정</div>
+	
+	      <div class="setting-row">
+	        <div>
+	          <div class="field-label">과목 선택</div>
+	          <select><option>영어</option><option>수학</option><option>국어</option></select>
+	        </div>
+	        <div>
+	          <div class="field-label">단원 선택</div>
+	          <select><option>Unit 2 Writing</option><option>Unit 1</option><option>Unit 3</option></select>
+	        </div>
+  	        <div>
+	          <div class="field-label">난이도</div>
+	          <select><option>중간</option><option>쉬움</option><option>어려움</option></select>
+	        </div>
+	      </div>
+	
+	      <div class="setting-row-2">
+	        <div>
+	          <div class="field-label">문제 수</div>
+	          <select><option>10문항</option><option>5문항</option><option>15문항</option><option>20문항</option></select>
+	        </div>
+	        <div>
+	          <div class="field-label">시간 제한</div>
+	          <select><option>15분</option><option>10분</option><option>20분</option><option>30분</option></select>
+	        </div>
+	      </div>
+	
+	      <div class="toggle-row">
+	        <div class="toggle-item">
+	          <div>
+	            <div class="toggle-label">정답 공개</div>
+	            <div class="toggle-desc">학생에게 정답을 공개합니다.</div>
+	          </div>
+	          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+	        </div>
+	        <div class="toggle-item">
+	          <div>
+	            <div class="toggle-label">해설 공개</div>
+	            <div class="toggle-desc">문제 해설을 공개합니다.</div>
+	          </div>
+	          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+	        </div>
+	        <div class="toggle-item">
+	          <div>
+	            <div class="toggle-label">피드백 공개</div>
+  	          <div class="toggle-desc">개별 피드백을 공개합니다.</div>
+  	        </div>
+	          <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+  	      </div>
+	    </div>
+	
+	    <button class="btn-generate">
+	      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+	        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+	      </svg>
+	      퀴즈 생성
+	    </button>
+	  </div>
+	
+	  <!-- 생성 옵션 요약 카드 -->
+	  <div class="card">
+	    <div class="summary-header">
+	      <div class="summary-title">생성 옵션 요약</div>
+	      <button class="btn-reset">
+	        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.52"/></svg>
+	        설정 초기화
+	      </button>
+	    </div>
+	    <table class="summary-table">
+	      <tr><td>과목</td><td>영어</td></tr>
+	      <tr><td>단원</td><td>Unit 2 Writing</td></tr>
+	      <tr><td>난이도</td><td>중간</td></tr>
+	      <tr><td>문제 수</td><td>10문항</td></tr>
+	      <tr><td>시간 제한</td><td>15분</td></tr>
+	      <tr><td>정답 공개</td><td><span class="badge-pub">공개</span></td></tr>
+	      <tr><td>해설 공개</td><td><span class="badge-pub">공개</span></td></tr>
+	      <tr><td>피드백 공개</td><td><span class="badge-pub">공개</span></td></tr>
+	    </table>
+	  </div>
+	</div>
+	
+	<!-- 생성된 퀴즈 미리보기 -->
+	<div class="preview-section">
+	  <div class="preview-header">
+	    <div>
+	      <span class="preview-title">생성된 퀴즈 미리보기</span>
+	      <span class="preview-count">총 10문항이 생성되었습니다.</span>
+	    </div>
+	    <div class="preview-actions">
+	      <button class="btn-outline">
+	        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.52"/></svg>
+	        다시 생성
+	      </button>
+	      <button class="btn-outline">
+	        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+	        저장
+	      </button>
+	      <button class="btn-primary">
+	        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+	        학생 배포
+	      </button>
+	      <button class="btn-arrow">
+	        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+	      </button>
+	    </div>
+	  </div>
+	
+	  <!-- 통계 -->
+	  <div class="stats-row">
+	    <div class="stat-item">
+	      <div class="stat-icon">
+	        <div class="icon-q">?</div>
+	        <span class="stat-label">총 문항 수</span>
+	      </div>
+	      <div><span class="stat-val">10</span><span class="stat-unit">문항</span></div>
+	    </div>
+	    <div class="stat-item">
+	      <div class="stat-icon">
+	        <div class="icon-c">
+	          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+	        </div>
+	        <span class="stat-label">예상 소요 시간</span>
+	      </div>
+	      <div><span class="stat-val">15</span><span class="stat-unit">분</span></div>
+	    </div>
+	    <div class="stat-item">
+	      <div class="stat-icon">
+	        <div class="icon-p">
+	          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#43a047" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+	        </div>
+	        <span class="stat-label">객관식 비율</span>
+	      </div>
+	      <div><span class="stat-val">80%</span><span class="stat-unit">(8/10)</span></div>
+	    </div>
+	  </div>
+	
+	  <!-- 문제 1 -->
+	  <div class="question-card">
+	    <div class="q-header">
+	      <span class="q-num">1</span>
+	      <div style="flex:1">
+	        <span class="q-badge">객관식</span>
+	        <span class="q-text">다음 빈칸에 들어갈 가장 적절한 단어는?</span>
+	      </div>
+	      <button class="q-expand">
+	        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+	      </button>
+	    </div>
+	    <div class="q-eng">She has been working on the project <u>____</u> two weeks.</div>
+	    <div class="q-choices">
+	      <span class="choice">A. since</span>
+	      <span class="choice correct">B. for</span>
+	      <span class="choice">C. from</span>
+	      <span class="choice">D. during</span>
+	    </div>
+	    <div class="q-cols">
+	      <div>
+	        <div class="q-col-title">정답</div>
+	        <div class="q-col-val correct">B. for</div>
+	      </div>
+	      <div>
+	        <div class="q-col-title">해설</div>
+	        <div class="q-col-desc">for는 기간을 나타낼 때 사용됩니다. '동안'이라는 의미로 현재까지 지속된 기간을 표현합니다.</div>
+	      </div>
+	      <div>
+	        <div class="q-col-title">피드백</div>
+	        <div class="q-col-desc">좋아요! for를 기간의 길이와 함께 사용하는 개념을 잘 이해하고 있어요.</div>
+	      </div>
+	    </div>
+	  </div>
+	
+	  <!-- 문제 2 -->
+	  <div class="question-card">
+	    <div class="q-header">
+	      <span class="q-num">2</span>
+	      <div style="flex:1">
+	        <span class="q-badge">객관식</span>
+	        <span class="q-text">다음 문장의 밑줄 친 부분과 의미가 가장 가까운 것은?</span>
+	      </div>
+	      <button class="q-expand">
+	        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+	      </button>
+	    </div>
+	    <div class="q-eng">He is <u>responsible for</u> the success of the team.</div>
+	    <div class="q-choices">
+	      <span class="choice">A. careless</span>
+	      <span class="choice correct">B. in charge of</span>
+	      <span class="choice">C. afraid of</span>
+	      <span class="choice">D. famous for</span>
+	    </div>
+	    <div class="q-cols">
+	      <div>
+	        <div class="q-col-title">정답</div>
+	        <div class="q-col-val correct">B. in charge of</div>
+	      </div>
+	      <div>
+	        <div class="q-col-title">해설</div>
+	        <div class="q-col-desc">responsible for는 '~에 책임이 있는', '~을 담당하는'이라는 의미입니다.</div>
+	      </div>
+	      <div>
+	        <div class="q-col-title">피드백</div>
+	        <div class="q-col-desc">핵심 표현을 정확히 파악했어요! 아주 훌륭합니다.</div>
+	      </div>
+	    </div>
+	  </div>
+	
+	  <!-- 문제 3 -->
+	  <div class="question-card">
+	    <div class="q-header">
+	      <span class="q-num">3</span>
+	      <div style="flex:1">
+	        <span class="q-badge">객관식</span>
+	        <span class="q-text">다음 글의 주제로 가장 적절한 것은?</span>
+	      </div>
+	      <button class="q-expand">
+	        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+	      </button>
+	    </div>
+	    <div class="q-eng">Many students today prefer online learning. They can study at their own pace and review lessons as many times as they want.</div>
+	    <div class="q-choices">
+	      <span class="choice">A. Online Shopping</span>
+	      <span class="choice correct">B. Online Learning</span>
+	      <span class="choice">C. School Rules</span>
+	      <span class="choice">D. Healthy Food</span>
+	    </div>
+	    <div class="q-cols">
+	      <div>
+	        <div class="q-col-title">정답</div>
+	        <div class="q-col-val correct">B. Online Learning</div>
+	      </div>
+	      <div>
+	        <div class="q-col-title">해설</div>
+	        <div class="q-col-desc">글의 내용이 온라인 학습의 장점에 대해 설명하고 있으므로, 주제는 '온라인 학습'입니다.</div>
+	      </div>
+	      <div>
+	        <div class="q-col-title">피드백</div>
+	        <div class="q-col-desc">중심 내용을 잘 파악했어요! 주제 찾기 능력이 뛰어나요.</div>
+	      </div>
+	    </div>
+	  </div>
+	
+	  <button class="btn-more">
+	    모든 문항 보기
+	    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+	  </button>
+	</div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

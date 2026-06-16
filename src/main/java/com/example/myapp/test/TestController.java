@@ -17,4 +17,14 @@ public class TestController {
     public String archive(Model model) {
         return "archive";
     }
+    
+    @GetMapping("/quiz")
+    public String quiz(Model model) {
+        return "quiz";
+    }
+    
+    @GetMapping("/student")
+    public String student(Model model) {
+        return "student";
+    }
 }

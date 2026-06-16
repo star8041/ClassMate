@@ -20,13 +20,14 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/test",
                     "/archive",
+                    "/quiz",
+                    "/student",
                     "/css/**",
                     "/js/**",
                     "/images/**",
                     "/error",
-                    // TODO: 인증 연동 전까지 PDF 자료 API 임시 허용
+                    // TODO: 인증 연동 전까지 PDF 자료 / 학생 API 임시 허용
                     "/api/materials/**",
-                    // 인증/사용자 API (내 정보 조회는 컨트롤러에서 토큰 검증)
                     "/api/v1/**"
                 ).permitAll()
                 .anyRequest().authenticated()
