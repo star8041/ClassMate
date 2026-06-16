@@ -59,6 +59,14 @@ public class TeacherMapper {
                 .optional();
     }
 
+    /** PK로 조회 */
+    public Optional<Teacher> findById(Long teacherId) {
+        return jdbcClient.sql("SELECT * FROM teacher WHERE teacher_id = ?")
+                .param(teacherId)
+                .query(ROW_MAPPER)
+                .optional();
+    }
+
     /** 로그인 ID 중복 여부 */
     public boolean existsByLoginId(String loginId) {
         Integer count = jdbcClient.sql("SELECT COUNT(*) FROM teacher WHERE login_id = ?")
