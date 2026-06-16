@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.myapp.quiz.mapper.QuizMapper">
+
+    <insert id="insertQuiz"
+        parameterType="com.example.myapp.quiz.domain.Quiz"
+        useGeneratedKeys="true"
+        keyProperty="quizId"
+        keyColumn="quiz_id">
+    INSERT INTO quiz (
+        teacher_id,
+        material_id,
+        title,
+        difficulty,
+        start_page,
+        end_page,
+        available_from,
+        available_until
+    )
+    VALUES (
+        #{teacherId},
+        #{materialId},
+        #{title},
+        #{difficulty},
+        #{startPage},
+        #{endPage},
+        #{availableFrom},
+        #{availableUntil}
+    )
+</insert>
+
+    <insert id="insertQuizQuestion"
+            parameterType="com.example.myapp.quiz.domain.QuizQuestion"
+            useGeneratedKeys="true"
+            keyProperty="quizQuestionId">
+        INSERT INTO quiz_question (
+            quiz_id,
+            question_type,
+            question_text,
+            options,
+            answer_text,
+            explanation,
+            question_order
+        )
+        VALUES (
+            #{quizId},
+            #{questionType},
+            #{questionText},
+            CAST(#{options} AS jsonb),
+            #{answerText},
+            #{explanation},
+            #{questionOrder}
+        )
+    </insert>
+
+    <select id="findQuizList"
+            resultType="com.example.myapp.quiz.dto.QuizListResponse">
+        SELECT
+            q.quiz_id AS quizId,
+            q.teacher_id AS teacherId,
+            q.material_id AS materialId,
+            q.title,
+            q.difficulty,
+            q.start_page AS startPage,
+            q.end_page AS endPage,
+            q.created_at AS createdAt,
+            COUNT(qq.quiz_question_id) AS questionCount
+        FROM quiz q
+        LEFT JOIN quiz_question qq
+            ON q.quiz_id = qq.quiz_id
+        GROUP BY q.quiz_id
+        ORDER BY q.created_at DESC
+    </select>
+
+    <select id="findQuizById"
+            parameterType="long"
+            resultType="com.example.myapp.quiz.domain.Quiz">
+        SELECT
+            quiz_id AS quizId,
+            teacher_id AS teacherId,
+            material_id AS materialId,
+            title,
+            difficulty,
+            start_page AS startPage,
+            end_page AS endPage,
+            available_from AS availableFrom,
+			available_until AS availableUntil,
+			created_at AS createdAt
+        FROM quiz
+        WHERE quiz_id = #{quizId}
+    </select>
+
+    <select id="findQuestionsByQuizId"
+            parameterType="long"
+            resultType="com.example.myapp.quiz.domain.QuizQuestion">
+        SELECT
+            quiz_question_id AS quizQuestionId,
+            quiz_id AS quizId,
+            question_type AS questionType,
+            question_text AS questionText,
+            options::text AS options,
+            answer_text AS answerText,
+            explanation,
+            question_order AS questionOrder
+        FROM quiz_question
+        WHERE quiz_id = #{quizId}
+        ORDER BY question_order ASC
+    </select>
+    
+    <update id="updateQuiz">
+    UPDATE quiz
+    <set>
+        <if test="request.title != null">
+            title = #{request.title},
+        </if>
+        <if test="request.difficulty != null">
+            difficulty = #{request.difficulty},
+        </if>
+        <if test="request.startPage != null">
+            start_page = #{request.startPage},
+        </if>
+        <if test="request.endPage != null">
+            end_page = #{request.endPage},
+        </if>
+    </set>
+    WHERE quiz_id = #{quizId}
+	</update>
+	
+	<delete id="deleteQuiz" parameterType="long">
+    DELETE FROM quiz
+    WHERE quiz_id = #{quizId}
+	</delete>
+	
+	<update id="updateQuestion">
+    UPDATE quiz_question
+    <set>
+        <if test="request.questionType != null">
+            question_type = #{request.questionType},
+        </if>
+        <if test="request.questionText != null">
+            question_text = #{request.questionText},
+        </if>
+        <if test="request.options != null">
+            options = CAST(#{request.options} AS jsonb),
+        </if>
+        <if test="request.answerText != null">
+            answer_text = #{request.answerText},
+        </if>
+        <if test="request.explanation != null">
+            explanation = #{request.explanation},
+        </if>
+        <if test="request.questionOrder != null">
+            question_order = #{request.questionOrder},
+        </if>
+    </set>
+    WHERE quiz_id = #{quizId}
+      AND quiz_question_id = #{questionId}
+	</update>
+	
+	<insert id="insertQuizAttempt"
+        parameterType="com.example.myapp.quiz.domain.QuizAttempt"
+        useGeneratedKeys="true"
+        keyProperty="quizAttemptId"
+        keyColumn="quiz_attempt_id">
+    INSERT INTO quiz_attempt (
+        quiz_id,
+        student_id,
+        score,
+        total_count,
+        correct_count
+    )
+    VALUES (
+        #{quizId},
+        #{studentId},
+        0,
+        0,
+        0
+    )
+</insert>
+
+	<select id="findAttemptById"
+        resultType="com.example.myapp.quiz.domain.QuizAttempt">
+    SELECT
+        quiz_attempt_id AS quizAttemptId,
+        quiz_id AS quizId,
+        student_id AS studentId,
+        score,
+        total_count AS totalCount,
+        correct_count AS correctCount,
+        started_at AS startedAt,
+        submitted_at AS submittedAt
+    FROM quiz_attempt
+    WHERE quiz_id = #{quizId}
+      AND quiz_attempt_id = #{attemptId}
+</select>
+
+	<insert id="insertQuizAnswer"
+        parameterType="com.example.myapp.quiz.domain.QuizAnswer"
+        useGeneratedKeys="true"
+        keyProperty="quizAnswerId"
+        keyColumn="quiz_answer_id">
+    INSERT INTO quiz_answer (
+        quiz_attempt_id,
+        quiz_question_id,
+        answer_text,
+        is_correct
+    )
+    VALUES (
+        #{quizAttemptId},
+        #{quizQuestionId},
+        #{answerText},
+        #{isCorrect}
+    )
+</insert>
+
+	<update id="updateAttemptResult">
+    UPDATE quiz_attempt
+    SET
+        score = #{score},
+        total_count = #{totalCount},
+        correct_count = #{correctCount},
+        submitted_at = CURRENT_TIMESTAMP
+    WHERE quiz_attempt_id = #{attemptId}
+</update>
+
+	<select id="findAnswerResultsByAttemptId"
+        parameterType="long"
+        resultType="com.example.myapp.quiz.dto.QuizAnswerResultResponse">
+    SELECT
+        qq.quiz_question_id AS quizQuestionId,
+        qq.question_text AS questionText,
+        qa.answer_text AS answerText,
+        qq.answer_text AS correctAnswer,
+        qa.is_correct AS isCorrect,
+        qq.explanation AS explanation
+    FROM quiz_answer qa
+    JOIN quiz_question qq
+        ON qa.quiz_question_id = qq.quiz_question_id
+    WHERE qa.quiz_attempt_id = #{attemptId}
+    ORDER BY qq.question_order ASC
+</select>
+
+</mapper>
