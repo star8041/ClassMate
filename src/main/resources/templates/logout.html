@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로그아웃</title>
+</head>
+<body>
+<script>
+    // 클라이언트 토큰/세션 정리 후 로그인 화면으로
+    ['accessToken', 'tokenType', 'loginRole', 'rememberLogin',
+     'studentTeacherId', 'studentTeacherName', 'inviteCode'].forEach(function (k) {
+        localStorage.removeItem(k);
+    });
+    location.replace('/login');
+</script>
+</body>
+</html>

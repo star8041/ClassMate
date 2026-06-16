@@ -261,7 +261,7 @@
         } catch (e) { return null; }
     }
     function roleDest() {
-        return selectedRole === 'student' ? '/quiz/student' : '/teacher/dashboard';
+        return selectedRole === 'student' ? '/student/home' : '/teacher/dashboard';
     }
 
     function togglePassword(inputId, btn) {
@@ -283,7 +283,7 @@
 
     // 이미 로그인된 경우 마지막 선택한 화면으로
     if (localStorage.getItem('accessToken')) {
-        location.href = localStorage.getItem('loginRole') === 'student' ? '/quiz/student' : '/teacher/dashboard';
+        location.href = localStorage.getItem('loginRole') === 'student' ? '/student/home' : '/teacher/dashboard';
     }
 
     // 엔터키 로그인
@@ -360,7 +360,7 @@
                 localStorage.setItem('studentTeacherId', data.teacherId);
                 localStorage.setItem('studentTeacherName', data.teacherName ?? '');
                 localStorage.setItem('inviteCode', code);
-                location.href = '/quiz/student';
+                location.href = '/student/home';
             } else {
                 showError(data.message ?? '유효하지 않거나 만료된 코드입니다.');
             }
