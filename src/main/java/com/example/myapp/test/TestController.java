@@ -42,4 +42,10 @@ public class TestController {
     	model.addAttribute("userName", "홍길동");
         return "schedule";
     }
+    
+    @GetMapping("/quiz/student")
+    public String quizStudent(Model model) {
+    	model.addAttribute("userName", "홍길동");
+        return "quiz_student";
+    }
 }
