@@ -46,9 +46,31 @@
             flex-direction: column;
         }
 
-        .brand { text-align: center; margin-bottom: 28px; }
+        .brand { text-align: center; margin-bottom: 22px; }
         .brand h1 { font-size: 26px; font-weight: 700; color: #2563EB; letter-spacing: -0.5px; }
         .brand p  { font-size: 13px; color: #6B7280; margin-top: 4px; }
+
+        /* 선생님/학생 선택 토글 */
+        .role-toggle {
+            position: relative;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+            background: #F1F3F9; border-radius: 12px; padding: 4px; margin-bottom: 24px;
+        }
+        .role-thumb {
+            position: absolute; top: 4px; left: 4px;
+            width: calc(50% - 4px); height: calc(100% - 8px);
+            background: #fff; border-radius: 9px; box-shadow: 0 1px 5px rgba(37,99,235,0.18);
+            transition: transform 0.25s ease; z-index: 0;
+        }
+        .role-thumb.student { transform: translateX(100%); }
+        .role-option {
+            position: relative; z-index: 1;
+            border: none; background: transparent; cursor: pointer;
+            padding: 11px 0; font-size: 14px; font-weight: 600; color: #8A93A3;
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            border-radius: 9px; transition: color 0.2s;
+        }
+        .role-option.active { color: #2563EB; }
 
         .field { margin-bottom: 16px; }
         .field label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
@@ -139,7 +161,20 @@
     <div class="form-area">
         <div class="brand">
             <h1>ClassMate</h1>
-            <p>교사용 AI 업무 비서</p>
+            <p id="roleHint">교사용 AI 업무 비서</p>
+        </div>
+
+        <!-- 선생님 / 학생 선택 -->
+        <div class="role-toggle">
+            <span class="role-thumb" id="roleThumb"></span>
+            <button type="button" class="role-option active" data-role="teacher" onclick="selectRole('teacher')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                선생님
+            </button>
+            <button type="button" class="role-option" data-role="student" onclick="selectRole('student')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                학생
+            </button>
         </div>
 
         <div class="alert alert-error" id="errorMsg"></div>
@@ -178,6 +213,20 @@
 </div>
 
 <script>
+    // 선생님 / 학생 선택
+    let selectedRole = 'teacher';
+    function selectRole(role) {
+        selectedRole = role;
+        document.querySelectorAll('.role-option').forEach(b =>
+            b.classList.toggle('active', b.dataset.role === role));
+        document.getElementById('roleThumb').classList.toggle('student', role === 'student');
+        document.getElementById('roleHint').textContent =
+            role === 'student' ? '학생 학습 공간' : '교사용 AI 업무 비서';
+    }
+    function roleDest() {
+        return selectedRole === 'student' ? '/quiz/student' : '/teacher/dashboard';
+    }
+
     function togglePassword(inputId, btn) {
         const input = document.getElementById(inputId);
         const isHidden = input.type === 'password';
@@ -195,9 +244,9 @@
         document.getElementById('errorMsg').style.display = 'none';
     }
 
-    // 이미 로그인된 경우 대시보드로
+    // 이미 로그인된 경우 마지막 선택한 화면으로
     if (localStorage.getItem('accessToken')) {
-        location.href = '/teacher/dashboard';
+        location.href = localStorage.getItem('loginRole') === 'student' ? '/quiz/student' : '/teacher/dashboard';
     }
 
     // 엔터키 로그인
@@ -228,10 +277,11 @@
                 const data = await res.json();
                 localStorage.setItem('accessToken', data.accessToken);
                 localStorage.setItem('tokenType', data.tokenType ?? 'Bearer');
+                localStorage.setItem('loginRole', selectedRole);
                 if (document.getElementById('rememberMe').checked) {
                     localStorage.setItem('rememberLogin', 'true');
                 }
-                location.href = '/teacher/dashboard';
+                location.href = roleDest();
             } else {
                 const err = await res.json().catch(() => ({}));
                 showError(err.message ?? '아이디 또는 비밀번호가 올바르지 않습니다.');
