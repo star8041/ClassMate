@@ -1,20 +1,12 @@
 <nav th:fragment="sidebar(activeMenu)" id="sidebar">
   <!-- ① 로고 -->
+  <!--
   <div class="header-logo">
     <a th:href="@{/dashboard}" class="header-logo-link">
-      <!-- ClassMate 파란 아이콘 (집 모양 + C 이니셜) -->
-      <div class="header-logo-icon" aria-hidden="true">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-             viewBox="0 0 24 24" fill="none"
-             stroke="#ffffff" stroke-width="2.4"
-             stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-      </div>
       <span class="header-logo-text">ClassMate</span>
     </a>
-  </div>
+  </div> -->
+  <h2 class="logo-font" th:text="#{sidebar.menu.logo}">ClassMate</h2>
   
   <ul class="sidebar-menu">
 
@@ -33,9 +25,9 @@
       </a>
     </li>
 
-    <!-- 수업 관리 -->
-    <li th:classappend="${activeMenu == 'lesson'} ? 'active'">
-      <a th:href="@{/lessons}">
+    <!-- 강의자료 관리 -->
+    <li th:classappend="${activeMenu == 'data'} ? 'active'">
+      <a th:href="@{/data}">
         <span class="sidebar-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -44,13 +36,13 @@
             <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
           </svg>
         </span>
-        <span class="sidebar-label" th:text="#{sidebar.menu.lesson}">수업 관리</span>
+        <span class="sidebar-label" th:text="#{sidebar.menu.data}">강의자료 관리</span>
       </a>
     </li>
 
-    <!-- 과제 관리 -->
-    <li th:classappend="${activeMenu == 'assignment'} ? 'active'">
-      <a th:href="@{/assignments}">
+    <!-- 퀴즈 관리 -->
+    <li th:classappend="${activeMenu == 'quiz'} ? 'active'">
+      <a th:href="@{/quiz}">
         <span class="sidebar-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -62,13 +54,13 @@
             <polyline points="10 9 9 9 8 9"/>
           </svg>
         </span>
-        <span class="sidebar-label" th:text="#{sidebar.menu.assignment}">과제 관리</span>
+        <span class="sidebar-label" th:text="#{sidebar.menu.quiz}">퀴즈 관리</span>
       </a>
     </li>
-
-    <!-- 시험 관리 -->
-    <li th:classappend="${activeMenu == 'exam'} ? 'active'">
-      <a th:href="@{/exams}">
+    
+    <!-- 일정 관리 -->
+    <li th:classappend="${activeMenu == 'schedule'} ? 'active'">
+      <a th:href="@{/schedule}">
         <span class="sidebar-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -79,7 +71,7 @@
             <line x1="9" y1="15" x2="13" y2="15"/>
           </svg>
         </span>
-        <span class="sidebar-label" th:text="#{sidebar.menu.exam}">시험 관리</span>
+        <span class="sidebar-label" th:text="#{sidebar.menu.schedule}">일정 관리</span>
       </a>
     </li>
 
@@ -116,22 +108,6 @@
 
     <!-- 구분선 -->
     <li class="sidebar-divider-item" aria-hidden="true"></li>
-
-    <!-- 퀴즈 생성 -->
-    <li th:classappend="${activeMenu == 'quiz'} ? 'active'">
-      <a th:href="@{/quiz}">
-        <span class="sidebar-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-               viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-            <line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-        </span>
-        <span class="sidebar-label" th:text="#{sidebar.menu.quiz}">퀴즈 생성</span>
-      </a>
-    </li>
 
     <!-- 설정 -->
     <li th:classappend="${activeMenu == 'settings'} ? 'active'">
