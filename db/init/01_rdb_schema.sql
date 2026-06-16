@@ -18,9 +18,11 @@ CREATE TABLE teacher (
                          email          VARCHAR(50),
                          question       VARCHAR(100) NOT NULL,
                          answer         VARCHAR(255) NOT NULL,
+                         role           VARCHAR(20) NOT NULL DEFAULT 'USER',
                          created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                          updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+-- role: USER(교사) / ADMIN(관리자)
 
 -- student: 학생 정보를 관리한다.
 CREATE TABLE student (

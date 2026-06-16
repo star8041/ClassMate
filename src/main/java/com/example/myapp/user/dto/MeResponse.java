@@ -18,7 +18,7 @@ public record MeResponse(
                 teacher.getLoginId(),
                 teacher.getTeacherName(),
                 teacher.getEmail(),
-                "TEACHER"
+                teacher.getRole() == null ? "USER" : teacher.getRole()
         );
     }
 }
