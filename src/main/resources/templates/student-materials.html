@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>강의자료 - ClassMate</title>
+<style>
+  .page-title { font-size: 30px; font-weight: 800; }
+  .page-sub { color: #8A93A3; margin: 8px 0 24px; }
+
+  .toolbar { background: #fff; border: 1px solid #EEF1F6; border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tab { border: none; background: transparent; padding: 8px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #6B7280; cursor: pointer; }
+  .tab.on { background: #2563EB; color: #fff; }
+  .search { margin-left: auto; display: flex; align-items: center; gap: 8px; background: #F4F6FA; border-radius: 10px; padding: 9px 14px; width: 260px; }
+  .search input { border: none; outline: none; background: transparent; font-size: 14px; width: 100%; font-family: inherit; }
+
+  .list { background: #fff; border: 1px solid #EEF1F6; border-radius: 16px; overflow: hidden; }
+  .lhead, .lrow { display: grid; grid-template-columns: 70px 1fr 130px 110px; align-items: center; gap: 16px; padding: 16px 22px; }
+  .lhead { color: #9AA3B2; font-size: 13px; border-bottom: 1px solid #EEF1F6; }
+  .lrow { border-bottom: 1px solid #F2F4F8; }
+  .lrow:last-child { border-bottom: none; }
+  .subj { text-align: center; font-size: 13px; font-weight: 700; padding: 7px 0; border-radius: 10px; }
+  .file { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ftype { width: 36px; height: 40px; border-radius: 8px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#fff; flex-shrink:0; }
+  .fname { font-size: 15px; font-weight: 700; }
+  .fdesc { font-size: 12px; color: #9AA3B2; margin-top: 3px; }
+  .date { color: #9AA3B2; font-size: 14px; }
+  .act { border: 1px solid #C9D6F5; background: #fff; color: #2563EB; border-radius: 10px; padding: 9px 0; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%; }
+  .act:hover { background: #F0F4FF; }
+  .empty { padding: 40px; text-align: center; color: #aaa; }
+
+  .recent { background: #fff; border: 1px solid #EEF1F6; border-radius: 16px; padding: 18px 22px; margin-top: 18px; }
+  .recent-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .recent-head b { font-size: 15px; }
+  .recent-head span { font-size: 13px; color: #9AA3B2; }
+  .recent-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .rcard { display: flex; align-items: center; gap: 10px; }
+  .rname { font-size: 14px; font-weight: 700; }
+  .rmeta { font-size: 12px; color: #9AA3B2; }
+</style>
+</head>
+<body>
+<div class="s-wrap">
+  <div th:replace="~{fragments/student-sidebar :: studentSidebar('materials')}"></div>
+  <main class="s-main">
+    <h1 class="page-title">강의자료</h1>
+    <p class="page-sub">선생님이 올린 학습 자료를 확인하고 다운로드해보세요.</p>
+
+    <div class="toolbar">
+      <button class="tab on" data-f="all" onclick="setFilter(this)">전체</button>
+      <button class="tab" data-f="수업" onclick="setFilter(this)">수업 자료</button>
+      <button class="tab" data-f="참고" onclick="setFilter(this)">참고 자료</button>
+      <button class="tab" data-f="PDF" onclick="setFilter(this)">PDF</button>
+      <button class="tab" data-f="동영상" onclick="setFilter(this)">동영상</button>
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA3B2" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchBox" placeholder="자료 제목 검색" oninput="render()">
+      </div>
+    </div>
+
+    <div class="list">
+      <div class="lhead"><span></span><span>자료 정보</span><span>업로드일 ↓</span><span></span></div>
+      <div id="rows"></div>
+    </div>
+
+    <div class="recent">
+      <div class="recent-head"><b>최근 본 자료</b><span>더보기 ›</span></div>
+      <div class="recent-row" id="recent"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  var SUBJ = { 국어:{bg:'#E8EEFF',c:'#3F62D6'}, 수학:{bg:'#E5F7EC',c:'#22A65A'}, 과학:{bg:'#EFE8FE',c:'#7C4DD6'}, 영어:{bg:'#FFF1DD',c:'#D98A20'}, 사회:{bg:'#FDE7E7',c:'#D9534F'} };
+  var FT = { PDF:{bg:'#EF4444'}, PPT:{bg:'#E08A1E'}, MP4:{bg:'#7C4DD6'} };
+  var MATERIALS = [
+    { subj:'국어', name:'4단원 읽기 자료', type:'PDF', desc:'12페이지',          date:'2024.05.28', cat:'수업',  act:'보기' },
+    { subj:'수학', name:'분수의 덧셈 정리', type:'PPT', desc:'핵심 개념 정리',     date:'2024.05.27', cat:'수업',  act:'다운로드' },
+    { subj:'과학', name:'식물의 한살이 관찰 자료', type:'PDF', desc:'8페이지',     date:'2024.05.26', cat:'참고',  act:'보기' },
+    { subj:'영어', name:'Unit 3 단어 학습지', type:'PDF', desc:'단어 목록 및 연습 문제', date:'2024.05.24', cat:'참고', act:'다운로드' },
+    { subj:'사회', name:'우리 고장 탐구 영상', type:'MP4', desc:'10분 32초',      date:'2024.05.23', cat:'동영상', act:'시청하기' }
+  ];
+  var filter = 'all';
+
+  function setFilter(btn) {
+    filter = btn.dataset.f;
+    document.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('on', t === btn); });
+    render();
+  }
+  function matchFilter(m) {
+    if (filter === 'all') return true;
+    if (filter === 'PDF') return m.type === 'PDF';
+    if (filter === '동영상') return m.type === 'MP4';
+    return m.cat === filter;
+  }
+  function doAct(name, act) { alert('「' + name + '」 ' + act + ' 기능은 준비 중이에요! 😊'); }
+
+  function render() {
+    var kw = document.getElementById('searchBox').value.trim();
+    var rows = MATERIALS.filter(function (m) { return matchFilter(m) && (!kw || m.name.indexOf(kw) > -1); });
+    var box = document.getElementById('rows');
+    if (!rows.length) { box.innerHTML = '<div class="empty">해당하는 자료가 없어요.</div>'; return; }
+    box.innerHTML = rows.map(function (m) {
+      var s = SUBJ[m.subj] || {bg:'#eee',c:'#666'}, f = FT[m.type] || {bg:'#888'};
+      return '<div class="lrow">' +
+        '<span class="subj" style="background:' + s.bg + ';color:' + s.c + '">' + m.subj + '</span>' +
+        '<div class="file"><span class="ftype" style="background:' + f.bg + '">' + m.type + '</span>' +
+        '<div><div class="fname">' + m.name + '</div><div class="fdesc">' + m.type + ' · ' + m.desc + '</div></div></div>' +
+        '<span class="date">' + m.date + '</span>' +
+        '<button class="act" onclick="doAct(\'' + m.name + '\',\'' + m.act + '\')">' + m.act + '</button></div>';
+    }).join('');
+  }
+
+  function renderRecent() {
+    var r = [MATERIALS[0], MATERIALS[1], MATERIALS[4]];
+    document.getElementById('recent').innerHTML = r.map(function (m) {
+      var f = FT[m.type] || {bg:'#888'};
+      return '<div class="rcard"><span class="ftype" style="background:' + f.bg + '">' + m.type + '</span>' +
+        '<div><div class="rname">' + m.name + '</div><div class="rmeta">' + m.type + ' · ' + m.date + '</div></div></div>';
+    }).join('');
+  }
+  render(); renderRecent();
+</script>
+</body>
+</html>

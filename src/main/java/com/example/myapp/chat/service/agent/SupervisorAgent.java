@@ -35,7 +35,7 @@ public class SupervisorAgent {
 
     private static final int HISTORY_LIMIT = 10;
     private static final int VECTOR_TOP_K = 5;
-    private static final double VECTOR_THRESHOLD = 0.65;
+    private static final double VECTOR_THRESHOLD = 0.50;
 
     private final ChatClient chatClient;
     private final VectorStore vectorStore;
@@ -94,12 +94,32 @@ public class SupervisorAgent {
                         .similarityThreshold(VECTOR_THRESHOLD);
 
                 if (materialId != null) {
-                    req.filterExpression("material_id == " + materialId);
+                    req.filterExpression("materialId == " + materialId);
                 }
 
+                log.info("[Supervisor] VECTOR_RAG 검색 시작 - query='{}' materialId={} threshold={}",
+                        intent.searchQuery(), materialId, VECTOR_THRESHOLD);
+
                 List<Document> docs = vectorStore.similaritySearch(req.build());
+
+                log.info("[Supervisor] VECTOR_RAG 검색 결과 - {}건 발견", docs.size());
+                docs.forEach(doc -> log.debug("[Supervisor]   └ fileName={} page={} score={}",
+                        doc.getMetadata().get("fileName"),
+                        doc.getMetadata().get("pageNumber"),
+                        doc.getMetadata().get("distance")));
+
                 yield docs.stream()
-                        .map(Document::getText)
+                        .map(doc -> {
+                            String fileName = (String) doc.getMetadata().getOrDefault("fileName", "");
+                            Object pageObj = doc.getMetadata().get("pageNumber");
+                            String header = "";
+                            if (!fileName.isBlank() && pageObj != null) {
+                                header = "[출처: " + fileName + " " + pageObj + "페이지]\n";
+                            } else if (!fileName.isBlank()) {
+                                header = "[출처: " + fileName + "]\n";
+                            }
+                            return header + doc.getText();
+                        })
                         .collect(Collectors.joining("\n\n---\n\n"));
             }
 

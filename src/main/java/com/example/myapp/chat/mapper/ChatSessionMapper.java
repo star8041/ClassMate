@@ -72,4 +72,17 @@ public class ChatSessionMapper {
                 .query(ROW_MAPPER)
                 .list();
     }
+
+    public void updateTitle(Long chatSessionId, String title) {
+        jdbcClient.sql("UPDATE chat_session SET title = ? WHERE chat_session_id = ?")
+                .param(title)
+                .param(chatSessionId)
+                .update();
+    }
+
+    public void deleteById(Long chatSessionId) {
+        jdbcClient.sql("DELETE FROM chat_session WHERE chat_session_id = ?")
+                .param(chatSessionId)
+                .update();
+    }
 }

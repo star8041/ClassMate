@@ -42,4 +42,16 @@ public class ChatSessionService {
         return chatSessionMapper.findByIdAndUserId(chatSessionId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHAT_SESSION_NOT_FOUND));
     }
+
+    @Transactional
+    public void updateTitle(Long chatSessionId, Long userId, String title) {
+        getOwnedSession(chatSessionId, userId); // 본인 세션 검증
+        chatSessionMapper.updateTitle(chatSessionId, title);
+    }
+
+    @Transactional
+    public void deleteSession(Long chatSessionId, Long userId) {
+        getOwnedSession(chatSessionId, userId); // 본인 세션 검증
+        chatSessionMapper.deleteById(chatSessionId);
+    }
 }

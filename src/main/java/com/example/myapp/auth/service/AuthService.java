@@ -46,8 +46,9 @@ public class AuthService {
             throw new BusinessException(ErrorCode.LOGIN_FAILED);
         }
 
-        // 교사/학생 테이블 분리 → 이 메서드 호출 자체가 교사임을 보장
-        String token = jwtTokenProvider.createToken(teacher.getLoginId(), "TEACHER", teacher.getTeacherName());
+        // 실제 권한(USER/ADMIN)을 JWT role 클레임에 반영 (ADMIN 이면 관리자 화면 분기/메뉴 표시)
+        String role = teacher.getRole() == null ? "USER" : teacher.getRole();
+        String token = jwtTokenProvider.createToken(teacher.getLoginId(), role, teacher.getTeacherName());
         return TokenResponse.bearer(token);
     }
 

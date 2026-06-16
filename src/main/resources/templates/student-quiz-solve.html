@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>퀴즈 풀이 - ClassMate</title>
+<style>
+  .page-title { font-size: 30px; font-weight: 800; }
+  .page-sub { color: #8A93A3; margin: 8px 0 22px; }
+  .card { background: #fff; border: 1px solid #EEF1F6; border-radius: 16px; }
+
+  .meta-bar { display: flex; align-items: center; gap: 18px; padding: 16px 22px; margin-bottom: 16px; font-size: 14px; color: #4B5563; }
+  .meta-bar .subj { background:#E8EEFF; color:#3F62D6; font-weight:700; padding:5px 12px; border-radius:10px; }
+  .meta-bar .sep { color: #E2E6EE; }
+  .meta-bar .timer { margin-left: auto; font-weight: 700; color: #2563EB; }
+
+  .prog-bar { display: flex; align-items: center; gap: 16px; padding: 16px 22px; margin-bottom: 16px; }
+  .prog-bar b { font-size: 18px; white-space: nowrap; }
+  .track { flex: 1; height: 12px; background: #EEF1F6; border-radius: 8px; overflow: hidden; }
+  .fill { height: 100%; background: #2563EB; border-radius: 8px; transition: width 0.3s; }
+
+  .q-card { padding: 26px 28px; }
+  .q-no { color: #2563EB; font-weight: 800; margin-bottom: 12px; }
+  .q-text { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+  .passage { background: #F7F9FC; border: 1px solid #EEF1F6; border-radius: 12px; padding: 16px 18px; color: #444; line-height: 1.6; margin-bottom: 18px; }
+  .q-ask { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+
+  .opt { display: flex; align-items: center; gap: 14px; border: 1.5px solid #E7EAF1; border-radius: 14px; padding: 15px 18px; margin-bottom: 12px; cursor: pointer; transition: 0.15s; }
+  .opt:hover { border-color: #C9D6F5; }
+  .opt.sel { border-color: #2563EB; background: #F5F8FF; }
+  .opt .num { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #D7DCE5; display:flex; align-items:center; justify-content:center; font-weight:700; color:#6B7280; flex-shrink:0; }
+  .opt.sel .num { background: #2563EB; border-color: #2563EB; color: #fff; }
+  .opt .txt { font-size: 15px; }
+
+  .hint { border: 1px solid #EEF1F6; border-radius: 12px; margin-top: 6px; }
+  .hint summary { list-style: none; cursor: pointer; padding: 13px 18px; font-size: 14px; color: #6B7280; display: flex; align-items: center; }
+  .hint summary::-webkit-details-marker { display: none; }
+  .hint summary .chev { margin-left: auto; transition: 0.2s; }
+  .hint[open] summary .chev { transform: rotate(180deg); }
+  .hint .body { padding: 0 18px 16px; color: #555; font-size: 14px; line-height: 1.6; }
+
+  .nav-row { display: flex; justify-content: space-between; margin-top: 22px; }
+  .nav-btn { border-radius: 12px; padding: 13px 26px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .prev { background: #fff; border: 1.5px solid #C9D6F5; color: #2563EB; }
+  .prev:disabled { border-color: #E7EAF1; color: #C7CDD8; cursor: not-allowed; }
+  .next { background: #2563EB; border: none; color: #fff; }
+</style>
+</head>
+<body>
+<div class="s-wrap">
+  <div th:replace="~{fragments/student-sidebar :: studentSidebar('quiz')}"></div>
+  <main class="s-main">
+    <h1 class="page-title">퀴즈 폴이</h1>
+    <p class="page-sub">차분하게 읽고 답을 골라보세요.</p>
+
+    <div class="card meta-bar">
+      <span class="subj">국어</span><span class="sep">|</span>
+      <span id="quizTitle">📄 4단원 복습 퀴즈</span><span class="sep">|</span>
+      <span>📋 <b id="total">10</b>문제</span>
+      <span class="timer">⏱ <span id="timer">10:00</span></span>
+    </div>
+
+    <div class="card prog-bar">
+      <b><span id="cur">1</span> / <span id="total2">10</span></b>
+      <div class="track"><div class="fill" id="fill" style="width:10%"></div></div>
+    </div>
+
+    <div class="card q-card" id="qCard"></div>
+
+    <div class="nav-row">
+      <button class="nav-btn prev" id="prevBtn" onclick="move(-1)">이전 문제</button>
+      <button class="nav-btn next" id="nextBtn" onclick="move(1)">다음 문제</button>
+    </div>
+  </main>
+</div>
+
+<script>
+  // 데모 문제 데이터 (실데이터 연동은 퀴즈 API + 학생 인증 필요)
+  var QUESTIONS = [
+    { ask:'우리나라의 수도는 어디인가요?', opts:['부산','서울','대구','광주'], hint:'대한민국의 중심 도시예요.' },
+    { ask:'다음 중 한글을 만든 분은 누구인가요?', opts:['세종대왕','이순신','장영실','신사임당'], hint:'조선의 네 번째 임금이에요.' },
+    { passage:'따뜻한 봄날, 나는 친구와 함께 공원에 갔습니다. 꽃도 보고, 맛있는 도시락도 먹어서 정말 즐거웠습니다.',
+      ask:'이 글의 내용으로 알맞은 것은 무엇인가요?',
+      opts:['나는 비 오는 날 집에 있었다.','나는 친구와 공원에 가서 즐거운 시간을 보냈다.','나는 학교에서 시험을 보았다.','나는 책을 읽고 숙제를 했다.'],
+      hint:'글에서 "공원", "친구", "즐거웠습니다" 를 찾아보세요.' },
+    { ask:'1/3 + 1/6 은 얼마인가요?', opts:['1/2','2/9','1/9','2/3'], hint:'분모를 6으로 통일해 보세요.' },
+    { ask:'식물이 자라는 데 꼭 필요하지 않은 것은?', opts:['햇빛','물','공기','과자'], hint:'먹는 간식은 식물에게 필요 없어요.' },
+    { ask:'다음 중 동물은 무엇인가요?', opts:['소나무','강아지','장미','바위'], hint:'움직이고 숨을 쉬어요.' },
+    { ask:'3 × 4 는 얼마인가요?', opts:['7','12','9','16'], hint:'3을 네 번 더해 보세요.' },
+    { ask:'"apple" 의 뜻은 무엇인가요?', opts:['바나나','사과','포도','수박'], hint:'빨갛고 둥근 과일이에요.' },
+    { ask:'태양은 어떤 천체일까요?', opts:['별','행성','위성','혜성'], hint:'스스로 빛을 내요.' },
+    { ask:'물이 얼면 무엇이 되나요?', opts:['수증기','얼음','구름','안개'], hint:'온도가 0도 이하로 내려가요.' }
+  ];
+  var answers = new Array(QUESTIONS.length).fill(null);
+  var idx = 0;
+  document.getElementById('total').textContent = QUESTIONS.length;
+  document.getElementById('total2').textContent = QUESTIONS.length;
+
+  var params = new URLSearchParams(location.search);
+  if (params.get('title')) document.getElementById('quizTitle').textContent = '📄 ' + params.get('title');
+
+  function renderQ() {
+    var q = QUESTIONS[idx];
+    var html = '<div class="q-no">문제 ' + (idx + 1) + '</div>';
+    if (q.passage) {
+      html += '<div class="q-text">다음 글을 읽고 알맞은 것을 골라보세요.</div>';
+      html += '<div class="passage">' + q.passage + '</div>';
+      html += '<div class="q-ask">' + q.ask + '</div>';
+    } else {
+      html += '<div class="q-text">' + q.ask + '</div>';
+    }
+    q.opts.forEach(function (o, i) {
+      var sel = answers[idx] === i ? ' sel' : '';
+      html += '<div class="opt' + sel + '" onclick="pick(' + i + ')"><span class="num">' + (i + 1) + '</span><span class="txt">' + o + '</span></div>';
+    });
+    html += '<details class="hint"><summary>💡 힌트<span class="chev">⌄</span></summary><div class="body">' + (q.hint || '힌트가 없어요.') + '</div></details>';
+    document.getElementById('qCard').innerHTML = html;
+
+    document.getElementById('cur').textContent = idx + 1;
+    document.getElementById('fill').style.width = ((idx + 1) / QUESTIONS.length * 100) + '%';
+    document.getElementById('prevBtn').disabled = idx === 0;
+    document.getElementById('nextBtn').textContent = idx === QUESTIONS.length - 1 ? '제출하기' : '다음 문제';
+  }
+  function pick(i) { answers[idx] = i; renderQ(); }
+  function move(d) {
+    if (d === 1 && idx === QUESTIONS.length - 1) { submit(); return; }
+    idx = Math.max(0, Math.min(QUESTIONS.length - 1, idx + d));
+    renderQ();
+  }
+  function submit() {
+    var done = answers.filter(function (a) { return a !== null; }).length;
+    if (done < QUESTIONS.length && !confirm('아직 ' + (QUESTIONS.length - done) + '문제를 안 풀었어요. 그래도 제출할까요?')) return;
+    alert('제출 완료! 푼 문제: ' + done + ' / ' + QUESTIONS.length + '\n(채점/결과 화면은 준비 중이에요 😊)');
+    location.href = '/student/quiz';
+  }
+
+  // 타이머 (10분 카운트다운)
+  var remain = 10 * 60;
+  setInterval(function () {
+    if (remain <= 0) return;
+    remain--;
+    var m = String(Math.floor(remain / 60)).padStart(2, '0'), s = String(remain % 60).padStart(2, '0');
+    document.getElementById('timer').textContent = m + ':' + s;
+  }, 1000);
+
+  renderQ();
+</script>
+</body>
+</html>

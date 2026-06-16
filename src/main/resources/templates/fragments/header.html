@@ -1,78 +1,26 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <body>
 <header th:fragment="header(userName, profileImgUrl)" id="main-header">
 
-  
-
-  <!-- ② 우측 액션 영역 -->
   <div class="header-actions">
 
-    <!-- 프로필 드롭다운 -->
-    <div class="header-profile" id="profileDropdown">
-      <button class="header-profile-btn" onclick="toggleProfileMenu()" aria-haspopup="true">
-        <!-- 프로필 이미지 (없으면 아바타 폴백) -->
-        <div class="header-avatar">
-          <img th:if="${profileImgUrl != null}"
-               th:src="${profileImgUrl}"
-               th:alt="${userName}"
-               class="header-avatar-img"/>
-          <span th:unless="${profileImgUrl != null}"
-                class="header-avatar-initial"
-                th:text="${userName != null ? userName.substring(0,1) : 'T'}">T</span>
-        </div>
-        <span class="header-username">
-          <span th:text="${userName}">김민지</span>
-          <span th:text="#{header.user.suffix}">선생님</span>
-        </span>
-        <!-- 드롭다운 화살표 -->
-        <svg class="header-chevron" xmlns="http://www.w3.org/2000/svg"
-             width="14" height="14" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2.5"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-
-      <!-- 드롭다운 메뉴 -->
-      <ul class="profile-dropdown-menu" id="profileMenu" style="display:none;">
-        <li><a th:href="@{/members/profile}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          <span th:text="#{header.menu.profile}">내 프로필</span>
-        </a></li>
-        <li><a th:href="@{/settings}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-          <span th:text="#{header.menu.settings}">설정</span>
-        </a></li>
-        <li class="dropdown-divider"></li>
-        <li><a th:href="@{/members/logout}" class="dropdown-logout">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          <span th:text="#{dashboard.menu.logout}">로그아웃</span>
-        </a></li>
-      </ul>
+    <!-- 초대코드 (인라인, 감싸는 박스 없음) -->
+    <div id="inviteBody">
+      <button class="invite-gen-btn" onclick="generateInvite()">코드 생성</button>
     </div>
 
-    <!-- Logout 버튼 (이미지에서 우측 상단에 별도 존재) -->
-    <a th:href="@{/members/logout}" class="header-logout-btn">
-      <span th:text="#{header.btn.logout}">Logout</span>
-    </a>
+    <!-- 사용자 이름 (아이콘 없이 텍스트만) -->
+    <span class="header-username">
+      <span th:text="${userName}">김민지</span>
+      <span th:text="#{header.user.suffix}">선생님</span>
+    </span>
+
+    <!-- 로그아웃 -->
+    <a th:href="@{/members/logout}" class="header-logout-btn">로그아웃</a>
 
   </div>
-</header>
 
+</header>
 </body>
 </html>

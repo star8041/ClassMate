@@ -59,4 +59,16 @@ public class ChatMessageMapper {
         Collections.reverse(messages);
         return messages;
     }
+
+    /** 세션의 모든 메시지를 시간 오름차순으로 반환. */
+    public List<ChatMessage> findAllBySessionId(Long chatSessionId) {
+        return jdbcClient.sql("""
+                SELECT * FROM chat_message
+                WHERE chat_session_id = ?
+                ORDER BY created_at ASC
+                """)
+                .param(chatSessionId)
+                .query(ROW_MAPPER)
+                .list();
+    }
 }

@@ -210,10 +210,8 @@
         // 헤더 이름 반영
         const p = jwtPayload(token);
         if (p) {
-            const initial = document.querySelector('.header-avatar-initial');
-            const uname   = document.querySelector('.header-username');
-            if (initial) initial.textContent = (p.name || p.sub || '').charAt(0);
-            if (uname)   uname.textContent   = (p.name || p.sub || '') + ' 선생님';
+            const uname = document.querySelector('.header-username');
+            if (uname) uname.textContent = (p.name || p.sub || '') + ' 선생님';
         }
         document.querySelectorAll('.dropdown-logout, .header-logout-btn').forEach(el => {
             el.addEventListener('click', e => { e.preventDefault(); localStorage.clear(); location.href = '/login'; });

@@ -1,9 +1,11 @@
 package com.example.myapp.chat.controller;
 
 import com.example.myapp.chat.dto.ChatMessageRequest;
+import com.example.myapp.chat.dto.ChatMessageResponse;
 import com.example.myapp.chat.dto.ChatSessionCreateRequest;
 import com.example.myapp.chat.dto.ChatSessionResponse;
 import com.example.myapp.chat.entity.ChatRole;
+import com.example.myapp.chat.mapper.ChatMessageMapper;
 import com.example.myapp.chat.service.ChatSessionService;
 import com.example.myapp.chat.service.TeacherChatService;
 import com.example.myapp.common.ApiResponse;
@@ -24,6 +26,7 @@ public class TeacherChatController {
 
     private final ChatSessionService chatSessionService;
     private final TeacherChatService teacherChatService;
+    private final ChatMessageMapper chatMessageMapper;
 
     @PostMapping("/sessions")
     public ResponseEntity<ApiResponse<ChatSessionResponse>> createSession(
@@ -50,5 +53,35 @@ public class TeacherChatController {
 
         return ResponseEntity.ok(ApiResponse.success(
                 chatSessionService.getSessions(teacherId, ChatRole.TEACHER)));
+    }
+
+    @PatchMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> updateTitle(
+            @AuthenticationPrincipal Long teacherId,
+            @PathVariable Long sessionId,
+            @RequestBody java.util.Map<String, String> body) {
+
+        chatSessionService.updateTitle(sessionId, teacherId, body.get("title"));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> deleteSession(
+            @AuthenticationPrincipal Long teacherId,
+            @PathVariable Long sessionId) {
+
+        chatSessionService.deleteSession(sessionId, teacherId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/sessions/{sessionId}/messages")
+    public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getMessages(
+            @AuthenticationPrincipal Long teacherId,
+            @PathVariable Long sessionId) {
+
+        chatSessionService.getOwnedSession(sessionId, teacherId); // 본인 세션 검증
+        List<ChatMessageResponse> messages = chatMessageMapper.findAllBySessionId(sessionId)
+                .stream().map(ChatMessageResponse::from).toList();
+        return ResponseEntity.ok(ApiResponse.success(messages));
     }
 }
