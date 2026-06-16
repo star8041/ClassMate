@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- 학생용 공통 셸(사이드바). 페이지는 .s-wrap > [이 프래그먼트] + main.s-main 구조로 사용 -->
+<th:block th:fragment="studentSidebar(active)">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: #F7F9FC; color: #2B2F38; font-size: 14px; }
+    a { text-decoration: none; color: inherit; }
+    .s-wrap { display: flex; min-height: 100vh; }
+    .s-main { flex: 1; min-width: 0; padding: 36px 44px; }
+
+    .s-side { width: 248px; flex-shrink: 0; background: #fff; border-right: 1px solid #EEF1F6; padding: 24px 16px; display: flex; flex-direction: column; }
+    .s-logo { display: flex; align-items: center; gap: 9px; font-size: 21px; font-weight: 800; color: #2563EB; padding: 4px 10px 26px; }
+    .s-nav { display: flex; flex-direction: column; gap: 4px; }
+    .s-nav a { display: flex; align-items: center; gap: 12px; padding: 13px 14px; border-radius: 12px; font-size: 15px; font-weight: 600; color: #6B7280; }
+    .s-nav a:hover { background: #F4F7FB; }
+    .s-nav a.on { background: #EAF1FE; color: #2563EB; }
+    .s-nav a svg { flex-shrink: 0; }
+    .s-user { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 12px 8px; border-top: 1px solid #F0F2F6; }
+    .s-ava { width: 38px; height: 38px; border-radius: 50%; background: #EEF2F8; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .s-name { font-weight: 700; font-size: 14px; }
+    .s-grade { font-size: 12px; color: #9AA3B2; }
+  </style>
+  <aside class="s-side">
+    <div class="s-logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="#2563EB"><path d="M3 5a2 2 0 0 1 2-2h6v16H5a2 2 0 0 0-2 2zM13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2h-6z"/></svg>
+      ClassMate
+    </div>
+    <nav class="s-nav">
+      <a th:href="@{/student/home}" th:classappend="${active == 'home'} ? ' on'">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        홈
+      </a>
+      <a th:href="@{/student/quiz}" th:classappend="${active == 'quiz'} ? ' on'">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+        퀴즈
+      </a>
+      <a th:href="@{/student/materials}" th:classappend="${active == 'materials'} ? ' on'">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        강의자료
+      </a>
+    </nav>
+    <div class="s-user">
+      <div class="s-ava">🧑‍🎓</div>
+      <div><div class="s-name">김학생</div><div class="s-grade">3학년 2반</div></div>
+    </div>
+  </aside>
+</th:block>
+</body>
+</html>
