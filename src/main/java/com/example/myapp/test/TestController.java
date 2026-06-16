@@ -22,4 +22,9 @@ public class TestController {
     public String quiz(Model model) {
         return "quiz";
     }
+    
+    @GetMapping("/student")
+    public String student(Model model) {
+        return "student";
+    }
 }
