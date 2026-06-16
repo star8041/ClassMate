@@ -1,0 +1,81 @@
+package com.example.myapp.student.mapper;
+
+import com.example.myapp.student.entity.Student;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * student 테이블 접근 매퍼.
+ * <p>
+ * 프로젝트 영속성 방침(JDBC)에 맞춰 Spring {@link JdbcClient}로 구현한다.
+ * (material 도메인과 동일한 방식)
+ */
+@Repository
+public class StudentMapper {
+
+    private final JdbcClient jdbcClient;
+
+    public StudentMapper(JdbcClient jdbcClient) {
+        this.jdbcClient = jdbcClient;
+    }
+
+    /** student 행 → Student 엔티티 매핑 (snake_case → camelCase) */
+    private static final RowMapper<Student> ROW_MAPPER = (rs, rowNum) -> Student.builder()
+            .studentId(rs.getLong("student_id"))
+            .teacherId(rs.getLong("teacher_id"))
+            .studentName(rs.getString("student_name"))
+            .studentNumber(rs.getString("student_number"))
+            .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+            .updatedAt(rs.getTimestamp("updated_at") == null
+                    ? null : rs.getTimestamp("updated_at").toLocalDateTime())
+            .build();
+
+    /**
+     * 전체 또는 특정 교사의 학생 목록을 이름순으로 조회한다.
+     *
+     * @param teacherId null 이면 전체 조회
+     */
+    public List<Student> findAll(Long teacherId) {
+        if (teacherId == null) {
+            return jdbcClient.sql("SELECT * FROM student ORDER BY student_name")
+                    .query(ROW_MAPPER)
+                    .list();
+        }
+        return jdbcClient.sql("SELECT * FROM student WHERE teacher_id = ? ORDER BY student_name")
+                .param(teacherId)
+                .query(ROW_MAPPER)
+                .list();
+    }
+
+    /** 단건 조회 */
+    public Optional<Student> findById(Long studentId) {
+        return jdbcClient.sql("SELECT * FROM student WHERE student_id = ?")
+                .param(studentId)
+                .query(ROW_MAPPER)
+                .optional();
+    }
+
+    /** 이름/학번 수정 (수정된 행 수 반환) */
+    public int update(Student student) {
+        return jdbcClient.sql("""
+                        UPDATE student
+                           SET student_name = ?, student_number = ?, updated_at = CURRENT_TIMESTAMP
+                         WHERE student_id = ?
+                        """)
+                .param(student.getStudentName())
+                .param(student.getStudentNumber())
+                .param(student.getStudentId())
+                .update();
+    }
+
+    /** 삭제 (삭제된 행 수 반환) */
+    public int deleteById(Long studentId) {
+        return jdbcClient.sql("DELETE FROM student WHERE student_id = ?")
+                .param(studentId)
+                .update();
+    }
+}

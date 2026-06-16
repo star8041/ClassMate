@@ -22,8 +22,9 @@ public class SecurityConfig {
                     "/js/**",
                     "/images/**",
                     "/error",
-                    // TODO: 인증 연동 전까지 PDF 자료 API 임시 허용
-                    "/api/materials/**"
+                    // TODO: 인증 연동 전까지 PDF 자료 / 학생 API 임시 허용
+                    "/api/materials/**",
+                    "/api/students/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
