@@ -3,6 +3,8 @@ package com.example.myapp.student.mapper;
 import com.example.myapp.student.entity.Student;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -33,6 +35,22 @@ public class StudentMapper {
             .updatedAt(rs.getTimestamp("updated_at") == null
                     ? null : rs.getTimestamp("updated_at").toLocalDateTime())
             .build();
+
+    /**
+     * 새 학생을 저장하고 생성된 PK를 반환한다.
+     */
+    public Long insert(Student student) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcClient.sql("""
+                        INSERT INTO student (teacher_id, student_name, student_number)
+                        VALUES (?, ?, ?)
+                        """)
+                .param(student.getTeacherId())
+                .param(student.getStudentName())
+                .param(student.getStudentNumber())
+                .update(keyHolder, "student_id");
+        return keyHolder.getKey().longValue();
+    }
 
     /**
      * 전체 또는 특정 교사의 학생 목록을 이름순으로 조회한다.

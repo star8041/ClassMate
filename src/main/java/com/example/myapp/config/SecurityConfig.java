@@ -24,7 +24,8 @@ public class SecurityConfig {
                     "/error",
                     // TODO: 인증 연동 전까지 PDF 자료 / 학생 API 임시 허용
                     "/api/materials/**",
-                    "/api/students/**"
+                    "/api/students/**",
+                    "/api/v1/**"
                 ).permitAll()
                 .anyRequest().authenticated()
             )

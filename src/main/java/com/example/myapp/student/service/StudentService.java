@@ -1,9 +1,11 @@
 package com.example.myapp.student.service;
 
+import com.example.myapp.student.dto.StudentCreateRequest;
 import com.example.myapp.student.dto.StudentResponse;
 import com.example.myapp.student.dto.StudentUpdateRequest;
 import com.example.myapp.student.entity.Student;
 import com.example.myapp.student.mapper.StudentMapper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,29 @@ public class StudentService {
 
     public StudentService(StudentMapper studentMapper) {
         this.studentMapper = studentMapper;
+    }
+
+    /** 학생 등록 (현재 교사에게 소속) */
+    @Transactional
+    public StudentResponse create(Long teacherId, StudentCreateRequest request) {
+        if (!StringUtils.hasText(request.studentName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "학생 이름은 비어 있을 수 없습니다.");
+        }
+
+        Student student = Student.builder()
+                .teacherId(teacherId)
+                .studentName(request.studentName())
+                .studentNumber(request.studentNumber())
+                .build();
+
+        try {
+            Long id = studentMapper.insert(student);
+            return StudentResponse.from(getEntityOrThrow(id));
+        } catch (DataIntegrityViolationException e) {
+            // teacher_id FK 위반 등
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "존재하지 않는 교사입니다. teacherId=" + teacherId, e);
+        }
     }
 
     /** 학생 목록 조회 (teacherId 가 null 이면 전체) */
