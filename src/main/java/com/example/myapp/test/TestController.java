@@ -12,4 +12,24 @@ public class TestController {
         model.addAttribute("userName", "홍길동");
         return "test";
     }
+    
+    @GetMapping("/archive")
+    public String archive(Model model) {
+        return "archive";
+    }
+    
+    @GetMapping("/quiz")
+    public String quiz(Model model) {
+        return "quiz";
+    }
+    
+    @GetMapping("/student")
+    public String student(Model model) {
+        return "student";
+    }
+    
+    @GetMapping("/counseling")
+    public String counseling(Model model) {
+        return "counseling";
+    }
 }
