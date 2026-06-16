@@ -22,6 +22,7 @@ public class SecurityConfig {
                     "/archive",
                     "/quiz",
                     "/student",
+                    "/counseling",
                     "/css/**",
                     "/js/**",
                     "/images/**",
