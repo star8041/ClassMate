@@ -242,7 +242,8 @@ answer
 )
 VALUES (
 'teacher1',
-'1234',
+-- BCrypt 해시 (평문 비밀번호는 '1234'). 앱이 BCrypt 로 비교하므로 시드도 해시여야 로그인된다.
+'$2a$10$dpTCc6N0CaSOY.kZeDUtYu7ymHXzWcA1aaKlc4esyLJ/vPICTIWN.',
 '테스트교사',
 'teacher1@classmate.com',
 '가장 좋아하는 색은?',
