@@ -68,19 +68,22 @@ public class StudentService {
         return StudentResponse.from(getEntityOrThrow(studentId));
     }
 
-    /** 학생 정보 수정 (이름/학번) */
+    /** 학생 정보 부분 수정 (PATCH): 전달된(null 이 아닌) 필드만 변경한다. */
     @Transactional
     public StudentResponse update(Long studentId, StudentUpdateRequest request) {
         Student student = getEntityOrThrow(studentId);
 
-        if (!StringUtils.hasText(request.studentName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "학생 이름은 비어 있을 수 없습니다.");
+        if (request.studentName() != null) {
+            if (!StringUtils.hasText(request.studentName())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "학생 이름은 비어 있을 수 없습니다.");
+            }
+            student.setStudentName(request.studentName());
+        }
+        if (request.studentNumber() != null) {
+            student.setStudentNumber(request.studentNumber());
         }
 
-        student.setStudentName(request.studentName());
-        student.setStudentNumber(request.studentNumber());
         studentMapper.update(student);
-
         return StudentResponse.from(getEntityOrThrow(studentId));
     }
 
