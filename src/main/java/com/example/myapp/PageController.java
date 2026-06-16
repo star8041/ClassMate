@@ -19,9 +19,15 @@ public class PageController {
 
     @GetMapping({"/", "/teacher/dashboard"})
     public String dashboard(Model model) {
-        // userName/profileImgUrl은 JWT 필터 연동 전까지 null — JS에서 토큰 파싱 후 업데이트
         model.addAttribute("userName", null);
         model.addAttribute("profileImgUrl", null);
         return "teacher/dashboard";
+    }
+
+    @GetMapping("/teacher/archive")
+    public String archive(Model model) {
+        model.addAttribute("userName", null);
+        model.addAttribute("profileImgUrl", null);
+        return "teacher/archive";
     }
 }
