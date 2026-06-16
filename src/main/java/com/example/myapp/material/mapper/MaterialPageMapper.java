@@ -47,4 +47,31 @@ public class MaterialPageMapper {
                 .query(ROW_MAPPER)
                 .list();
     }
+
+    /** 페이지 번호 범위로 조회 — PAGE_SEARCH 의도 처리 시 사용 */
+    public List<MaterialPage> findByPageRange(Long materialId, int startPage, int endPage) {
+        return jdbcClient.sql("""
+                SELECT * FROM material_page
+                WHERE material_id = ? AND page_number BETWEEN ? AND ?
+                ORDER BY page_number ASC
+                """)
+                .param(materialId)
+                .param(startPage)
+                .param(endPage)
+                .query(ROW_MAPPER)
+                .list();
+    }
+
+    /** 키워드 포함 페이지 검색 (LIKE) — PAGE_SEARCH 의도 처리 시 사용 */
+    public List<MaterialPage> searchByKeyword(Long materialId, String keyword) {
+        return jdbcClient.sql("""
+                SELECT * FROM material_page
+                WHERE material_id = ? AND LOWER(page_text) LIKE LOWER(?)
+                ORDER BY page_number ASC
+                """)
+                .param(materialId)
+                .param("%" + keyword + "%")
+                .query(ROW_MAPPER)
+                .list();
+    }
 }
