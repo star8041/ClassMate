@@ -27,4 +27,9 @@ public class TestController {
     public String student(Model model) {
         return "student";
     }
+    
+    @GetMapping("/counseling")
+    public String counseling(Model model) {
+        return "counseling";
+    }
 }
