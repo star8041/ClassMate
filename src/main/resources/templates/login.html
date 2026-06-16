@@ -72,6 +72,13 @@
         }
         .role-option.active { color: #2563EB; }
 
+        /* 학생 초대코드 입력 */
+        .code-input {
+            text-align: center; font-size: 28px; font-weight: 700;
+            letter-spacing: 14px; padding-left: 14px !important;
+            font-family: 'Menlo', 'Consolas', monospace; color: #1a2b4a;
+        }
+
         .field { margin-bottom: 16px; }
         .field label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
 
@@ -179,35 +186,53 @@
 
         <div class="alert alert-error" id="errorMsg"></div>
 
-        <div class="field">
-            <label for="loginId">아이디</label>
-            <input type="text" id="loginId" placeholder="아이디를 입력하세요">
-        </div>
+        <!-- ── 선생님: 아이디/비밀번호 ── -->
+        <div id="teacherForm">
+            <div class="field">
+                <label for="loginId">아이디</label>
+                <input type="text" id="loginId" placeholder="아이디를 입력하세요">
+            </div>
 
-        <div class="field">
-            <label for="password">비밀번호</label>
-            <div class="pw-wrap">
-                <input type="password" id="password" placeholder="비밀번호를 입력하세요">
-                <button type="button" class="pw-toggle" onclick="togglePassword('password', this)">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                        <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                </button>
+            <div class="field">
+                <label for="password">비밀번호</label>
+                <div class="pw-wrap">
+                    <input type="password" id="password" placeholder="비밀번호를 입력하세요">
+                    <button type="button" class="pw-toggle" onclick="togglePassword('password', this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="rememberMe"> 로그인 상태 유지
+                </label>
+                <a href="/signup" class="link">비밀번호 찾기</a>
+            </div>
+
+            <button class="btn-primary" id="loginBtn" onclick="doLogin()">로그인</button>
+
+            <div class="signup-row">
+                계정이 없으신가요? <a href="/signup" class="link">회원가입</a>
             </div>
         </div>
 
-        <div class="row">
-            <label class="checkbox-label">
-                <input type="checkbox" id="rememberMe"> 로그인 상태 유지
-            </label>
-            <a href="/signup" class="link">비밀번호 찾기</a>
-        </div>
+        <!-- ── 학생: 초대 코드 ── -->
+        <div id="studentForm" style="display:none">
+            <div class="field">
+                <label for="inviteCode">초대 코드</label>
+                <input type="text" id="inviteCode" class="code-input" placeholder="••••••"
+                       maxlength="6" inputmode="numeric" autocomplete="off">
+            </div>
 
-        <button class="btn-primary" id="loginBtn" onclick="doLogin()">로그인</button>
+            <button class="btn-primary" id="studentBtn" onclick="doStudentLogin()">입장하기</button>
 
-        <div class="signup-row">
-            계정이 없으신가요? <a href="/signup" class="link">회원가입</a>
+            <div class="signup-row">
+                선생님께 받은 <b>6자리 코드</b>를 입력하세요. (발급 후 10분간 유효)
+            </div>
         </div>
     </div>
 </div>
@@ -222,6 +247,9 @@
         document.getElementById('roleThumb').classList.toggle('student', role === 'student');
         document.getElementById('roleHint').textContent =
             role === 'student' ? '학생 학습 공간' : '교사용 AI 업무 비서';
+        document.getElementById('teacherForm').style.display = role === 'student' ? 'none' : 'block';
+        document.getElementById('studentForm').style.display = role === 'student' ? 'block' : 'none';
+        hideError();
     }
     function roleDest() {
         return selectedRole === 'student' ? '/quiz/student' : '/teacher/dashboard';
@@ -251,7 +279,7 @@
 
     // 엔터키 로그인
     document.addEventListener('keydown', e => {
-        if (e.key === 'Enter') doLogin();
+        if (e.key === 'Enter') { selectedRole === 'student' ? doStudentLogin() : doLogin(); }
     });
 
     async function doLogin() {
@@ -291,6 +319,41 @@
         } finally {
             btn.disabled = false;
             btn.textContent = '로그인';
+        }
+    }
+
+    // 학생: 초대 코드로 입장
+    async function doStudentLogin() {
+        hideError();
+        const code = document.getElementById('inviteCode').value.trim();
+        if (!/^\d{6}$/.test(code)) { showError('6자리 숫자 코드를 입력해 주세요.'); return; }
+
+        const btn = document.getElementById('studentBtn');
+        btn.disabled = true;
+        btn.textContent = '확인 중...';
+
+        try {
+            const res = await fetch('/api/v1/students/verify-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok && data.valid) {
+                localStorage.setItem('loginRole', 'student');
+                localStorage.setItem('studentTeacherId', data.teacherId);
+                localStorage.setItem('studentTeacherName', data.teacherName ?? '');
+                localStorage.setItem('inviteCode', code);
+                location.href = '/quiz/student';
+            } else {
+                showError(data.message ?? '유효하지 않거나 만료된 코드입니다.');
+            }
+        } catch (e) {
+            showError('서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '입장하기';
         }
     }
 </script>
