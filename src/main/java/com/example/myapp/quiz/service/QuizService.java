@@ -24,7 +24,7 @@ import com.example.myapp.quiz.dto.QuizListResponse;
 import com.example.myapp.quiz.dto.QuizQuestionResponse;
 import com.example.myapp.quiz.dto.QuizSubmitRequest;
 import com.example.myapp.quiz.dto.QuizUpdateRequest;
-import com.example.myapp.quiz.mapper.QuizMapper;
+import com.example.myapp.quiz.repository.QuizRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +32,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class QuizService {
 
-    private final QuizMapper quizMapper;
+	private final QuizRepository quizRepository;
 
     @Transactional
     public QuizDetailResponse generateQuiz(QuizGenerateRequest request) {
@@ -46,7 +46,7 @@ public class QuizService {
         quiz.setAvailableFrom(request.getAvailableFrom());
         quiz.setAvailableUntil(request.getAvailableUntil());
 
-        quizMapper.insertQuiz(quiz);
+        quizRepository.insertQuiz(quiz);
 
         List<QuizQuestion> questions = List.of(
                 createDummyQuestion(
@@ -100,24 +100,24 @@ public class QuizService {
         );
 
         for (QuizQuestion question : questions) {
-            quizMapper.insertQuizQuestion(question);
+            quizRepository.insertQuizQuestion(question);
         }
 
         return getQuiz(quiz.getQuizId());
     }
 
     public List<QuizListResponse> getQuizList() {
-        return quizMapper.findQuizList();
+        return quizRepository.findQuizList();
     }
 
     public QuizDetailResponse getQuiz(Long quizId) {
-        Quiz quiz = quizMapper.findQuizById(quizId);
+        Quiz quiz = quizRepository.findQuizById(quizId);
 
         if (quiz == null) {
             throw new IllegalArgumentException("존재하지 않는 퀴즈입니다. quizId=" + quizId);
         }
 
-        List<QuizQuestion> questions = quizMapper.findQuestionsByQuizId(quizId);
+        List<QuizQuestion> questions = quizRepository.findQuestionsByQuizId(quizId);
 
         QuizDetailResponse response = new QuizDetailResponse();
         response.setQuizId(quiz.getQuizId());
@@ -140,7 +140,7 @@ public class QuizService {
 
     @Transactional
     public QuizDetailResponse updateQuiz(Long quizId, QuizUpdateRequest request) {
-        int updatedCount = quizMapper.updateQuiz(quizId, request);
+        int updatedCount = quizRepository.updateQuiz(quizId, request);
 
         if (updatedCount == 0) {
             throw new IllegalArgumentException("존재하지 않는 퀴즈입니다. quizId=" + quizId);
@@ -151,7 +151,7 @@ public class QuizService {
 
     @Transactional
     public void deleteQuiz(Long quizId) {
-        int deletedCount = quizMapper.deleteQuiz(quizId);
+        int deletedCount = quizRepository.deleteQuiz(quizId);
 
         if (deletedCount == 0) {
             throw new IllegalArgumentException("존재하지 않는 퀴즈입니다. quizId=" + quizId);
@@ -164,7 +164,7 @@ public class QuizService {
             Long questionId,
             QuestionUpdateRequest request
     ) {
-        int updatedCount = quizMapper.updateQuestion(quizId, questionId, request);
+        int updatedCount = quizRepository.updateQuestion(quizId, questionId, request);
 
         if (updatedCount == 0) {
             throw new IllegalArgumentException(
@@ -177,7 +177,7 @@ public class QuizService {
 
     @Transactional
     public QuizAttemptResponse startAttempt(Long quizId, QuizAttemptStartRequest request) {
-        Quiz quiz = quizMapper.findQuizById(quizId);
+        Quiz quiz = quizRepository.findQuizById(quizId);
 
         if (quiz == null) {
             throw new IllegalArgumentException("존재하지 않는 퀴즈입니다. quizId=" + quizId);
@@ -189,9 +189,9 @@ public class QuizService {
         attempt.setQuizId(quizId);
         attempt.setStudentId(request.getStudentId());
 
-        quizMapper.insertQuizAttempt(attempt);
+        quizRepository.insertQuizAttempt(attempt);
 
-        QuizAttempt savedAttempt = quizMapper.findAttemptById(quizId, attempt.getQuizAttemptId());
+        QuizAttempt savedAttempt = quizRepository.findAttemptById(quizId, attempt.getQuizAttemptId());
         return toAttemptResponse(savedAttempt);
     }
 
@@ -201,7 +201,7 @@ public class QuizService {
             Long attemptId,
             QuizSubmitRequest request
     ) {
-        Quiz quiz = quizMapper.findQuizById(quizId);
+        Quiz quiz = quizRepository.findQuizById(quizId);
 
         if (quiz == null) {
             throw new IllegalArgumentException("존재하지 않는 퀴즈입니다. quizId=" + quizId);
@@ -209,7 +209,7 @@ public class QuizService {
 
         validateSubmitAvailable(quiz);
 
-        QuizAttempt attempt = quizMapper.findAttemptById(quizId, attemptId);
+        QuizAttempt attempt = quizRepository.findAttemptById(quizId, attemptId);
 
         if (attempt == null) {
             throw new IllegalArgumentException("존재하지 않는 응시 기록입니다. attemptId=" + attemptId);
@@ -223,7 +223,7 @@ public class QuizService {
             throw new IllegalArgumentException("제출된 답안이 없습니다.");
         }
 
-        List<QuizQuestion> questions = quizMapper.findQuestionsByQuizId(quizId);
+        List<QuizQuestion> questions = quizRepository.findQuestionsByQuizId(quizId);
 
         Map<Long, QuizQuestion> questionMap = questions.stream()
                 .collect(Collectors.toMap(
@@ -256,14 +256,14 @@ public class QuizService {
             answer.setAnswerText(submittedAnswer.getAnswerText());
             answer.setIsCorrect(isCorrect);
 
-            quizMapper.insertQuizAnswer(answer);
+            quizRepository.insertQuizAnswer(answer);
         }
 
         int score = totalCount == 0
                 ? 0
                 : (int) Math.round((correctCount * 100.0) / totalCount);
 
-        quizMapper.updateAttemptResult(
+        quizRepository.updateAttemptResult(
                 attemptId,
                 score,
                 totalCount,
@@ -274,14 +274,14 @@ public class QuizService {
     }
 
     public QuizAttemptResultResponse getAttemptResult(Long quizId, Long attemptId) {
-        QuizAttempt attempt = quizMapper.findAttemptById(quizId, attemptId);
+        QuizAttempt attempt = quizRepository.findAttemptById(quizId, attemptId);
 
         if (attempt == null) {
             throw new IllegalArgumentException("존재하지 않는 응시 기록입니다. attemptId=" + attemptId);
         }
 
         List<QuizAnswerResultResponse> answers =
-                quizMapper.findAnswerResultsByAttemptId(attemptId);
+                quizRepository.findAnswerResultsByAttemptId(attemptId);
 
         QuizAttemptResultResponse response = new QuizAttemptResultResponse();
         response.setQuizAttemptId(attempt.getQuizAttemptId());

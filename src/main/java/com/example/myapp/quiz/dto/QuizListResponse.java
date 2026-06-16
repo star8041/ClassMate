@@ -8,6 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class QuizListResponse {
+
     private Long quizId;
     private Long teacherId;
     private Long materialId;
@@ -15,6 +16,10 @@ public class QuizListResponse {
     private String difficulty;
     private Integer startPage;
     private Integer endPage;
+
+    private LocalDateTime availableFrom;
+    private LocalDateTime availableUntil;
+
     private LocalDateTime createdAt;
     private Integer questionCount;
 }
