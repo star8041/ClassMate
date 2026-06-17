@@ -220,8 +220,18 @@
             </div>
         </div>
 
-        <!-- ── 학생: 초대 코드 ── -->
+        <!-- ── 학생: 이름 + 학번 + 초대코드 ── -->
         <div id="studentForm" style="display:none">
+            <div class="field">
+                <label for="studentName">이름</label>
+                <input type="text" id="studentName" placeholder="이름을 입력하세요" autocomplete="off">
+            </div>
+
+            <div class="field">
+                <label for="studentNumber">학번</label>
+                <input type="text" id="studentNumber" placeholder="학번을 입력하세요" autocomplete="off">
+            </div>
+
             <div class="field">
                 <label for="inviteCode">초대 코드</label>
                 <input type="text" id="inviteCode" class="code-input" placeholder="••••••"
@@ -337,32 +347,36 @@
         }
     }
 
-    // 학생: 초대 코드로 입장
+    // 학생: 이름 + 학번 + 초대코드로 로그인
     async function doStudentLogin() {
         hideError();
-        const code = document.getElementById('inviteCode').value.trim();
-        if (!/^\d{6}$/.test(code)) { showError('6자리 숫자 코드를 입력해 주세요.'); return; }
+        const studentName   = document.getElementById('studentName').value.trim();
+        const studentNumber = document.getElementById('studentNumber').value.trim();
+        const inviteCode    = document.getElementById('inviteCode').value.trim();
+
+        if (!studentName)                  { showError('이름을 입력해 주세요.'); return; }
+        if (!studentNumber)                { showError('학번을 입력해 주세요.'); return; }
+        if (!/^\d{6}$/.test(inviteCode))   { showError('6자리 숫자 초대코드를 입력해 주세요.'); return; }
 
         const btn = document.getElementById('studentBtn');
         btn.disabled = true;
         btn.textContent = '확인 중...';
 
         try {
-            const res = await fetch('/api/v1/students/verify-code', {
+            const res = await fetch('/api/v1/students/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code })
+                body: JSON.stringify({ studentName, studentNumber, inviteCode })
             });
             const data = await res.json().catch(() => ({}));
 
-            if (res.ok && data.valid) {
+            if (res.ok && data.accessToken) {
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('tokenType', data.tokenType ?? 'Bearer');
                 localStorage.setItem('loginRole', 'student');
-                localStorage.setItem('studentTeacherId', data.teacherId);
-                localStorage.setItem('studentTeacherName', data.teacherName ?? '');
-                localStorage.setItem('inviteCode', code);
                 location.href = '/student/home';
             } else {
-                showError(data.message ?? '유효하지 않거나 만료된 코드입니다.');
+                showError(data.message ?? '이름, 학번, 초대코드를 다시 확인해 주세요.');
             }
         } catch (e) {
             showError('서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.');

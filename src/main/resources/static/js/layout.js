@@ -36,11 +36,33 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ── 초대코드 ── */
 let inviteTimerInterval = null;
 
-// 페이지 로드 시 localStorage에서 복원
-document.addEventListener('DOMContentLoaded', function () {
-  const saved = _loadInviteState();
-  if (saved && saved.expiresAt > Date.now()) {
-    showInviteCode(saved.code, new Date(saved.expiresAt).toISOString());
+// 페이지 로드 시 서버에 유효한 코드가 있는지 확인 후 복원
+document.addEventListener('DOMContentLoaded', async function () {
+  const body = document.getElementById('inviteBody');
+  if (!body) return; // 헤더가 없는 페이지(로그인 등)는 스킵
+
+  const token = localStorage.getItem('accessToken');
+  if (!token) return;
+
+  try {
+    const res = await fetch('/api/v1/teachers/me/invite-code', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      _saveInviteState(data.code, data.expiresAt);
+      showInviteCode(data.code, data.expiresAt);
+    } else {
+      // 서버에 유효한 코드 없음(204) 또는 오류 → localStorage 정리 후 생성 버튼 표시
+      _clearInviteState();
+      body.innerHTML = '<button class="invite-gen-btn" onclick="generateInvite()">코드 생성</button>';
+    }
+  } catch (e) {
+    // 네트워크 오류 시 localStorage 코드를 fallback 으로 사용
+    const saved = _loadInviteState();
+    if (saved && saved.expiresAt > Date.now()) {
+      showInviteCode(saved.code, new Date(saved.expiresAt).toISOString());
+    }
   }
 });
 

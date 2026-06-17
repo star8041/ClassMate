@@ -4,6 +4,8 @@ import com.example.myapp.auth.dto.InviteCodeResponse;
 import com.example.myapp.auth.service.AuthService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +30,18 @@ public class TeacherInviteCodeController {
 
     public TeacherInviteCodeController(AuthService authService) {
         this.authService = authService;
+    }
+
+    /**
+     * 현재 교사가 보유한 유효한 초대코드 조회.
+     * 없으면 204 No Content — 클라이언트가 재생성 버튼을 표시하도록 한다.
+     */
+    @GetMapping
+    public ResponseEntity<InviteCodeResponse> current(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        return authService.getCurrentInviteCode(authHeader)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
     }
 
     /** 초대코드 생성/재발급 */
