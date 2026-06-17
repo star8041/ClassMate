@@ -1,6 +1,5 @@
 package com.example.myapp.chat.service.agent;
 
-import com.example.myapp.chat.entity.ChatMessage;
 import com.example.myapp.chat.entity.ChatRole;
 import com.example.myapp.chat.mapper.ChatMessageMapper;
 import com.example.myapp.material.entity.MaterialPage;
@@ -16,6 +15,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,12 +45,19 @@ public class SupervisorAgent {
     @Value("classpath:prompts/intent-classifier.st")
     private Resource intentClassifierPrompt;
 
+    /** 교사 채팅용 (teacherMaterialIds 없음) */
     public AgentContext analyze(String userMessage, ChatRole role, Long sessionId, Long materialId) {
-        IntentResult intentResult = classifyIntent(userMessage, materialId);
+        return analyze(userMessage, role, sessionId, materialId, Collections.emptyList());
+    }
+
+    /** 학생 채팅용 (담임선생님 자료 ID 목록 포함) */
+    public AgentContext analyze(String userMessage, ChatRole role, Long sessionId,
+                                Long materialId, List<Long> teacherMaterialIds) {
+        IntentResult intentResult = classifyIntent(userMessage, materialId != null || !teacherMaterialIds.isEmpty());
         log.info("[Supervisor] sessionId={} intent={} reason={}",
                 sessionId, intentResult.intentType(), intentResult.reasoning());
 
-        String context = retrieveContext(intentResult, materialId);
+        String context = retrieveContext(intentResult, materialId, teacherMaterialIds);
         String history = buildHistory(sessionId);
 
         return AgentContext.builder()
@@ -61,16 +68,17 @@ public class SupervisorAgent {
                 .userMessage(userMessage)
                 .sessionId(sessionId)
                 .materialId(materialId)
+                .teacherMaterialIds(teacherMaterialIds)
                 .build();
     }
 
     // ── private ──────────────────────────────────────────────────────────────
 
-    private IntentResult classifyIntent(String userMessage, Long materialId) {
+    private IntentResult classifyIntent(String userMessage, boolean hasMaterial) {
         try {
             String prompt = new String(intentClassifierPrompt.getContentAsByteArray(), StandardCharsets.UTF_8)
                     .replace("{userMessage}", userMessage)
-                    .replace("{hasMaterial}", materialId != null ? "true" : "false");
+                    .replace("{hasMaterial}", hasMaterial ? "true" : "false");
 
             return chatClient.prompt()
                     .user(prompt)
@@ -82,7 +90,7 @@ public class SupervisorAgent {
         }
     }
 
-    private String retrieveContext(IntentResult intent, Long materialId) {
+    private String retrieveContext(IntentResult intent, Long materialId, List<Long> teacherMaterialIds) {
         return switch (intent.intentType()) {
 
             case VECTOR_RAG -> {
@@ -95,10 +103,16 @@ public class SupervisorAgent {
 
                 if (materialId != null) {
                     req.filterExpression("materialId == " + materialId);
+                } else if (teacherMaterialIds != null && !teacherMaterialIds.isEmpty()) {
+                    if (teacherMaterialIds.size() == 1) {
+                        req.filterExpression("materialId == " + teacherMaterialIds.get(0));
+                    } else {
+                        req.filterExpression("materialId in " + teacherMaterialIds);
+                    }
                 }
 
-                log.info("[Supervisor] VECTOR_RAG 검색 시작 - query='{}' materialId={} threshold={}",
-                        intent.searchQuery(), materialId, VECTOR_THRESHOLD);
+                log.info("[Supervisor] VECTOR_RAG 검색 시작 - query='{}' materialId={} teacherMaterialIds={} threshold={}",
+                        intent.searchQuery(), materialId, teacherMaterialIds, VECTOR_THRESHOLD);
 
                 List<Document> docs = vectorStore.similaritySearch(req.build());
 

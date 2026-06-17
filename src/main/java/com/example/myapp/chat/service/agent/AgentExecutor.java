@@ -73,7 +73,7 @@ public class AgentExecutor {
 
         if (hasContext) {
             sb.append("## 참고 자료\n").append(ctx.getRetrievedContext()).append("\n\n");
-            sb.append("위 참고 자료에 [출처: 파일명 N페이지] 형태로 표시된 경우, 답변 말미에 반드시 출처를 명시하세요.\n\n");
+            sb.append("위 참고 자료에 [출처: 파일명 N페이지] 형태로 표시된 경우, 답변 말미에 반드시 출처를 명시하세요. 마크다운 문법은 사용하지 마세요.\n\n");
         } else {
             sb.append("참고할 교재 자료가 없습니다. 일반 교육 지식으로만 답변하고, 출처나 페이지 번호를 절대 임의로 만들지 마세요.\n\n");
         }
