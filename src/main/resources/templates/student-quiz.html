@@ -490,7 +490,7 @@ function getStudentIdFromToken() {
 
     const payload = JSON.parse(payloadJson);
 
-    if (payload.role !== 'STUDENT') {
+    if (payload.role !== 'STUDENT' && payload.role !== 'ADMIN') {
       alert('학생 계정으로 로그인해주세요.');
       location.href = '/login';
       return null;

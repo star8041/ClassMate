@@ -978,129 +978,287 @@ button:disabled:hover {
 	})();
 	</script>
 
-	<script>
-	(function () {
-		/* ── 더미 강의자료 데이터 (서버 연동 시 fetch로 교체) ── */
-		var DUMMY_MATERIALS = [
-			{ id: 'mat-01', title: '1강. 세포의 구조와 기능', desc: '생명과학 I · 12쪽' },
-			{ id: 'mat-02', title: '2강. 유전 정보와 DNA', desc: '생명과학 I · 18쪽' },
-			{ id: 'mat-03', title: '3강. 광합성과 세포 호흡', desc: '생명과학 I · 15쪽' },
-			{ id: 'mat-04', title: '1강. 뉴턴의 운동 법칙', desc: '물리학 I · 20쪽' },
-			{ id: 'mat-05', title: '2강. 전기와 자기', desc: '물리학 I · 22쪽' },
-			{ id: 'mat-06', title: '1강. 원소와 주기율표', desc: '화학 I · 14쪽' },
-		];
+<script>
+(function () {
+	let materials = [];
+	let selectedMaterial = null;
 
-		var selectedMaterial = null;
 
-		function fetchMaterials(callback) {
-			/* 서버 연동 예시:
-			   fetch('/api/materials')
-			     .then(function(r){ return r.json(); })
-			     .then(callback);
-			   현재는 더미 데이터를 100ms 지연 후 반환 */
-			setTimeout(function () {
-				callback(DUMMY_MATERIALS);
-			}, 100);
+	const MATERIAL_API = {
+		list: function () {
+			return '/api/materials';
+		}
+	};
+
+
+
+	function authHeaders() {
+		const token = localStorage.getItem('accessToken');
+
+		return token
+			? { 'Authorization': 'Bearer ' + token }
+			: {};
+	}
+
+	function unwrapResponse(body) {
+		return body?.data || body?.result || body?.materials || body || [];
+	}
+
+	function getMaterialId(material) {
+		return material.materialId ?? material.material_id ?? material.id;
+	}
+
+	function getMaterialFileName(material) {
+		return material.fileName ?? material.file_name ?? material.title ?? '제목 없는 자료';
+	}
+
+	function getMaterialSubject(material) {
+		return material.subject || '과목 미지정';
+	}
+
+	function getMaterialTotalPages(material) {
+		return Number(material.totalPages ?? material.total_pages ?? 0);
+	}
+
+	function formatUploadedAt(value) {
+		if (!value) {
+			return '';
 		}
 
-		function renderDropdown(materials) {
-			var dropdown = document.getElementById('materialDropdown');
-			if (!dropdown) return;
+		const date = new Date(value);
 
-			if (!materials || materials.length === 0) {
-				dropdown.innerHTML = '<div class="material-dropdown-empty">강의자료가 없습니다.</div>';
+		if (Number.isNaN(date.getTime())) {
+			return '';
+		}
+
+		return date.toLocaleDateString('ko-KR', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit'
+		});
+	}
+
+	function escapeHtml(value) {
+		return String(value ?? '')
+			.replaceAll('&', '&amp;')
+			.replaceAll('<', '&lt;')
+			.replaceAll('>', '&gt;')
+			.replaceAll('"', '&quot;')
+			.replaceAll("'", '&#39;');
+	}
+
+	function renderDropdown() {
+		const dropdown = document.getElementById('materialDropdown');
+
+		if (!dropdown) {
+			return;
+		}
+
+		if (!materials.length) {
+			dropdown.innerHTML = '<div class="material-dropdown-empty">등록된 강의자료가 없습니다.</div>';
+			return;
+		}
+
+		dropdown.innerHTML = materials.map(function (material) {
+			const materialId = getMaterialId(material);
+			const fileName = getMaterialFileName(material);
+			const subject = getMaterialSubject(material);
+			const totalPages = getMaterialTotalPages(material);
+			const uploadedAt = formatUploadedAt(material.uploadedAt ?? material.uploaded_at);
+
+			return '' +
+				'<div class="material-dropdown-item" role="option" data-id="' + escapeHtml(materialId) + '">' +
+					'<div>' + escapeHtml(fileName) + '</div>' +
+					'<div class="material-dropdown-item-sub">' +
+						escapeHtml(subject) + ' · ' + totalPages + '쪽' +
+						(uploadedAt ? ' · ' + escapeHtml(uploadedAt) : '') +
+					'</div>' +
+				'</div>';
+		}).join('');
+
+		dropdown.querySelectorAll('.material-dropdown-item').forEach(function (item) {
+			item.addEventListener('click', function () {
+				const materialId = this.getAttribute('data-id');
+
+				const material = materials.find(function (m) {
+					return String(getMaterialId(m)) === String(materialId);
+				});
+
+				if (!material) {
+					return;
+				}
+
+				selectMaterial(material);
+				closeDropdown();
+			});
+		});
+	}
+
+	function selectMaterial(material) {
+		selectedMaterial = material;
+
+		const trigger = document.getElementById('materialTrigger');
+		const startPageInput = document.getElementById('startPageInput');
+		const endPageInput = document.getElementById('endPageInput');
+
+		const fileName = getMaterialFileName(material);
+		const totalPages = getMaterialTotalPages(material);
+
+		if (trigger) {
+			trigger.textContent = fileName;
+			trigger.classList.add('has-value');
+		}
+
+		document.querySelectorAll('.material-dropdown-item').forEach(function (item) {
+			item.classList.toggle(
+				'selected',
+				String(item.getAttribute('data-id')) === String(getMaterialId(material))
+			);
+		});
+
+		if (totalPages > 0) {
+			if (startPageInput) {
+				startPageInput.max = totalPages;
+
+				if (!startPageInput.value) {
+					startPageInput.value = 1;
+				}
+			}
+
+			if (endPageInput) {
+				endPageInput.max = totalPages;
+
+				if (!endPageInput.value) {
+					endPageInput.value = Math.min(3, totalPages);
+				}
+			}
+		}
+
+		if (typeof window.syncPageRangeValue === 'function') {
+			window.syncPageRangeValue();
+		}
+	}
+
+	async function loadMaterialsForTeacher(teacherId) {
+		const dropdown = document.getElementById('materialDropdown');
+
+		try {
+			if (dropdown) {
+				dropdown.innerHTML = '<div class="material-dropdown-loading">불러오는 중...</div>';
+			}
+
+			const response = await fetch(MATERIAL_API.list(), { 
+				headers: authHeaders() 
+			});
+
+			if (!response.ok) {
+				console.error(await response.text());
+
+				if (dropdown) {
+					dropdown.innerHTML = '<div class="material-dropdown-empty">강의자료를 불러오지 못했습니다.</div>';
+				}
+
 				return;
 			}
 
-			dropdown.innerHTML = materials.map(function (m) {
-				return '<div class="material-dropdown-item" role="option" data-id="' + m.id + '">'
-					+ '<div>' + m.title + '</div>'
-					+ '<div class="material-dropdown-item-sub">' + m.desc + '</div>'
-					+ '</div>';
-			}).join('');
+			const body = await response.json();
+			materials = unwrapResponse(body) || [];
 
-			dropdown.querySelectorAll('.material-dropdown-item').forEach(function (item) {
-				item.addEventListener('click', function () {
-					var id = this.getAttribute('data-id');
-					var mat = materials.find(function (m) { return m.id === id; });
-					if (!mat) return;
+			renderDropdown();
 
-					selectedMaterial = mat;
-
-					var trigger = document.getElementById('materialTrigger');
-					if (trigger) {
-						trigger.textContent = mat.title;
-						trigger.classList.add('has-value');
-					}
-
-					dropdown.querySelectorAll('.material-dropdown-item').forEach(function (el) {
-						el.classList.remove('selected');
-					});
-					this.classList.add('selected');
-
-					closeDropdown();
-				});
-			});
-		}
-
-		function openDropdown() {
-			var trigger = document.getElementById('materialTrigger');
-			var dropdown = document.getElementById('materialDropdown');
-			if (!trigger || !dropdown) return;
-
-			trigger.classList.add('open');
-			trigger.setAttribute('aria-expanded', 'true');
-			dropdown.classList.add('open');
-
-			/* 열릴 때마다 목록 새로고침 (필요 시 캐싱 가능) */
-			dropdown.innerHTML = '<div class="material-dropdown-loading">불러오는 중...</div>';
-			fetchMaterials(renderDropdown);
-		}
-
-		function closeDropdown() {
-			var trigger = document.getElementById('materialTrigger');
-			var dropdown = document.getElementById('materialDropdown');
-			if (!trigger || !dropdown) return;
-
-			trigger.classList.remove('open');
-			trigger.setAttribute('aria-expanded', 'false');
-			dropdown.classList.remove('open');
-		}
-
-		document.addEventListener('DOMContentLoaded', function () {
-			var trigger = document.getElementById('materialTrigger');
-			if (trigger) {
-				trigger.addEventListener('click', function (e) {
-					e.stopPropagation();
-					var isOpen = document.getElementById('materialDropdown').classList.contains('open');
-					if (isOpen) {
-						closeDropdown();
-					} else {
-						openDropdown();
-					}
-				});
+			if (materials.length > 0 && !selectedMaterial) {
+				selectMaterial(materials[0]);
 			}
+		} catch (error) {
+			console.error(error);
 
-			/* 바깥 클릭 시 닫기 */
-			document.addEventListener('click', function (e) {
-				var selector = document.querySelector('.material-selector');
-				if (selector && !selector.contains(e.target)) {
+			if (dropdown) {
+				dropdown.innerHTML = '<div class="material-dropdown-empty">강의자료 조회 중 오류가 발생했습니다.</div>';
+			}
+		}
+	}
+
+	function openDropdown() {
+		const trigger = document.getElementById('materialTrigger');
+		const dropdown = document.getElementById('materialDropdown');
+
+		if (!trigger || !dropdown) {
+			return;
+		}
+
+		trigger.classList.add('open');
+		trigger.setAttribute('aria-expanded', 'true');
+		dropdown.classList.add('open');
+
+		renderDropdown();
+	}
+
+	function closeDropdown() {
+		const trigger = document.getElementById('materialTrigger');
+		const dropdown = document.getElementById('materialDropdown');
+
+		if (!trigger || !dropdown) {
+			return;
+		}
+
+		trigger.classList.remove('open');
+		trigger.setAttribute('aria-expanded', 'false');
+		dropdown.classList.remove('open');
+	}
+
+	document.addEventListener('DOMContentLoaded', function () {
+		const trigger = document.getElementById('materialTrigger');
+
+		if (trigger) {
+			trigger.addEventListener('click', function (event) {
+				event.stopPropagation();
+
+				const dropdown = document.getElementById('materialDropdown');
+				const isOpen = dropdown && dropdown.classList.contains('open');
+
+				if (isOpen) {
 					closeDropdown();
+				} else {
+					openDropdown();
 				}
 			});
+		}
 
-			/* ESC 키로 닫기 */
-			document.addEventListener('keydown', function (e) {
-				if (e.key === 'Escape') closeDropdown();
-			});
+		document.addEventListener('click', function (event) {
+			const selector = document.querySelector('.material-selector');
+
+			if (selector && !selector.contains(event.target)) {
+				closeDropdown();
+			}
 		});
 
-		/* 외부에서 선택된 강의자료 ID를 읽을 수 있도록 노출 */
-		window.getSelectedMaterialId = function () {
-			return selectedMaterial ? selectedMaterial.id : null;
-		};
-	})();
-	</script>
+		document.addEventListener('keydown', function (event) {
+			if (event.key === 'Escape') {
+				closeDropdown();
+			}
+		});
+	});
+
+	window.loadMaterialsForTeacher = loadMaterialsForTeacher;
+
+	window.getSelectedMaterial = function () {
+		return selectedMaterial;
+	};
+
+	window.getSelectedMaterialId = function () {
+		return selectedMaterial ? Number(getMaterialId(selectedMaterial)) : null;
+	};
+
+	window.getSelectedMaterialTotalPages = function () {
+		return selectedMaterial ? getMaterialTotalPages(selectedMaterial) : 0;
+	};
+
+	window.getSelectedMaterialSubject = function () {
+		return selectedMaterial ? getMaterialSubject(selectedMaterial) : '';
+	};
+})();
+</script>
+
 
 	<script th:src="@{/js/quiz-create.js}"></script>
 	<script th:src="@{/js/layout.js}"></script>
