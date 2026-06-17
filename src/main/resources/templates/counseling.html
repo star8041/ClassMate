@@ -183,24 +183,18 @@
 	          <th>시간</th>
 	          <th>상담 주제</th>
 	          <th>상태</th>
-	          <th>관리</th>
 	        </tr>
 	      </thead>
 	            <tbody id="counsel-body">
-        <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px;">상담 일정을 불러오는 중...</td></tr>
+        <tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;">상담 일정을 불러오는 중...</td></tr>
       </tbody>
 	    </table>
 	
-	    <div class="pagination-wrap">
-	      <div class="pagination">
-	        <button class="page-btn nav">&#8249;</button>
-	        <button class="page-btn active">1</button>
-	        <button class="page-btn">2</button>
-	        <button class="page-btn nav">&#8250;</button>
-	      </div>
-	      <span class="total-count">전체 12건</span>
-	    </div>
-	  </div>
+	    <div class="pagination-wrap" id="paginationWrap" style="display:none">
+      <div class="pagination" id="pagination"></div>
+      <span class="total-count" id="totalCount">전체 0건</span>
+    </div>
+  </div>
 	
 	  <!-- ══ 녹음 업로드 & 텍스트 변환 & 자동 요약 ══ -->
 	  <div class="section">
@@ -315,26 +309,44 @@
       return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
     }
 
+    var allRows = [];        // 전체 상담 일정
+    var curPage = 1;
+    var PAGE_SIZE = 8;
+
     async function load() {
       var body = document.getElementById('counsel-body');
       try {
         var res = await fetch('/api/schedules?type=' + encodeURIComponent('상담'), { headers: authHeaders() });
         if (!res.ok) throw new Error('status ' + res.status);
-        render(await res.json());
+        allRows = await res.json();
+        curPage = 1;
+        renderPage();
+        fillScheduleDropdown();
       } catch (e) {
         console.error('상담 일정 로드 실패', e);
-        body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#c0392b;padding:20px;">상담 일정을 불러오지 못했어요. (교사 로그인 상태를 확인해 주세요)</td></tr>';
+        body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#c0392b;padding:20px;">상담 일정을 불러오지 못했어요. (교사 로그인 상태를 확인해 주세요)</td></tr>';
+        document.getElementById('paginationWrap').style.display = 'none';
       }
     }
 
-    function render(rows) {
+    function renderPage() {
       var body = document.getElementById('counsel-body');
-      if (!rows.length) {
-        body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px;">등록된 상담 일정이 없습니다. 일정 관리에서 ‘상담’ 유형으로 등록해 보세요.</td></tr>';
+      var wrap = document.getElementById('paginationWrap');
+      var total = allRows.length;
+
+      if (!total) {
+        body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px;">등록된 상담 일정이 없습니다. 일정 관리에서 ‘상담’ 유형으로 등록해 보세요.</td></tr>';
+        wrap.style.display = 'none';
         return;
       }
+
+      var totalPages = Math.ceil(total / PAGE_SIZE);
+      if (curPage > totalPages) curPage = totalPages;
+      var startIdx = (curPage - 1) * PAGE_SIZE;
+      var pageRows = allRows.slice(startIdx, startIdx + PAGE_SIZE);
       var now = Date.now();
-      body.innerHTML = rows.map(function (s) {
+
+      body.innerHTML = pageRows.map(function (s) {
         var done = s.scheduledAt && new Date(s.scheduledAt).getTime() < now;
         var badge = done
           ? '<span class="badge badge-done">완료</span>'
@@ -348,18 +360,41 @@
           '<td>' + fmtTime(s.scheduledAt) + '</td>' +
           '<td>' + topic + '</td>' +
           '<td>' + badge + '</td>' +
-          '<td><button class="btn-menu">⋮</button></td>' +
         '</tr>';
       }).join('');
 
-      // 저장용 상담 일정 드롭다운 채우기
-      var sel = document.getElementById('noteSchedule');
-      if (sel) {
-        sel.innerHTML = '<option value="">상담 일정을 선택하세요</option>' + rows.map(function (s) {
-          var label = (s.studentName || s.title || '상담') + ' · ' + fmtDate(s.scheduledAt);
-          return '<option value="' + s.scheduleId + '">' + esc(label) + '</option>';
-        }).join('');
+      // 페이지네이션: 페이지가 1개뿐이면 버튼 숨기고 건수만 표시
+      wrap.style.display = 'flex';
+      var pag = document.getElementById('pagination');
+      document.getElementById('totalCount').textContent = '전체 ' + total + '건';
+      if (totalPages <= 1) {
+        pag.innerHTML = '';
+        return;
       }
+      var html = '<button class="page-btn nav" data-go="prev"' + (curPage === 1 ? ' disabled style="opacity:.4;cursor:default"' : '') + '>&#8249;</button>';
+      for (var i = 1; i <= totalPages; i++) {
+        html += '<button class="page-btn' + (i === curPage ? ' active' : '') + '" data-go="' + i + '">' + i + '</button>';
+      }
+      html += '<button class="page-btn nav" data-go="next"' + (curPage === totalPages ? ' disabled style="opacity:.4;cursor:default"' : '') + '>&#8250;</button>';
+      pag.innerHTML = html;
+      pag.querySelectorAll('.page-btn').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var g = b.dataset.go;
+          if (g === 'prev') { if (curPage > 1) curPage--; }
+          else if (g === 'next') { if (curPage < totalPages) curPage++; }
+          else { curPage = Number(g); }
+          renderPage();
+        });
+      });
+    }
+
+    function fillScheduleDropdown() {
+      var sel = document.getElementById('noteSchedule');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">상담 일정을 선택하세요</option>' + allRows.map(function (s) {
+        var label = (s.studentName || s.title || '상담') + ' · ' + fmtDate(s.scheduledAt);
+        return '<option value="' + s.scheduleId + '">' + esc(label) + '</option>';
+      }).join('');
     }
 
     // ── 녹음 업로드 → 변환 → 요약 ───────────────────────────
