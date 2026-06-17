@@ -29,8 +29,6 @@
     
     .student-name-badge { font-size: 15px; font-weight: 700; color: var(--text); }
     .student-name-badge span { color: #9AA3B2; font-weight: 500; font-size: 13px; margin-left: 3px; }
-    /* .logout-btn { display: flex; align-items: center; gap: 6px; color: #6B7280; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: none; font-family: inherit; }
-  	.logout-btn:hover { color: #EF4444; } */
   	.student-role {
 	  color: #9AA3B2;
 	  font-weight: 500;
@@ -53,18 +51,7 @@
   </style>
   <!-- class="topbar" 도 같이 부여 → 학생 사이드바의 전환버튼 재배치 로직이 이 곳으로 이동 -->
   <div class="s-topbar topbar">
-    <!-- <div class="stb-me">
-      <div class="stb-avatar" id="stbAvatar">🧒</div>
-      <span class="stb-name" id="studentName">학생</span>
-      <span class="stb-grade" id="studentGrade">3학년 2반</span>
-    </div> -->
     <span class="student-name-badge" id="studentName">학생<span class="student-role">학생</span></span>
-    <!-- <button class="logout-btn">
-      <a href="/members/logout">
-	    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-	    로그아웃
-	  </a>
-    </button> -->
     <a href="/members/logout" class="logout-btn">
 	  <svg width="15" height="15" viewBox="0 0 24 24"
 	       fill="none" stroke="currentColor" stroke-width="2">
@@ -110,22 +97,7 @@
         var sn = payload?.name || localStorage.getItem('studentName') || '학생';
         if (sn && nm) nm.innerHTML = fixEncoding(sn) + '<span class="student-role"> 학생</span>';
       }
-      /* document.addEventListener('DOMContentLoaded', () => {
-	  const p = jwtPayload(token);
-	    if (p) {
-	      studentName = p.name || '학생';
-	      document.getElementById('studentNameBadge').innerHTML = nm + '<span> 학생</span>';
-	    }
-	  }); */
     })();
-    
-    /* function jwtPayload(jwt) {
-      try {
-        const b64 = jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-        return JSON.parse(decodeURIComponent(atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-      } catch { return null; }
-    } */
-    
   </script>
 </th:block>
 </body>

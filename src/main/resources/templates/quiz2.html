@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -105,139 +106,6 @@ select:focus,
 .datetime-input:focus {
 	outline: none;
 	border-color: #4f80f7;
-}
-
-/* 강의자료 선택 드롭다운 */
-.material-selector {
-	position: relative;
-}
-
-.material-trigger {
-	width: 100%;
-	height: 36px;
-	border: 1px solid #ddd;
-	border-radius: 8px;
-	padding: 0 32px 0 10px;
-	font-size: 13px;
-	color: #aaa;
-	background: #fff
-		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")
-		no-repeat right 10px center;
-	font-family: inherit;
-	cursor: pointer;
-	text-align: left;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	display: flex;
-	align-items: center;
-	transition: border-color 0.15s;
-	box-sizing: border-box;
-}
-
-.material-trigger.has-value {
-	color: #1a1a1a;
-}
-
-.material-trigger:focus,
-.material-trigger.open {
-	outline: none;
-	border-color: #4f80f7;
-}
-
-.material-dropdown {
-	display: none;
-	position: absolute;
-	top: calc(100% + 4px);
-	left: 0;
-	right: 0;
-	background: #fff;
-	border: 1px solid #ddd;
-	border-radius: 10px;
-	box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-	z-index: 100;
-	overflow: hidden;
-}
-
-.material-dropdown.open {
-	display: block;
-}
-
-.material-dropdown-loading,
-.material-dropdown-empty {
-	padding: 14px 14px;
-	font-size: 13px;
-	color: #999;
-	text-align: center;
-}
-
-.material-dropdown-item {
-	padding: 10px 14px;
-	font-size: 13px;
-	color: #1a1a1a;
-	cursor: pointer;
-	transition: background 0.12s;
-	border-bottom: 1px solid #f0f0f0;
-}
-
-.material-dropdown-item:last-child {
-	border-bottom: none;
-}
-
-.material-dropdown-item:hover {
-	background: #f5f8ff;
-}
-
-.material-dropdown-item.selected {
-	background: #eef4ff;
-	color: #4f80f7;
-	font-weight: 600;
-}
-
-.material-dropdown-item-sub {
-	font-size: 11px;
-	color: #aaa;
-	margin-top: 2px;
-}
-
-/* 숫자 입력 필드 */
-.number-input-wrap {
-	position: relative;
-	display: flex;
-	align-items: center;
-}
-
-.number-input {
-	width: 100%;
-	height: 36px;
-	border: 1px solid #ddd;
-	border-radius: 8px;
-	padding: 0 36px 0 10px;
-	font-size: 13px;
-	color: #1a1a1a;
-	background: #fff;
-	font-family: inherit;
-	box-sizing: border-box;
-	-moz-appearance: textfield;
-}
-
-.number-input::-webkit-outer-spin-button,
-.number-input::-webkit-inner-spin-button {
-	-webkit-appearance: none;
-	margin: 0;
-}
-
-.number-input:focus {
-	outline: none;
-	border-color: #4f80f7;
-}
-
-.number-input-unit {
-	position: absolute;
-	right: 10px;
-	font-size: 12px;
-	color: #999;
-	pointer-events: none;
 }
 
 .page-range-wrap {
@@ -689,24 +557,21 @@ button:disabled:hover {
 
 						<div class="setting-row">
 							<div>
-								<div class="field-label">강의자료 선택</div>
-								<div class="material-selector">
-									<button type="button" id="materialTrigger" class="material-trigger" aria-haspopup="listbox" aria-expanded="false">
-										강의자료 선택
-									</button>
-									<div id="materialDropdown" class="material-dropdown" role="listbox">
-										<div class="material-dropdown-loading">불러오는 중...</div>
-									</div>
-								</div>
+								<div class="field-label">과목 선택</div>
+								<select id="subjectSelect">
+									<option>영어</option>
+									<option>수학</option>
+									<option>국어</option>
+								</select>
 							</div>
 
 							<div>
 								<div class="field-label">쪽수 직접 지정</div>
 
 								<div class="page-range-wrap">
-									<input id="startPageInput" class="page-range-input" type="number" min="1" step="1" placeholder="시작">
+									<input id="startPageInput" class="page-range-input" type="number" min="1" step="1" value="1" placeholder="시작">
 									<span class="page-range-dash">~</span>
-									<input id="endPageInput" class="page-range-input" type="number" min="1" step="1" placeholder="끝">
+									<input id="endPageInput" class="page-range-input" type="number" min="1" step="1" value="3" placeholder="끝">
 								</div>
 
 								<select id="unitSelect" class="page-range-hidden-select" aria-hidden="true" tabindex="-1">
@@ -719,8 +584,8 @@ button:disabled:hover {
 							<div>
 								<div class="field-label">난이도</div>
 								<select id="difficultySelect">
-									<option>쉬움</option>
 									<option>중간</option>
+									<option>쉬움</option>
 									<option>어려움</option>
 								</select>
 							</div>
@@ -729,18 +594,19 @@ button:disabled:hover {
 						<div class="setting-row-2">
 							<div>
 								<div class="field-label">문제 수</div>
-								<div class="number-input-wrap">
-									<input id="questionCountInput" class="number-input" type="number" min="1" max="50" placeholder="숫자만 입력">
-									<span class="number-input-unit">문항</span>
-								</div>
+								<select id="questionCountSelect">
+									<option value="3">3문항</option>
+								</select>
 							</div>
 
 							<div>
 								<div class="field-label">시간 제한</div>
-								<div class="number-input-wrap">
-									<input id="timeLimitInput" class="number-input" type="number" min="1" max="180" placeholder="숫자만 입력">
-									<span class="number-input-unit">분</span>
-								</div>
+								<select id="timeLimitSelect">
+									<option value="15">15분</option>
+									<option value="10">10분</option>
+									<option value="20">20분</option>
+									<option value="30">30분</option>
+								</select>
 							</div>
 
 							<div>
@@ -978,131 +844,8 @@ button:disabled:hover {
 	})();
 	</script>
 
-	<script>
-	(function () {
-		/* ── 더미 강의자료 데이터 (서버 연동 시 fetch로 교체) ── */
-		var DUMMY_MATERIALS = [
-			{ id: 'mat-01', title: '1강. 세포의 구조와 기능', desc: '생명과학 I · 12쪽' },
-			{ id: 'mat-02', title: '2강. 유전 정보와 DNA', desc: '생명과학 I · 18쪽' },
-			{ id: 'mat-03', title: '3강. 광합성과 세포 호흡', desc: '생명과학 I · 15쪽' },
-			{ id: 'mat-04', title: '1강. 뉴턴의 운동 법칙', desc: '물리학 I · 20쪽' },
-			{ id: 'mat-05', title: '2강. 전기와 자기', desc: '물리학 I · 22쪽' },
-			{ id: 'mat-06', title: '1강. 원소와 주기율표', desc: '화학 I · 14쪽' },
-		];
-
-		var selectedMaterial = null;
-
-		function fetchMaterials(callback) {
-			/* 서버 연동 예시:
-			   fetch('/api/materials')
-			     .then(function(r){ return r.json(); })
-			     .then(callback);
-			   현재는 더미 데이터를 100ms 지연 후 반환 */
-			setTimeout(function () {
-				callback(DUMMY_MATERIALS);
-			}, 100);
-		}
-
-		function renderDropdown(materials) {
-			var dropdown = document.getElementById('materialDropdown');
-			if (!dropdown) return;
-
-			if (!materials || materials.length === 0) {
-				dropdown.innerHTML = '<div class="material-dropdown-empty">강의자료가 없습니다.</div>';
-				return;
-			}
-
-			dropdown.innerHTML = materials.map(function (m) {
-				return '<div class="material-dropdown-item" role="option" data-id="' + m.id + '">'
-					+ '<div>' + m.title + '</div>'
-					+ '<div class="material-dropdown-item-sub">' + m.desc + '</div>'
-					+ '</div>';
-			}).join('');
-
-			dropdown.querySelectorAll('.material-dropdown-item').forEach(function (item) {
-				item.addEventListener('click', function () {
-					var id = this.getAttribute('data-id');
-					var mat = materials.find(function (m) { return m.id === id; });
-					if (!mat) return;
-
-					selectedMaterial = mat;
-
-					var trigger = document.getElementById('materialTrigger');
-					if (trigger) {
-						trigger.textContent = mat.title;
-						trigger.classList.add('has-value');
-					}
-
-					dropdown.querySelectorAll('.material-dropdown-item').forEach(function (el) {
-						el.classList.remove('selected');
-					});
-					this.classList.add('selected');
-
-					closeDropdown();
-				});
-			});
-		}
-
-		function openDropdown() {
-			var trigger = document.getElementById('materialTrigger');
-			var dropdown = document.getElementById('materialDropdown');
-			if (!trigger || !dropdown) return;
-
-			trigger.classList.add('open');
-			trigger.setAttribute('aria-expanded', 'true');
-			dropdown.classList.add('open');
-
-			/* 열릴 때마다 목록 새로고침 (필요 시 캐싱 가능) */
-			dropdown.innerHTML = '<div class="material-dropdown-loading">불러오는 중...</div>';
-			fetchMaterials(renderDropdown);
-		}
-
-		function closeDropdown() {
-			var trigger = document.getElementById('materialTrigger');
-			var dropdown = document.getElementById('materialDropdown');
-			if (!trigger || !dropdown) return;
-
-			trigger.classList.remove('open');
-			trigger.setAttribute('aria-expanded', 'false');
-			dropdown.classList.remove('open');
-		}
-
-		document.addEventListener('DOMContentLoaded', function () {
-			var trigger = document.getElementById('materialTrigger');
-			if (trigger) {
-				trigger.addEventListener('click', function (e) {
-					e.stopPropagation();
-					var isOpen = document.getElementById('materialDropdown').classList.contains('open');
-					if (isOpen) {
-						closeDropdown();
-					} else {
-						openDropdown();
-					}
-				});
-			}
-
-			/* 바깥 클릭 시 닫기 */
-			document.addEventListener('click', function (e) {
-				var selector = document.querySelector('.material-selector');
-				if (selector && !selector.contains(e.target)) {
-					closeDropdown();
-				}
-			});
-
-			/* ESC 키로 닫기 */
-			document.addEventListener('keydown', function (e) {
-				if (e.key === 'Escape') closeDropdown();
-			});
-		});
-
-		/* 외부에서 선택된 강의자료 ID를 읽을 수 있도록 노출 */
-		window.getSelectedMaterialId = function () {
-			return selectedMaterial ? selectedMaterial.id : null;
-		};
-	})();
-	</script>
-
 	<script th:src="@{/js/quiz-create.js}"></script>
 	<script th:src="@{/js/layout.js}"></script>
 </body>
 </html>
+```
