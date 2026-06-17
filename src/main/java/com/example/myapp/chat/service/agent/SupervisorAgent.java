@@ -68,8 +68,9 @@ public class SupervisorAgent {
         log.info("[Supervisor] sessionId={} intent={} reason={}",
                 sessionId, intentResult.intentType(), intentResult.reasoning());
 
-        String context = intentResult.intentType() == IntentType.SCHEDULE_CONSULTATION
-                ? "" : retrieveContext(intentResult, materialId, teacherMaterialIds);
+        boolean skipContext = intentResult.intentType() == IntentType.SCHEDULE_CONSULTATION
+                || intentResult.intentType() == IntentType.QUIZ_TOOL;
+        String context = skipContext ? "" : retrieveContext(intentResult, materialId, teacherMaterialIds);
         String history = buildHistory(sessionId);
 
         return AgentContext.builder()
@@ -170,6 +171,7 @@ public class SupervisorAgent {
 
             case DIRECT -> "";
             case SCHEDULE_CONSULTATION -> "";
+            case QUIZ_TOOL -> "";
         };
     }
 
