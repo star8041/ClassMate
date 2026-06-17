@@ -119,7 +119,7 @@ button { cursor: pointer; }
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 /* 알림 벨 */
@@ -277,7 +277,7 @@ button { cursor: pointer; }
 }
 .invite-gen-btn {
   background: #2563eb; color: #fff; border: none; border-radius: 8px;
-  padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+  padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .invite-gen-btn:hover { background: #1d4fd7; }
 .invite-code {
@@ -297,7 +297,7 @@ button { cursor: pointer; }
 .header-logout-btn {
   display: inline-flex;
   align-items: center;
-  padding: 7px 16px;
+  padding: 8px 14px;
   background: var(--cm-white);
   border: 1px solid var(--cm-border);
   border-radius: var(--radius-sm);
