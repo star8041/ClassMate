@@ -1,15 +1,20 @@
 package com.example.myapp.quiz.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.myapp.material.entity.Material;
+import com.example.myapp.material.entity.MaterialPage;
+import com.example.myapp.material.mapper.MaterialMapper;
+import com.example.myapp.material.mapper.MaterialPageMapper;
 import com.example.myapp.quiz.domain.Quiz;
 import com.example.myapp.quiz.domain.QuizAnswer;
 import com.example.myapp.quiz.domain.QuizAttempt;
@@ -28,42 +33,81 @@ import com.example.myapp.quiz.dto.QuizQuestionResponse;
 import com.example.myapp.quiz.dto.QuizSubmitRequest;
 import com.example.myapp.quiz.dto.QuizUpdateRequest;
 import com.example.myapp.quiz.repository.QuizRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QuizService {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final QuizRepository quizRepository;
+    private final MaterialMapper materialMapper;
+    private final MaterialPageMapper materialPageMapper;
+    private final ChatClient chatClient;
 
     /**
      * 퀴즈 미리보기 생성
      *
      * DB에 저장하지 않는다.
-     * 현재는 AI 생성 기능이 없으므로 테스트용 더미 문제를 생성해서 반환한다.
+     * 선택한 강의자료의 페이지 내용을 기반으로 LLM이 문제를 생성한다.
      */
     public QuizDetailResponse previewQuiz(QuizGenerateRequest request) {
+        validatePreviewRequest(request);
+
+        Material material = materialMapper.findById(request.getMaterialId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 강의자료입니다. materialId=" + request.getMaterialId()));
+
+        if (request.getTeacherId() != null && !material.getTeacherId().equals(request.getTeacherId())) {
+            throw new IllegalArgumentException("해당 교사의 강의자료가 아닙니다. materialId=" + request.getMaterialId());
+        }
+
+        List<MaterialPage> pages = materialPageMapper.findByPageRange(
+                request.getMaterialId(),
+                request.getStartPage(),
+                request.getEndPage()
+        );
+
+        if (pages == null || pages.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "선택한 페이지 범위의 교재 내용을 찾을 수 없습니다. pages="
+                            + request.getStartPage() + "-" + request.getEndPage()
+            );
+        }
+
+        String pageContent = pages.stream()
+                .map(page -> "[%d페이지]\n%s".formatted(page.getPageNumber(), nullToEmpty(page.getPageText())))
+                .collect(Collectors.joining("\n\n---\n\n"));
+
+        if (pageContent.isBlank()) {
+            throw new IllegalArgumentException("선택한 페이지에 추출된 텍스트가 없습니다.");
+        }
+
+        String title = normalizeTitle(request, material);
+
+        List<QuizQuestionRequest> previewQuestions = generateQuestionsByAi(
+                material,
+                request,
+                pageContent
+        );
+
         QuizDetailResponse response = new QuizDetailResponse();
 
         response.setQuizId(null);
         response.setTeacherId(request.getTeacherId());
         response.setMaterialId(request.getMaterialId());
-        response.setTitle(request.getTitle());
+        response.setTitle(title);
         response.setDifficulty(request.getDifficulty());
         response.setStartPage(request.getStartPage());
         response.setEndPage(request.getEndPage());
         response.setAvailableFrom(request.getAvailableFrom());
         response.setAvailableUntil(request.getAvailableUntil());
         response.setCreatedAt(LocalDateTime.now());
-
-        List<QuizQuestionRequest> previewQuestions;
-
-        if (request.getQuestions() != null && !request.getQuestions().isEmpty()) {
-            previewQuestions = request.getQuestions();
-        } else {
-            previewQuestions = createDummyPreviewQuestions(request);
-        }
 
         List<QuizQuestionResponse> questionResponses = previewQuestions.stream()
                 .map(questionRequest -> toQuestionResponse(questionRequest, null))
@@ -85,6 +129,10 @@ public class QuizService {
     public QuizDetailResponse generateQuiz(QuizGenerateRequest request) {
         if (request.getQuestions() == null || request.getQuestions().isEmpty()) {
             throw new IllegalArgumentException("배포할 문제가 없습니다. 먼저 퀴즈 미리보기를 생성해주세요.");
+        }
+
+        if (request.getTeacherId() == null) {
+            throw new IllegalArgumentException("교사 정보가 없습니다.");
         }
 
         Quiz quiz = new Quiz();
@@ -135,7 +183,7 @@ public class QuizService {
     public List<QuizListResponse> getQuizList() {
         return quizRepository.findQuizList();
     }
-    
+
     /**
      * 학생용 퀴즈 목록 조회
      */
@@ -205,13 +253,12 @@ public class QuizService {
      */
     @Transactional
     public QuizAttemptResponse startAttempt(Long quizId, QuizAttemptStartRequest request) {
-    	
-    	Quiz quiz = quizRepository.findQuizById(quizId);
+        Quiz quiz = quizRepository.findQuizById(quizId);
 
         if (quiz == null) {
             throw new IllegalArgumentException("존재하지 않는 퀴즈입니다. quizId=" + quizId);
         }
-        
+
         boolean alreadySubmitted = quizRepository.existsSubmittedAttempt(
                 quizId,
                 request.getStudentId()
@@ -257,11 +304,6 @@ public class QuizService {
             throw new IllegalArgumentException("이미 제출된 퀴즈입니다. attemptId=" + attemptId);
         }
 
-        /*
-         * 핵심 추가:
-         * 같은 학생이 같은 퀴즈를 이미 제출한 기록이 있으면
-         * 새 attemptId로 다시 제출하는 것도 막는다.
-         */
         boolean alreadySubmitted = quizRepository.existsSubmittedAttempt(
                 quizId,
                 attempt.getStudentId()
@@ -330,7 +372,6 @@ public class QuizService {
         return getAttemptResult(quizId, attemptId);
     }
 
-
     /**
      * 학생 퀴즈 결과 조회
      */
@@ -357,174 +398,258 @@ public class QuizService {
         return response;
     }
 
-    private List<QuizQuestionRequest> createDummyPreviewQuestions(QuizGenerateRequest request) {
-        String title = request.getTitle() == null ? "" : request.getTitle();
+    private List<QuizQuestionRequest> generateQuestionsByAi(
+            Material material,
+            QuizGenerateRequest request,
+            String pageContent
+    ) {
+        String prompt = buildQuizGenerationPrompt(material, request, pageContent);
 
-        if (title.contains("수학")) {
-            return List.of(
-                    createQuestionRequest(
-                            "MULTIPLE_CHOICE",
-                            "2 + 3은 얼마인가요?",
-                            """
-                            [
-                              {"number": 1, "text": "4"},
-                              {"number": 2, "text": "5"},
-                              {"number": 3, "text": "6"},
-                              {"number": 4, "text": "7"}
-                            ]
-                            """,
-                            "2",
-                            "2에 3을 더하면 5입니다.",
-                            1
-                    ),
-                    createQuestionRequest(
-                            "MULTIPLE_CHOICE",
-                            "10에서 4를 빼면 얼마인가요?",
-                            """
-                            [
-                              {"number": 1, "text": "5"},
-                              {"number": 2, "text": "6"},
-                              {"number": 3, "text": "7"},
-                              {"number": 4, "text": "8"}
-                            ]
-                            """,
-                            "2",
-                            "10에서 4를 빼면 6입니다.",
-                            2
-                    ),
-                    createQuestionRequest(
-                            "MULTIPLE_CHOICE",
-                            "다음 중 가장 큰 수는 무엇인가요?",
-                            """
-                            [
-                              {"number": 1, "text": "3"},
-                              {"number": 2, "text": "8"},
-                              {"number": 3, "text": "5"},
-                              {"number": 4, "text": "1"}
-                            ]
-                            """,
-                            "2",
-                            "3, 8, 5, 1 중 가장 큰 수는 8입니다.",
-                            3
-                    )
-            );
+        log.info(
+                "[QuizService] AI 퀴즈 생성 시작 materialId={} pages={}-{} count={}",
+                request.getMaterialId(),
+                request.getStartPage(),
+                request.getEndPage(),
+                request.getQuestionCount()
+        );
+
+        String aiResponse = chatClient.prompt()
+                .user(prompt)
+                .call()
+                .content();
+
+        log.debug("[QuizService] AI 퀴즈 생성 원문 응답={}", aiResponse);
+
+        List<QuizQuestionRequest> questions = parseAiQuestions(aiResponse);
+
+        if (questions.isEmpty()) {
+            throw new IllegalArgumentException("AI가 생성한 문제가 없습니다.");
         }
 
-        if (title.contains("과학")) {
-            return List.of(
-                    createQuestionRequest(
-                            "MULTIPLE_CHOICE",
-                            "식물이 자라는 데 필요한 것은 무엇인가요?",
-                            """
-                            [
-                              {"number": 1, "text": "물"},
-                              {"number": 2, "text": "돌"},
-                              {"number": 3, "text": "플라스틱"},
-                              {"number": 4, "text": "유리"}
-                            ]
-                            """,
-                            "1",
-                            "식물이 자라려면 물, 햇빛, 공기 등이 필요합니다.",
-                            1
-                    ),
-                    createQuestionRequest(
-                            "MULTIPLE_CHOICE",
-                            "낮에 하늘에서 밝게 빛나는 것은 무엇인가요?",
-                            """
-                            [
-                              {"number": 1, "text": "달"},
-                              {"number": 2, "text": "태양"},
-                              {"number": 3, "text": "구름"},
-                              {"number": 4, "text": "비"}
-                            ]
-                            """,
-                            "2",
-                            "태양은 낮에 하늘을 밝게 비추는 별입니다.",
-                            2
-                    ),
-                    createQuestionRequest(
-                            "MULTIPLE_CHOICE",
-                            "물이 얼면 무엇이 되나요?",
-                            """
-                            [
-                              {"number": 1, "text": "얼음"},
-                              {"number": 2, "text": "모래"},
-                              {"number": 3, "text": "바람"},
-                              {"number": 4, "text": "흙"}
-                            ]
-                            """,
-                            "1",
-                            "물이 차가워져 얼면 얼음이 됩니다.",
-                            3
-                    )
-            );
+        int expectedCount = request.getQuestionCount() == null ? questions.size() : request.getQuestionCount();
+
+        if (questions.size() > expectedCount) {
+            questions = questions.subList(0, expectedCount);
         }
 
-        return List.of(
-                createQuestionRequest(
-                        "MULTIPLE_CHOICE",
-                        "다음 중 인사말로 알맞은 것은?",
-                        """
-                        [
-                          {"number": 1, "text": "안녕하세요"},
-                          {"number": 2, "text": "연필"},
-                          {"number": 3, "text": "바나나"},
-                          {"number": 4, "text": "자동차"}
-                        ]
-                        """,
-                        "1",
-                        "안녕하세요는 사람을 만났을 때 쓰는 인사말입니다.",
-                        1
-                ),
-                createQuestionRequest(
-                        "MULTIPLE_CHOICE",
-                        "다음 중 문장의 끝에 쓰는 표시는 무엇인가요?",
-                        """
-                        [
-                          {"number": 1, "text": "마침표"},
-                          {"number": 2, "text": "ㄱ"},
-                          {"number": 3, "text": "사과"},
-                          {"number": 4, "text": "하늘"}
-                        ]
-                        """,
-                        "1",
-                        "문장이 끝날 때에는 마침표를 사용할 수 있습니다.",
-                        2
-                ),
-                createQuestionRequest(
-                        "MULTIPLE_CHOICE",
-                        "다음 중 동물 이름은 무엇인가요?",
-                        """
-                        [
-                          {"number": 1, "text": "책상"},
-                          {"number": 2, "text": "강아지"},
-                          {"number": 3, "text": "연필"},
-                          {"number": 4, "text": "가방"}
-                        ]
-                        """,
-                        "2",
-                        "강아지는 동물입니다.",
-                        3
-                )
+        for (int i = 0; i < questions.size(); i++) {
+            QuizQuestionRequest question = questions.get(i);
+
+            if (question.getQuestionType() == null || question.getQuestionType().isBlank()) {
+                question.setQuestionType("MULTIPLE_CHOICE");
+            }
+
+            question.setQuestionOrder(i + 1);
+
+            if (question.getQuestionText() == null || question.getQuestionText().isBlank()) {
+                throw new IllegalArgumentException("AI가 생성한 문제 내용이 비어 있습니다.");
+            }
+
+            if (question.getOptions() == null || question.getOptions().isBlank()) {
+                throw new IllegalArgumentException("AI가 생성한 객관식 선택지가 비어 있습니다.");
+            }
+
+            if (question.getAnswerText() == null || question.getAnswerText().isBlank()) {
+                throw new IllegalArgumentException("AI가 생성한 정답이 비어 있습니다.");
+            }
+        }
+
+        return questions;
+    }
+
+    private String buildQuizGenerationPrompt(
+            Material material,
+            QuizGenerateRequest request,
+            String pageContent
+    ) {
+        int questionCount = request.getQuestionCount() == null ? 5 : request.getQuestionCount();
+        String difficulty = request.getDifficulty() == null || request.getDifficulty().isBlank()
+                ? "중간"
+                : request.getDifficulty();
+
+        return """
+                너는 초등학생용 퀴즈를 만드는 교사용 AI야.
+                아래 교재 내용을 바탕으로 객관식 퀴즈를 생성해.
+
+                [생성 조건]
+                - 문제 수: %d개
+                - 난이도: %s
+                - 문제 유형: 전부 MULTIPLE_CHOICE
+                - 각 문제는 선택지 4개를 가져야 함
+                - answerText에는 정답 선택지 번호만 문자열로 넣기. 예: "1", "2", "3", "4"
+                - explanation은 초등학생이 이해할 수 있게 짧고 명확하게 작성
+                - 교재 내용에 없는 사실을 임의로 만들지 말 것
+                - 반드시 아래 JSON 형식만 반환
+                - 마크다운 코드블록, 설명 문장, 주석을 절대 붙이지 말 것
+
+                [반환 형식]
+                [
+                  {
+                    "questionType": "MULTIPLE_CHOICE",
+                    "questionText": "문제 내용",
+                    "options": [
+                      {"number": 1, "text": "선택지 1"},
+                      {"number": 2, "text": "선택지 2"},
+                      {"number": 3, "text": "선택지 3"},
+                      {"number": 4, "text": "선택지 4"}
+                    ],
+                    "answerText": "1",
+                    "explanation": "해설"
+                  }
+                ]
+
+                [교재 정보]
+                파일명: %s
+                과목: %s
+                페이지 범위: %d~%d쪽
+
+                [교재 내용]
+                %s
+                """.formatted(
+                questionCount,
+                difficulty,
+                nullToEmpty(material.getFileName()),
+                nullToEmpty(material.getSubject()),
+                request.getStartPage(),
+                request.getEndPage(),
+                pageContent
         );
     }
 
-    private QuizQuestionRequest createQuestionRequest(
-            String questionType,
-            String questionText,
-            String options,
-            String answerText,
-            String explanation,
-            Integer questionOrder
-    ) {
+    private List<QuizQuestionRequest> parseAiQuestions(String aiResponse) {
+        try {
+            String json = extractJson(aiResponse);
+
+            if (json.startsWith("{")) {
+                Map<String, Object> wrapper = OBJECT_MAPPER.readValue(
+                        json,
+                        new TypeReference<Map<String, Object>>() {}
+                );
+
+                Object questions = wrapper.get("questions");
+
+                if (questions == null) {
+                    questions = wrapper.get("data");
+                }
+
+                if (questions == null) {
+                    throw new IllegalArgumentException("AI 응답에서 questions를 찾을 수 없습니다.");
+                }
+
+                json = OBJECT_MAPPER.writeValueAsString(questions);
+            }
+
+            List<Map<String, Object>> rawQuestions = OBJECT_MAPPER.readValue(
+                    json,
+                    new TypeReference<List<Map<String, Object>>>() {}
+            );
+
+            return rawQuestions.stream()
+                    .map(this::toQuizQuestionRequestFromMap)
+                    .toList();
+
+        } catch (Exception e) {
+            log.error("[QuizService] AI 문제 JSON 파싱 실패. response={}", aiResponse, e);
+            throw new IllegalArgumentException("AI가 생성한 문제 형식을 해석하지 못했습니다.");
+        }
+    }
+
+    private QuizQuestionRequest toQuizQuestionRequestFromMap(Map<String, Object> raw) {
         QuizQuestionRequest request = new QuizQuestionRequest();
-        request.setQuestionType(questionType);
-        request.setQuestionText(questionText);
-        request.setOptions(options);
-        request.setAnswerText(answerText);
-        request.setExplanation(explanation);
-        request.setQuestionOrder(questionOrder);
+
+        request.setQuestionType(stringValue(raw.getOrDefault("questionType", "MULTIPLE_CHOICE")));
+        request.setQuestionText(stringValue(raw.get("questionText")));
+        request.setAnswerText(stringValue(raw.get("answerText")));
+        request.setExplanation(stringValue(raw.get("explanation")));
+
+        Object optionsValue = raw.get("options");
+
+        try {
+            if (optionsValue == null) {
+                request.setOptions(null);
+            } else if (optionsValue instanceof String optionsString) {
+                request.setOptions(optionsString);
+            } else {
+                request.setOptions(OBJECT_MAPPER.writeValueAsString(optionsValue));
+            }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("선택지 변환에 실패했습니다.", e);
+        }
+
         return request;
+    }
+
+    private String extractJson(String text) {
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("AI 응답이 비어 있습니다.");
+        }
+
+        String trimmed = text.trim();
+
+        if (trimmed.startsWith("```")) {
+            trimmed = trimmed.replaceFirst("^```json", "")
+                    .replaceFirst("^```", "")
+                    .replaceFirst("```$", "")
+                    .trim();
+        }
+
+        int arrayStart = trimmed.indexOf("[");
+        int arrayEnd = trimmed.lastIndexOf("]");
+
+        if (arrayStart >= 0 && arrayEnd > arrayStart) {
+            return trimmed.substring(arrayStart, arrayEnd + 1);
+        }
+
+        int objectStart = trimmed.indexOf("{");
+        int objectEnd = trimmed.lastIndexOf("}");
+
+        if (objectStart >= 0 && objectEnd > objectStart) {
+            return trimmed.substring(objectStart, objectEnd + 1);
+        }
+
+        throw new IllegalArgumentException("AI 응답에서 JSON을 찾을 수 없습니다.");
+    }
+
+    private void validatePreviewRequest(QuizGenerateRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("퀴즈 생성 요청이 비어 있습니다.");
+        }
+
+        if (request.getTeacherId() == null) {
+            throw new IllegalArgumentException("교사 정보가 없습니다.");
+        }
+
+        if (request.getMaterialId() == null) {
+            throw new IllegalArgumentException("강의자료를 선택해주세요.");
+        }
+
+        if (request.getStartPage() == null || request.getStartPage() < 1) {
+            throw new IllegalArgumentException("시작 쪽은 1 이상이어야 합니다.");
+        }
+
+        if (request.getEndPage() == null || request.getEndPage() < 1) {
+            throw new IllegalArgumentException("끝 쪽은 1 이상이어야 합니다.");
+        }
+
+        if (request.getStartPage() > request.getEndPage()) {
+            throw new IllegalArgumentException("시작 쪽은 끝 쪽보다 클 수 없습니다.");
+        }
+
+        if (request.getQuestionCount() == null || request.getQuestionCount() < 1 || request.getQuestionCount() > 50) {
+            throw new IllegalArgumentException("문제 수는 1개 이상 50개 이하로 입력해주세요.");
+        }
+    }
+
+    private String normalizeTitle(QuizGenerateRequest request, Material material) {
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            return request.getTitle();
+        }
+
+        return "%s %d-%d쪽 퀴즈".formatted(
+                material.getFileName(),
+                request.getStartPage(),
+                request.getEndPage()
+        );
     }
 
     private QuizDetailResponse toQuizDetailResponse(Quiz quiz, List<QuizQuestion> questions) {
@@ -621,5 +746,17 @@ public class QuizService {
         }
 
         return value.trim().toLowerCase();
+    }
+
+    private String stringValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+
+        return String.valueOf(value).trim();
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }
