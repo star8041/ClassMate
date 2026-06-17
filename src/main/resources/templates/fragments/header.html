@@ -9,6 +9,12 @@
   <!-- ② 우측 액션 영역 -->
   <div class="header-actions">
 
+    <!-- 관리자 전용: 화면 전환 버튼 (관리자 토큰일 때만 표시) -->
+    <button id="adminSwitchBtn" type="button" class="admin-switch" style="display:none;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      <span id="adminSwitchLabel">학생 화면으로 전환</span>
+    </button>
+
     <!-- 프로필 드롭다운 -->
     <div class="header-profile" id="profileDropdown">
       <button class="header-profile-btn" onclick="toggleProfileMenu()" aria-haspopup="true">
@@ -72,6 +78,43 @@
     </a>
 
   </div>
+
+  <style>
+    .admin-switch {
+      display: inline-flex; align-items: center; gap: 7px;
+      border: none; cursor: pointer; padding: 9px 15px; border-radius: 999px;
+      font-size: 13px; font-weight: 700; font-family: inherit; color: #fff; white-space: nowrap;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      box-shadow: 0 4px 12px rgba(99,102,241,.35);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .admin-switch:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(99,102,241,.45); }
+    .admin-switch:active { transform: translateY(0); }
+    .admin-switch svg { flex-shrink: 0; }
+  </style>
+  <script th:inline="none">
+    (function () {
+      var btn = document.getElementById('adminSwitchBtn');
+      if (!btn) return;
+      var token = localStorage.getItem('accessToken');
+      var role = null;
+      if (token) {
+        try {
+          var b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          role = JSON.parse(decodeURIComponent(escape(atob(b64)))).role;
+        } catch (e) { role = null; }
+      }
+      if (role !== 'ADMIN') { btn.remove(); return; }   // 관리자만 노출
+      var onStudent = location.pathname.indexOf('/student') === 0;
+      var label = document.getElementById('adminSwitchLabel');
+      if (label) label.textContent = onStudent ? '선생님 화면으로 전환' : '학생 화면으로 전환';
+      btn.style.display = 'inline-flex';
+      btn.addEventListener('click', function () {
+        if (onStudent) { localStorage.setItem('loginRole', 'teacher'); location.href = '/teacher/dashboard'; }
+        else { localStorage.setItem('loginRole', 'student'); location.href = '/student/home'; }
+      });
+    })();
+  </script>
 </header>
 
 </body>
