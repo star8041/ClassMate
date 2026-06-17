@@ -13,6 +13,7 @@ public record ScheduleCreateRequest(
         LocalDateTime endAt,
         String location,
         String memo,
+        Long studentId,
         String studentName,
         String parentName
 ) {

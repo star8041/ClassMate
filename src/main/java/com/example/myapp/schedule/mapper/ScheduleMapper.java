@@ -25,6 +25,7 @@ public class ScheduleMapper {
     private static final RowMapper<Schedule> ROW_MAPPER = (rs, rowNum) -> Schedule.builder()
             .scheduleId(rs.getLong("schedule_id"))
             .teacherId(rs.getLong("teacher_id"))
+            .studentId(rs.getObject("student_id", Long.class))
             .scheduleType(rs.getString("schedule_type"))
             .title(rs.getString("title"))
             .topic(rs.getString("topic"))
@@ -42,11 +43,12 @@ public class ScheduleMapper {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcClient.sql("""
                         INSERT INTO schedule
-                            (teacher_id, schedule_type, title, topic, scheduled_at, end_at,
+                            (teacher_id, student_id, schedule_type, title, topic, scheduled_at, end_at,
                              location, memo, student_name, parent_name, status)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """)
                 .param(s.getTeacherId())
+                .param(s.getStudentId())
                 .param(s.getScheduleType())
                 .param(s.getTitle())
                 .param(s.getTopic())
@@ -121,6 +123,46 @@ public class ScheduleMapper {
                 .param(to)
                 .query(ROW_MAPPER)
                 .list();
+    }
+
+    /** 일정 수정 (schedule_id 유지) */
+    public int update(Schedule s) {
+        return jdbcClient.sql("""
+                UPDATE schedule
+                   SET student_id    = ?,
+                       schedule_type = ?,
+                       title         = ?,
+                       topic         = ?,
+                       scheduled_at  = ?,
+                       end_at        = ?,
+                       location      = ?,
+                       memo          = ?,
+                       student_name  = ?,
+                       parent_name   = ?
+                 WHERE schedule_id = ?
+                   AND teacher_id  = ?
+                """)
+                .param(s.getStudentId())
+                .param(s.getScheduleType())
+                .param(s.getTitle())
+                .param(s.getTopic())
+                .param(Timestamp.valueOf(s.getScheduledAt()))
+                .param(s.getEndAt() != null ? Timestamp.valueOf(s.getEndAt()) : null)
+                .param(s.getLocation())
+                .param(s.getMemo())
+                .param(s.getStudentName())
+                .param(s.getParentName())
+                .param(s.getScheduleId())
+                .param(s.getTeacherId())
+                .update();
+    }
+
+    /** 기존 schedule 유형 조회 (수정 전 유형 비교용) */
+    public java.util.Optional<Schedule> findById(Long scheduleId) {
+        return jdbcClient.sql("SELECT * FROM schedule WHERE schedule_id = ?")
+                .param(scheduleId)
+                .query(ROW_MAPPER)
+                .optional();
     }
 
     public int deleteById(Long scheduleId, Long teacherId) {

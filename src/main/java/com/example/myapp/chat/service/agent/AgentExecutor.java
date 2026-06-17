@@ -10,6 +10,7 @@ import com.example.myapp.material.mapper.MaterialMapper;
 import com.example.myapp.material.mapper.MaterialPageMapper;
 import com.example.myapp.quiz.repository.QuizRepository;
 import com.example.myapp.schedule.mapper.ScheduleMapper;
+import com.example.myapp.student.mapper.StudentMapper;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class AgentExecutor {
 
     private final ChatModel chatModel;
     private final ScheduleMapper scheduleMapper;
+    private final StudentMapper studentMapper;
     private final MaterialMapper materialMapper;
     private final MaterialPageMapper materialPageMapper;
     private final QuizRepository quizRepository;
@@ -92,7 +94,7 @@ public class AgentExecutor {
             return Flux.just("로그인이 필요합니다.");
         }
         ConsultationScheduleTool registerTool =
-                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper);
+                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper, studentMapper);
         ScheduleQueryTool queryTool =
                 new ScheduleQueryTool(context.getTeacherId(), scheduleMapper);
 
@@ -110,7 +112,7 @@ public class AgentExecutor {
             return "로그인이 필요합니다.";
         }
         ConsultationScheduleTool registerTool =
-                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper);
+                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper, studentMapper);
         ScheduleQueryTool queryTool =
                 new ScheduleQueryTool(context.getTeacherId(), scheduleMapper);
 

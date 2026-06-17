@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -47,6 +48,13 @@ public class ScheduleController {
     public List<ScheduleResponse> list(@AuthenticationPrincipal Long teacherId,
                                        @RequestParam(value = "type", required = false) String type) {
         return scheduleService.list(teacherId, type);
+    }
+
+    @PutMapping("/{id}")
+    public ScheduleResponse update(@AuthenticationPrincipal Long teacherId,
+                                   @PathVariable("id") Long id,
+                                   @RequestBody ScheduleCreateRequest request) {
+        return scheduleService.update(id, teacherId, request);
     }
 
     @DeleteMapping("/{id}")
