@@ -97,11 +97,11 @@ public class ReportService {
     }
 
     /**
-     * 학생의 최근 상담 기록 3건을 반환한다 (리포트 페이지 상담 요약 섹션용).
+     * 학생의 최근 상담 기록 1건을 반환한다 (리포트 페이지 상담 요약 섹션용).
      */
     @Transactional(readOnly = true)
     public List<CounselingNoteResponse> getRecentCounseling(Long studentId) {
-        return counselingNoteMapper.findRecentByStudentId(studentId, 3).stream()
+        return counselingNoteMapper.findRecentByStudentId(studentId, 1).stream()
                 .map(CounselingNoteResponse::from)
                 .toList();
     }

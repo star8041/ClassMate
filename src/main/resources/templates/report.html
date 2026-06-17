@@ -1247,41 +1247,35 @@ function renderCounselingSection(notes) {
 	if (!notes.length) {
 		subEl.textContent = '상담 기록 없음';
 		lastDateEl.textContent = '없음';
-		countEl.textContent = '0건';
+		countEl.textContent = '없음';
 		contentEl.innerHTML = '<div class="counsel-text" style="color:#aaa">상담 기록이 없습니다.</div>';
 		return;
 	}
 
-	subEl.textContent = '최근 ' + notes.length + '건 사용';
-	countEl.textContent = notes.length + '건';
+	const note = notes[0];
 
-	const latest = notes[0];
-	if (latest.createdAt) {
-		const d = new Date(latest.createdAt);
-		const y = d.getFullYear();
-		const m = String(d.getMonth() + 1).padStart(2, '0');
-		const day = String(d.getDate()).padStart(2, '0');
-		lastDateEl.textContent = y + '.' + m + '.' + day;
+	subEl.textContent = '최근 상담 기준';
+
+	if (note.createdAt) {
+		const d = new Date(note.createdAt);
+		lastDateEl.textContent = d.getFullYear() + '.' +
+			String(d.getMonth() + 1).padStart(2, '0') + '.' +
+			String(d.getDate()).padStart(2, '0');
 	} else {
 		lastDateEl.textContent = '-';
 	}
 
-	let html = '';
-	notes.forEach(function (note, idx) {
-		if (note.summaryText) {
-			if (notes.length > 1) {
-				html += '<div class="counsel-sub-title">상담 ' + (idx + 1) + ' — 주요 내용</div>';
-			} else {
-				html += '<div class="counsel-sub-title">상담 주요 내용 (요약)</div>';
-			}
-			html += '<div class="counsel-text">' + escapeHtml(note.summaryText) + '</div>';
-		}
-		if (note.followUpText) {
-			html += '<div class="counsel-sub-title">다음 단계 / 후속 조치</div>';
-			html += '<div class="counsel-text">' + escapeHtml(note.followUpText) + '</div>';
-		}
-	});
+	countEl.textContent = note.summaryText ? '있음' : '없음';
 
+	let html = '';
+	if (note.summaryText) {
+		html += '<div class="counsel-sub-title">상담 주요 내용 (요약)</div>';
+		html += '<div class="counsel-text">' + escapeHtml(note.summaryText) + '</div>';
+	}
+	if (note.followUpText) {
+		html += '<div class="counsel-sub-title">다음 단계 / 후속 조치</div>';
+		html += '<div class="counsel-text">' + escapeHtml(note.followUpText) + '</div>';
+	}
 	if (!html) {
 		html = '<div class="counsel-text" style="color:#aaa">상담 내용이 아직 작성되지 않았습니다.</div>';
 	}
