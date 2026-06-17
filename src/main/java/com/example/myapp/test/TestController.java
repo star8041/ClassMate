@@ -13,11 +13,11 @@ public class TestController {
         return "test";
     }
     
-    @GetMapping("/archive")
-    public String archive(Model model) {
-    	model.addAttribute("userName", "홍길동");
-        return "archive";
-    }
+//    @GetMapping("/archive")
+//    public String archive(Model model) {
+//    	model.addAttribute("userName", "홍길동");
+//        return "archive";
+//    }
     
     @GetMapping("/archive/student")
     public String archiveStudent(Model model) {
@@ -25,11 +25,11 @@ public class TestController {
         return "archive_student";
     }
     
-    @GetMapping("/quiz")
-    public String quiz(Model model) {
-    	model.addAttribute("userName", "홍길동");
-        return "quiz";
-    }
+//    @GetMapping("/quiz")
+//    public String quiz(Model model) {
+//    	model.addAttribute("userName", "홍길동");
+//        return "quiz";
+//    }
     
     @GetMapping("/quiz/student")
     public String quizStudent(Model model) {
@@ -43,21 +43,21 @@ public class TestController {
         return "quiz_student_solve";
     }
     
-    @GetMapping("/student")
-    public String student(Model model) {
-    	model.addAttribute("userName", "홍길동");
-        return "student";
-    }
-    
-    @GetMapping("/counseling")
-    public String counseling(Model model) {
-    	model.addAttribute("userName", "홍길동");
-        return "counseling";
-    }
-    
-    @GetMapping("/schedule")
-    public String schedule(Model model) {
-    	model.addAttribute("userName", "홍길동");
-        return "schedule";
-    }
+//    @GetMapping("/student")
+//    public String student(Model model) {
+//    	model.addAttribute("userName", "홍길동");
+//        return "student";
+//    }
+//    
+//    @GetMapping("/counseling")
+//    public String counseling(Model model) {
+//    	model.addAttribute("userName", "홍길동");
+//        return "counseling";
+//    }
+//    
+//    @GetMapping("/schedule")
+//    public String schedule(Model model) {
+//    	model.addAttribute("userName", "홍길동");
+//        return "schedule";
+//    }
 }

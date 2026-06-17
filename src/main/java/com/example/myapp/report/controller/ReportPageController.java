@@ -16,7 +16,8 @@ public class ReportPageController {
 
     @GetMapping("/student/report")
     public String studentReport(Model model) {
-        model.addAttribute("userName", "홍길동");
+        model.addAttribute("userName", null);
+        model.addAttribute("profileImgUrl", null);
         return "report";
     }
 }
