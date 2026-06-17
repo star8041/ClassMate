@@ -69,6 +69,26 @@ public class StudentMapper {
                 .list();
     }
 
+    /**
+     * 이름 + 학번 + 담임교사 ID로 학생을 조회한다.
+     * 학생 로그인 시 본인 확인에 사용한다.
+     */
+    public Optional<Student> findByNameAndStudentNumberAndTeacherId(
+            String studentName, String studentNumber, Long teacherId) {
+        return jdbcClient.sql("""
+                        SELECT * FROM student
+                         WHERE student_name = ?
+                           AND student_number = ?
+                           AND teacher_id = ?
+                         LIMIT 1
+                        """)
+                .param(studentName)
+                .param(studentNumber)
+                .param(teacherId)
+                .query(ROW_MAPPER)
+                .optional();
+    }
+
     /** 단건 조회 */
     public Optional<Student> findById(Long studentId) {
         return jdbcClient.sql("SELECT * FROM student WHERE student_id = ?")

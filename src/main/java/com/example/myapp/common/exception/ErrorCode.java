@@ -26,7 +26,8 @@ public enum ErrorCode {
     SIGNUP_INVALID(HttpStatus.BAD_REQUEST, "이름/아이디/비밀번호는 필수입니다."),
     PASSWORD_CONFIRM_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
     INVITE_CODE_INVALID(HttpStatus.BAD_REQUEST, "유효하지 않거나 만료된 초대 코드입니다."),
-    INVITE_CODE_TEACHER_NOT_FOUND(HttpStatus.BAD_REQUEST, "초대 코드에 연결된 교사를 찾을 수 없습니다.");
+    INVITE_CODE_TEACHER_NOT_FOUND(HttpStatus.BAD_REQUEST, "초대 코드에 연결된 교사를 찾을 수 없습니다."),
+    STUDENT_NOT_FOUND(HttpStatus.UNAUTHORIZED, "이름·학번·초대코드가 일치하는 학생을 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
