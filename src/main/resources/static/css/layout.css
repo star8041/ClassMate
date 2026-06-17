@@ -3,6 +3,9 @@
    header.html + sidebar.html 공통 스타일
    ============================================== */
 
+/* 공통 웹폰트 (Pretendard) – 모든 페이지 폰트 통일 */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+
 /* ── 디자인 토큰 ── */
 :root {
   /* 브랜드 */
@@ -36,8 +39,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont,
-               'Segoe UI', sans-serif;
+  font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
   background: var(--cm-bg);
   color: var(--cm-text-primary);
   font-size: 14px;
@@ -117,7 +119,7 @@ button { cursor: pointer; }
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 /* 알림 벨 */
@@ -275,7 +277,7 @@ button { cursor: pointer; }
 }
 .invite-gen-btn {
   background: #2563eb; color: #fff; border: none; border-radius: 8px;
-  padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+  padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .invite-gen-btn:hover { background: #1d4fd7; }
 .invite-code {
@@ -295,7 +297,7 @@ button { cursor: pointer; }
 .header-logout-btn {
   display: inline-flex;
   align-items: center;
-  padding: 7px 16px;
+  padding: 8px 14px;
   background: var(--cm-white);
   border: 1px solid var(--cm-border);
   border-radius: var(--radius-sm);

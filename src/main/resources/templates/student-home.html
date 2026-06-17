@@ -217,7 +217,25 @@
 
 <script>
   const token = localStorage.getItem('accessToken');
-  if (!token) location.href = '/login';
+
+  (function checkAuth() {
+    if (!token) {
+      alert('로그인이 필요합니다.');
+      location.href = '/login';
+      return;
+    }
+    try {
+      const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(decodeURIComponent(atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+      if (payload.role !== 'STUDENT' && payload.role !== 'ADMIN') {
+        alert('학생 계정으로 로그인해주세요.');
+        location.href = '/login';
+      }
+    } catch {
+      alert('로그인 정보가 올바르지 않습니다. 다시 로그인해주세요.');
+      location.href = '/login';
+    }
+  })();
 
   let currentSessionId = null;
   let allSessions = [];
