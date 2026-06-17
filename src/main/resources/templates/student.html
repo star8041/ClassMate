@@ -204,7 +204,7 @@
             </div>
 
             <div class="header-actions">
-              <button class="btn-preview" type="button">
+              <button class="btn-preview" type="button" onclick="goReportPage()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
                      viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -227,7 +227,7 @@
 
           <div class="tabs">
             <button class="tab-btn active" type="button">퀴즈 결과</button>
-            <button class="tab-btn" type="button" onclick="location.href='/student/report'">성취도 리포트</button>
+            <button class="tab-btn" type="button" onclick="goReportPage()">성취도 리포트</button>
           </div>
 
           <div class="section-header">
@@ -642,6 +642,16 @@
       .replaceAll('"', '&quot;')
       .replaceAll("'", '&#39;');
   }
+  
+function goReportPage() {
+  if (!selectedStudentId) {
+    alert('학생을 먼저 선택해주세요.');
+    return;
+  }
+
+  location.href = '/student/report?studentId=' + encodeURIComponent(selectedStudentId);
+}
+  
 </script>
 </body>
 </html>
