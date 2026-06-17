@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>학부모 상담 관리 - 미리보기</title>
+<title>상담 관리 - 미리보기</title>
 <link rel="stylesheet" th:href="@{/css/layout.css}">
 <link rel="stylesheet" th:href="@{/css/sidebar.css}">
 <link rel="stylesheet" th:href="@{/css/fonts.css}">
@@ -164,7 +164,7 @@
   <div class="layout-main">
     <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
     <main class="page-body">
-	  <h1 class="page-title">학부모 상담 관리</h1>
+	  <h1 class="page-title">상담 관리</h1>
 	  <p class="page-subtitle">상담 일정 등록부터 상담 녹음 관리, 텍스트 변환, 요약까지 한번에 관리하세요.</p>
 	
 	  <!-- ══ 등록된 상담 일정 조회 ══ -->
@@ -212,7 +212,7 @@
           <div class="step-title">녹음 업로드</div>
         </div>
 
-        <input type="file" id="audioInput" accept="audio/*" style="display:none" />
+        <input type="file" id="audioInput" accept=".mp3,.m4a,.wav,.webm,.ogg,.flac,.mp4,.mpeg" style="display:none" />
         <div class="dropzone" id="dropzone">
           <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
           <div class="dropzone-main">녹음 파일을 드래그하거나<br>클릭하여 업로드하세요</div>
@@ -398,7 +398,7 @@
     }
 
     // ── 녹음 업로드 → 변환 → 요약 ───────────────────────────
-    var lastResult = null;  // { transcript, summary }
+    var lastResult = null;  // { transcript, summary, followUp }
 
     function humanSize(bytes) {
       if (bytes < 1024) return bytes + ' B';
@@ -486,7 +486,7 @@
           var res = await fetch('/api/v1/counseling-notes', {
             method: 'POST',
             headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-            body: JSON.stringify({ scheduleId: Number(scheduleId), rawText: lastResult.transcript, summaryText: lastResult.summary })
+            body: JSON.stringify({ scheduleId: Number(scheduleId), rawText: lastResult.transcript, summaryText: lastResult.summary, followUpText: lastResult.followUp || '' })
           });
           alert(res.ok ? '상담 기록이 저장되었어요.' : '저장에 실패했어요. (상태 ' + res.status + ')');
         } catch (e) { alert('저장 중 오류가 발생했어요.'); }

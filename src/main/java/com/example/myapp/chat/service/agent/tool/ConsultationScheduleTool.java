@@ -1,5 +1,7 @@
 package com.example.myapp.chat.service.agent.tool;
 
+import com.example.myapp.counseling.entity.CounselingNote;
+import com.example.myapp.counseling.mapper.CounselingNoteMapper;
 import com.example.myapp.schedule.entity.Schedule;
 import com.example.myapp.schedule.mapper.ScheduleMapper;
 import com.example.myapp.student.entity.Student;
@@ -15,8 +17,7 @@ import java.util.Set;
 
 /**
  * Tool Calling: 모든 유형의 일정(상담/수업/회의/수행평가/개인)을 자동 등록.
- *
- * teacherId를 런타임에 주입받아 인스턴스 생성 → AgentExecutor에서 .tools(tool) 로 등록.
+ * 상담 유형인 경우 counseling_note 레코드도 함께 생성한다.
  */
 @Slf4j
 public class ConsultationScheduleTool {
@@ -27,26 +28,18 @@ public class ConsultationScheduleTool {
     private final Long teacherId;
     private final ScheduleMapper scheduleMapper;
     private final StudentMapper studentMapper;
+    private final CounselingNoteMapper counselingNoteMapper;
 
-    public ConsultationScheduleTool(Long teacherId, ScheduleMapper scheduleMapper, StudentMapper studentMapper) {
+    public ConsultationScheduleTool(Long teacherId,
+                                    ScheduleMapper scheduleMapper,
+                                    StudentMapper studentMapper,
+                                    CounselingNoteMapper counselingNoteMapper) {
         this.teacherId = teacherId;
         this.scheduleMapper = scheduleMapper;
         this.studentMapper = studentMapper;
+        this.counselingNoteMapper = counselingNoteMapper;
     }
 
-    /**
-     * 일정을 DB에 등록하고 결과 메시지를 반환한다.
-     *
-     * @param scheduleType 일정 유형: 수업, 상담, 회의, 수행평가, 개인
-     * @param title        제목 (언급 없으면 빈 문자열, 자동 생성됨)
-     * @param scheduledAt  시작 일시 (ISO-8601, 예: 2026-06-22T10:00:00)
-     * @param endAt        종료 일시 (ISO-8601, 언급 없으면 빈 문자열)
-     * @param location     장소 (언급 없으면 빈 문자열)
-     * @param topic        주제·내용 (언급 없으면 빈 문자열)
-     * @param memo         메모 (언급 없으면 빈 문자열)
-     * @param studentName  학생 이름 (상담 유형 시 사용, 아니면 빈 문자열)
-     * @param parentName   학부모 이름 (상담 유형·학부모 상담 시 사용, 아니면 빈 문자열)
-     */
     @Tool(description = "교사의 일정(상담/수업/회의/수행평가/개인)을 DB에 등록합니다.")
     public String registerSchedule(
             @ToolParam(description = "일정 유형: 수업, 상담, 회의, 수행평가, 개인 중 하나") String scheduleType,
@@ -62,7 +55,6 @@ public class ConsultationScheduleTool {
         // scheduleType 정규화
         String type = (scheduleType == null || scheduleType.isBlank()) ? "개인" : scheduleType.trim();
         if (!VALID_TYPES.contains(type)) {
-            // 유사 단어 처리
             if (type.contains("상담")) type = "상담";
             else if (type.contains("수업") || type.contains("강의")) type = "수업";
             else if (type.contains("회의") || type.contains("미팅")) type = "회의";
@@ -70,10 +62,9 @@ public class ConsultationScheduleTool {
             else type = "개인";
         }
 
-        log.info("[ScheduleTool] type={} title={} at={} endAt={} location={} student={} teacherId={}",
-                type, title, scheduledAt, endAt, location, studentName, teacherId);
+        log.info("[ScheduleTool] type={} title={} at={} student={} teacherId={}",
+                type, title, scheduledAt, studentName, teacherId);
 
-        // 시작 일시 파싱
         LocalDateTime startDt;
         try {
             startDt = LocalDateTime.parse(scheduledAt, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
@@ -82,7 +73,6 @@ public class ConsultationScheduleTool {
             return "일시 형식을 인식할 수 없습니다. 예) 2026-06-22T10:00:00";
         }
 
-        // 종료 일시 파싱 (선택)
         LocalDateTime endDt = null;
         if (!isBlank(endAt)) {
             try {
@@ -92,13 +82,10 @@ public class ConsultationScheduleTool {
             }
         }
 
-        // 제목 자동 생성
         String finalTitle = buildTitle(type, title, studentName, parentName);
-
         boolean hasParent = !isBlank(parentName);
         boolean hasStudent = !isBlank(studentName);
 
-        // 상담 유형이고 학생 이름이 있으면 student_id 조회
         Long resolvedStudentId = null;
         if ("상담".equals(type) && hasStudent) {
             List<Student> matched = studentMapper.findByNameAndTeacherId(studentName, teacherId);
@@ -131,8 +118,17 @@ public class ConsultationScheduleTool {
         Long scheduleId = scheduleMapper.insert(schedule);
         log.info("[ScheduleTool] 일정 등록 완료 scheduleId={} type={}", scheduleId, type);
 
+        // 상담 유형이면 counseling_note 자동 생성
+        if ("상담".equals(type)) {
+            counselingNoteMapper.insert(CounselingNote.builder()
+                    .scheduleId(scheduleId)
+                    .rawText(blankToNull(topic))
+                    .build());
+            log.info("[ScheduleTool] 상담노트 자동 생성 scheduleId={}", scheduleId);
+        }
+
         DateTimeFormatter display = DateTimeFormatter.ofPattern("M월 d일 HH:mm");
-        StringBuilder result = new StringBuilder("✅ ");
+        StringBuilder result = new StringBuilder();
         result.append(type).append(" 일정이 등록되었습니다.");
         result.append("\n제목: ").append(finalTitle);
         result.append("\n일시: ").append(startDt.format(display));
@@ -146,10 +142,8 @@ public class ConsultationScheduleTool {
         return result.toString();
     }
 
-    /** 제목이 없으면 유형에 맞게 자동 생성 */
     private String buildTitle(String type, String title, String studentName, String parentName) {
         if (!isBlank(title)) return title.trim();
-
         return switch (type) {
             case "상담" -> {
                 boolean hasParent = !isBlank(parentName);
