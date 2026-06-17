@@ -20,6 +20,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const detailBtn = document.getElementById("detailQuizBtn");
   const deleteBtn = document.getElementById("deleteQuizBtn");
   const timeLimitSelect = document.getElementById("timeLimitSelect");
+  const startDateTimeInput = document.getElementById("startDateTimeInput");
+
+  initializeStartDateTimeInput();
 
   generateBtn?.addEventListener("click", handleGeneratePreview);
   regenerateBtn?.addEventListener("click", handleGeneratePreview);
@@ -41,6 +44,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  startDateTimeInput?.addEventListener("change", () => {
+    if (currentMode === "preview" && previewQuiz) {
+      const schedule = buildQuizSchedule();
+
+      if (schedule) {
+        previewQuiz.availableFrom = schedule.availableFrom;
+        previewQuiz.availableUntil = schedule.availableUntil;
+      }
+    }
+  });
+
   loadSavedQuizList();
 });
 
@@ -53,6 +67,10 @@ async function handleGeneratePreview() {
     }
 
     const requestBody = createQuizRequestBody();
+
+    if (!requestBody) {
+      return;
+    }
 
     const response = await fetch(API.preview, {
       method: "POST",
@@ -108,6 +126,11 @@ async function handlePublishQuiz() {
     }
 
     const finalQuiz = collectEditedPreviewQuiz();
+
+    if (!finalQuiz) {
+      setPublishButtonEnabled(true);
+      return;
+    }
 
     if (!finalQuiz.title.trim()) {
       alert("퀴즈 이름을 입력해주세요.");
@@ -223,7 +246,9 @@ async function loadSavedQuizList(selectedAfterLoad = null) {
     }
 
     const data = await response.json();
-    const quizzes = Array.isArray(data) ? data : (data.quizzes || []);
+    const quizzes = Array.isArray(data)
+      ? data
+      : (data.data || data.result || data.quizzes || []);
 
     renderSavedQuizList(quizzes);
 
@@ -267,6 +292,8 @@ function renderSavedQuizList(quizzes) {
     const questionCount = quiz.questionCount ?? quiz.questions?.length ?? 0;
     const difficulty = quiz.difficulty || "-";
     const createdAt = formatDateTime(quiz.createdAt);
+    const availableFrom = formatDateTime(quiz.availableFrom);
+    const availableUntil = formatDateTime(quiz.availableUntil);
 
     return `
       <div class="saved-quiz-item" data-quiz-id="${quiz.quizId}">
@@ -275,7 +302,10 @@ function renderSavedQuizList(quizzes) {
           ${escapeHtml(difficulty)} · ${questionCount}문항
         </div>
         <div class="saved-quiz-meta">
-          ${createdAt}
+          시작 ${availableFrom || "-"} · 종료 ${availableUntil || "-"}
+        </div>
+        <div class="saved-quiz-meta">
+          생성 ${createdAt || "-"}
         </div>
         <span class="badge-published">배포됨</span>
       </div>
@@ -334,13 +364,14 @@ function createQuizRequestBody() {
   const subject = document.getElementById("subjectSelect").value;
   const difficulty = document.getElementById("difficultySelect").value;
   const questionCount = Number(document.getElementById("questionCountSelect").value);
-  const timeLimit = Number(document.getElementById("timeLimitSelect").value);
   const unitValue = document.getElementById("unitSelect").value;
 
   const [startPage, endPage] = unitValue.split("-").map(Number);
+  const schedule = buildQuizSchedule();
 
-  const now = new Date();
-  const until = new Date(now.getTime() + timeLimit * 60 * 1000);
+  if (!schedule) {
+    return null;
+  }
 
   return {
     teacherId: TEACHER_ID,
@@ -350,14 +381,19 @@ function createQuizRequestBody() {
     startPage,
     endPage,
     questionCount,
-    availableFrom: toLocalDateTime(now),
-    availableUntil: toLocalDateTime(until)
+    availableFrom: schedule.availableFrom,
+    availableUntil: schedule.availableUntil
   };
 }
 
 function collectEditedPreviewQuiz() {
   const cards = document.querySelectorAll(".preview-question-card");
   const titleInput = document.getElementById("previewQuizTitleInput");
+  const schedule = buildQuizSchedule();
+
+  if (!schedule) {
+    return null;
+  }
 
   const quizTitle = titleInput?.value.trim() || previewQuiz.title || "제목 없는 퀴즈";
 
@@ -387,6 +423,8 @@ function collectEditedPreviewQuiz() {
   return {
     ...previewQuiz,
     title: quizTitle,
+    availableFrom: schedule.availableFrom,
+    availableUntil: schedule.availableUntil,
     questions
   };
 }
@@ -394,10 +432,11 @@ function collectEditedPreviewQuiz() {
 function renderQuizPreview(quiz) {
   const questions = quiz.questions || [];
   const container = document.getElementById("quizPreviewContainer");
+  const scheduleText = createScheduleText(quiz.availableFrom, quiz.availableUntil);
 
   document.getElementById("previewTitleText").textContent = "생성된 퀴즈 미리보기";
   document.getElementById("previewCountText").textContent =
-    `총 ${questions.length}문항이 생성되었습니다. 퀴즈 이름과 문제를 수정한 뒤 학생 배포를 눌러주세요.`;
+    `총 ${questions.length}문항이 생성되었습니다. ${scheduleText}`;
 
   updateStats(questions);
 
@@ -423,6 +462,9 @@ function renderQuizPreview(quiz) {
         value="${escapeAttribute(quiz.title || "제목 없는 퀴즈")}"
         style="width:100%; height:38px; border:1px solid #ddd; border-radius:8px; padding:0 10px; font-size:14px;"
       >
+      <div class="q-col-desc">
+        ${escapeHtml(scheduleText)}
+      </div>
     </div>
   `;
 
@@ -552,12 +594,13 @@ function updateAnswerSelectOptions(questionIndex) {
 function renderQuizDetail(quiz) {
   const questions = quiz.questions || [];
   const container = document.getElementById("quizPreviewContainer");
+  const scheduleText = createScheduleText(quiz.availableFrom, quiz.availableUntil);
 
   document.getElementById("previewTitleText").textContent = "퀴즈 상세보기";
   document.getElementById("previewCountText").textContent =
-    `${quiz.title || "선택한 퀴즈"} · 총 ${questions.length}문항`;
+    `${quiz.title || "선택한 퀴즈"} · 총 ${questions.length}문항 · ${scheduleText}`;
 
-  updateStats(questions);
+  updateStats(questions, getTimeLimitFromDates(quiz.availableFrom, quiz.availableUntil));
 
   if (!container) {
     return;
@@ -611,8 +654,8 @@ function renderQuizDetail(quiz) {
           </div>
 
           <div>
-            <div class="q-col-title">피드백</div>
-            <div class="q-col-desc">배포된 퀴즈 상세보기 상태입니다.</div>
+            <div class="q-col-title">일정</div>
+            <div class="q-col-desc">${escapeHtml(scheduleText)}</div>
           </div>
         </div>
       </div>
@@ -620,7 +663,7 @@ function renderQuizDetail(quiz) {
   }).join("");
 }
 
-function updateStats(questions) {
+function updateStats(questions, timeLimitOverride = null) {
   const totalCount = questions.length;
   const multipleChoiceCount = questions.filter(question =>
     !question.questionType || question.questionType === "MULTIPLE_CHOICE"
@@ -630,10 +673,10 @@ function updateStats(questions) {
     ? 0
     : Math.round((multipleChoiceCount / totalCount) * 100);
 
-  const timeLimit = Number(document.getElementById("timeLimitSelect")?.value || 15);
+  const timeLimit = timeLimitOverride ?? Number(document.getElementById("timeLimitSelect")?.value || 15);
 
   document.getElementById("totalQuestionCount").textContent = totalCount;
-  document.getElementById("timeLimitStat").textContent = timeLimit;
+  document.getElementById("timeLimitStat").textContent = timeLimit || 0;
   document.getElementById("multipleChoiceRatio").textContent = `${ratio}%`;
   document.getElementById("multipleChoiceCount").textContent = `(${multipleChoiceCount}/${totalCount})`;
 }
@@ -686,6 +729,84 @@ function setDeleteButtonEnabled(enabled) {
   if (deleteBtn) {
     deleteBtn.disabled = !enabled;
   }
+}
+
+function initializeStartDateTimeInput() {
+  const input = document.getElementById("startDateTimeInput");
+
+  if (!input) {
+    return;
+  }
+
+  const now = new Date();
+  now.setSeconds(0, 0);
+
+  if (!input.value) {
+    input.value = toDatetimeLocalValue(now);
+  }
+}
+
+function buildQuizSchedule() {
+  const startInput = document.getElementById("startDateTimeInput");
+  const timeLimitSelect = document.getElementById("timeLimitSelect");
+
+  const startValue = startInput?.value;
+  const timeLimit = Number(timeLimitSelect?.value || 15);
+
+  if (!startValue) {
+    alert("퀴즈 시작 시간을 선택해주세요.");
+    return null;
+  }
+
+  const startDate = new Date(startValue);
+
+  if (Number.isNaN(startDate.getTime())) {
+    alert("퀴즈 시작 시간이 올바르지 않습니다.");
+    return null;
+  }
+
+  if (!timeLimit || timeLimit <= 0) {
+    alert("시간 제한을 선택해주세요.");
+    return null;
+  }
+
+  const endDate = new Date(startDate.getTime() + timeLimit * 60 * 1000);
+
+  return {
+    timeLimit,
+    availableFrom: toLocalDateTime(startDate),
+    availableUntil: toLocalDateTime(endDate)
+  };
+}
+
+function createScheduleText(availableFrom, availableUntil) {
+  const startText = formatDateTime(availableFrom);
+  const endText = formatDateTime(availableUntil);
+  const timeLimit = getTimeLimitFromDates(availableFrom, availableUntil);
+
+  if (!startText || !endText) {
+    return "시작/종료 시간이 설정되지 않았습니다.";
+  }
+
+  return `시작 ${startText} · 종료 ${endText} · 제한 ${timeLimit}분`;
+}
+
+function getTimeLimitFromDates(availableFrom, availableUntil) {
+  if (!availableFrom || !availableUntil) {
+    return 0;
+  }
+
+  const startDate = new Date(availableFrom);
+  const endDate = new Date(availableUntil);
+
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return 0;
+  }
+
+  const diffMs = endDate.getTime() - startDate.getTime();
+  const diffMin = Math.round(diffMs / 1000 / 60);
+
+  return diffMin > 0 ? diffMin : 0;
 }
 
 function parseOptions(options) {
@@ -752,6 +873,11 @@ function formatDateTime(value) {
 function toLocalDateTime(date) {
   const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   return offsetDate.toISOString().slice(0, 19);
+}
+
+function toDatetimeLocalValue(date) {
+  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return offsetDate.toISOString().slice(0, 16);
 }
 
 async function safeJson(response) {
