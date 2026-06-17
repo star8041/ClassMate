@@ -251,6 +251,31 @@ button { cursor: pointer; }
 .dropdown-logout:hover { background: #FFF0F0 !important; color: #C62828 !important; }
 .dropdown-logout svg { stroke: #E53935; }
 
+/* ── 초대코드 위젯 ── */
+#inviteBody {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.invite-gen-btn {
+  background: #2563eb; color: #fff; border: none; border-radius: 8px;
+  padding: 6px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.invite-gen-btn:hover { background: #1d4fd7; }
+.invite-code {
+  font-family: 'Menlo', 'Consolas', monospace; font-size: 15px; font-weight: 800;
+  letter-spacing: 3px; color: #1a2b4a;
+}
+.invite-timer { font-size: 12px; font-weight: 700; color: #f06595; }
+.invite-icon-btn {
+  background: none; border: 1px solid #cdd6f4; border-radius: 7px;
+  width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+  color: #3b5bdb; cursor: pointer; flex-shrink: 0; padding: 0;
+}
+.invite-icon-btn:hover { background: #eef3ff; }
+.invite-expired { font-size: 12px; color: #e25555; font-weight: 700; }
+
 /* ── Logout 버튼 (헤더 우상단 별도) ── */
 .header-logout-btn {
   display: inline-flex;

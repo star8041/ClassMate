@@ -1,0 +1,776 @@
+const TEACHER_ID = 1;
+const MATERIAL_ID = null;
+
+const API = {
+  preview: "/api/v1/quizzes/preview",
+  publish: "/api/v1/quizzes/generate",
+  list: "/api/v1/quizzes",
+  detail: (quizId) => `/api/v1/quizzes/${quizId}`,
+  remove: (quizId) => `/api/v1/quizzes/${quizId}`
+};
+
+let previewQuiz = null;
+let selectedQuizId = null;
+let currentMode = "empty";
+
+document.addEventListener("DOMContentLoaded", () => {
+  const generateBtn = document.getElementById("generateQuizBtn");
+  const regenerateBtn = document.getElementById("regenerateQuizBtn");
+  const publishBtn = document.getElementById("publishQuizBtn");
+  const detailBtn = document.getElementById("detailQuizBtn");
+  const deleteBtn = document.getElementById("deleteQuizBtn");
+  const timeLimitSelect = document.getElementById("timeLimitSelect");
+
+  generateBtn?.addEventListener("click", handleGeneratePreview);
+  regenerateBtn?.addEventListener("click", handleGeneratePreview);
+  publishBtn?.addEventListener("click", handlePublishQuiz);
+  deleteBtn?.addEventListener("click", handleDeleteSelectedQuiz);
+
+  detailBtn?.addEventListener("click", async () => {
+    if (!selectedQuizId) {
+      alert("상세보기 할 퀴즈를 먼저 선택해주세요.");
+      return;
+    }
+
+    await showQuizDetail(selectedQuizId);
+  });
+
+  timeLimitSelect?.addEventListener("change", () => {
+    if (currentMode !== "detail") {
+      document.getElementById("timeLimitStat").textContent = timeLimitSelect.value;
+    }
+  });
+
+  loadSavedQuizList();
+});
+
+async function handleGeneratePreview() {
+  const generateBtn = document.getElementById("generateQuizBtn");
+
+  try {
+    if (generateBtn) {
+      generateBtn.disabled = true;
+    }
+
+    const requestBody = createQuizRequestBody();
+
+    const response = await fetch(API.preview, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(errorText);
+      alert("퀴즈 미리보기 생성에 실패했습니다.");
+      return;
+    }
+
+    const quiz = await response.json();
+
+    previewQuiz = {
+      ...requestBody,
+      ...quiz,
+      questions: quiz.questions || []
+    };
+
+    selectedQuizId = null;
+    currentMode = "preview";
+
+    renderQuizPreview(previewQuiz);
+    setPublishButtonEnabled(true);
+    setDetailButtonEnabled(false);
+    setDeleteButtonEnabled(false);
+  } catch (error) {
+    console.error(error);
+    alert("퀴즈 미리보기 생성 중 오류가 발생했습니다.");
+  } finally {
+    if (generateBtn) {
+      generateBtn.disabled = false;
+    }
+  }
+}
+
+async function handlePublishQuiz() {
+  if (!previewQuiz) {
+    alert("먼저 퀴즈를 생성해주세요.");
+    return;
+  }
+
+  const publishBtn = document.getElementById("publishQuizBtn");
+
+  try {
+    if (publishBtn) {
+      publishBtn.disabled = true;
+    }
+
+    const finalQuiz = collectEditedPreviewQuiz();
+
+    if (!finalQuiz.title.trim()) {
+      alert("퀴즈 이름을 입력해주세요.");
+      setPublishButtonEnabled(true);
+      return;
+    }
+
+    const response = await fetch(API.publish, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(finalQuiz)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(errorText);
+      alert("학생 배포에 실패했습니다.");
+      setPublishButtonEnabled(true);
+      return;
+    }
+
+    const savedQuiz = await safeJson(response);
+
+    alert("학생 배포가 완료되었습니다.");
+
+    previewQuiz = null;
+    currentMode = "detail";
+
+    await loadSavedQuizList(savedQuiz?.quizId);
+
+    if (savedQuiz?.quizId) {
+      selectedQuizId = savedQuiz.quizId;
+      await showQuizDetail(savedQuiz.quizId);
+      setDeleteButtonEnabled(true);
+    } else {
+      clearPreviewAreaAfterPublish();
+      setDeleteButtonEnabled(false);
+    }
+  } catch (error) {
+    console.error(error);
+    alert("학생 배포 중 오류가 발생했습니다.");
+    setPublishButtonEnabled(true);
+  }
+}
+
+async function handleDeleteSelectedQuiz() {
+  if (!selectedQuizId) {
+    alert("삭제할 퀴즈를 먼저 선택해주세요.");
+    return;
+  }
+
+  const confirmed = confirm("선택한 퀴즈를 삭제하시겠습니까? 삭제 후에는 되돌릴 수 없습니다.");
+
+  if (!confirmed) {
+    return;
+  }
+
+  const deleteBtn = document.getElementById("deleteQuizBtn");
+
+  try {
+    if (deleteBtn) {
+      deleteBtn.disabled = true;
+    }
+
+    const response = await fetch(API.remove(selectedQuizId), {
+      method: "DELETE"
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(errorText);
+      alert("퀴즈 삭제에 실패했습니다.");
+      setDeleteButtonEnabled(true);
+      return;
+    }
+
+    alert("퀴즈가 삭제되었습니다.");
+
+    selectedQuizId = null;
+    previewQuiz = null;
+    currentMode = "empty";
+
+    setDetailButtonEnabled(false);
+    setDeleteButtonEnabled(false);
+    setPublishButtonEnabled(false);
+
+    clearPreviewAreaAfterDelete();
+    await loadSavedQuizList();
+  } catch (error) {
+    console.error(error);
+    alert("퀴즈 삭제 중 오류가 발생했습니다.");
+    setDeleteButtonEnabled(true);
+  }
+}
+
+async function loadSavedQuizList(selectedAfterLoad = null) {
+  const listContainer = document.getElementById("savedQuizList");
+
+  try {
+    const response = await fetch(API.list);
+
+    if (!response.ok) {
+      if (listContainer) {
+        listContainer.innerHTML = `
+          <div class="saved-quiz-empty">
+            퀴즈 목록을 불러오지 못했습니다.
+          </div>
+        `;
+      }
+      return;
+    }
+
+    const data = await response.json();
+    const quizzes = Array.isArray(data) ? data : (data.quizzes || []);
+
+    renderSavedQuizList(quizzes);
+
+    if (selectedAfterLoad) {
+      selectQuizInList(selectedAfterLoad);
+    }
+  } catch (error) {
+    console.error(error);
+
+    if (listContainer) {
+      listContainer.innerHTML = `
+        <div class="saved-quiz-empty">
+          퀴즈 목록을 불러오는 중 오류가 발생했습니다.
+        </div>
+      `;
+    }
+  }
+}
+
+function renderSavedQuizList(quizzes) {
+  const listContainer = document.getElementById("savedQuizList");
+
+  if (!listContainer) {
+    return;
+  }
+
+  if (!quizzes.length) {
+    listContainer.innerHTML = `
+      <div class="saved-quiz-empty">
+        아직 배포된 퀴즈가 없습니다.
+      </div>
+    `;
+
+    selectedQuizId = null;
+    setDetailButtonEnabled(false);
+    setDeleteButtonEnabled(false);
+    return;
+  }
+
+  listContainer.innerHTML = quizzes.map(quiz => {
+    const questionCount = quiz.questionCount ?? quiz.questions?.length ?? 0;
+    const difficulty = quiz.difficulty || "-";
+    const createdAt = formatDateTime(quiz.createdAt);
+
+    return `
+      <div class="saved-quiz-item" data-quiz-id="${quiz.quizId}">
+        <div class="saved-quiz-title">${escapeHtml(quiz.title)}</div>
+        <div class="saved-quiz-meta">
+          ${escapeHtml(difficulty)} · ${questionCount}문항
+        </div>
+        <div class="saved-quiz-meta">
+          ${createdAt}
+        </div>
+        <span class="badge-published">배포됨</span>
+      </div>
+    `;
+  }).join("");
+
+  document.querySelectorAll(".saved-quiz-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const quizId = Number(item.dataset.quizId);
+
+      selectedQuizId = quizId;
+      selectQuizInList(quizId);
+      setDetailButtonEnabled(true);
+      setDeleteButtonEnabled(true);
+    });
+  });
+}
+
+function selectQuizInList(quizId) {
+  document.querySelectorAll(".saved-quiz-item").forEach(item => {
+    const itemQuizId = Number(item.dataset.quizId);
+    item.classList.toggle("selected", itemQuizId === Number(quizId));
+  });
+
+  selectedQuizId = Number(quizId);
+  setDetailButtonEnabled(true);
+  setDeleteButtonEnabled(true);
+}
+
+async function showQuizDetail(quizId) {
+  try {
+    const response = await fetch(API.detail(quizId));
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(errorText);
+      alert("퀴즈 상세 정보를 불러오지 못했습니다.");
+      return;
+    }
+
+    const quiz = await response.json();
+
+    currentMode = "detail";
+    previewQuiz = null;
+
+    renderQuizDetail(quiz);
+    setPublishButtonEnabled(false);
+    setDeleteButtonEnabled(true);
+  } catch (error) {
+    console.error(error);
+    alert("퀴즈 상세보기 중 오류가 발생했습니다.");
+  }
+}
+
+function createQuizRequestBody() {
+  const subject = document.getElementById("subjectSelect").value;
+  const difficulty = document.getElementById("difficultySelect").value;
+  const questionCount = Number(document.getElementById("questionCountSelect").value);
+  const timeLimit = Number(document.getElementById("timeLimitSelect").value);
+  const unitValue = document.getElementById("unitSelect").value;
+
+  const [startPage, endPage] = unitValue.split("-").map(Number);
+
+  const now = new Date();
+  const until = new Date(now.getTime() + timeLimit * 60 * 1000);
+
+  return {
+    teacherId: TEACHER_ID,
+    materialId: MATERIAL_ID,
+    title: `${subject} 퀴즈`,
+    difficulty,
+    startPage,
+    endPage,
+    questionCount,
+    availableFrom: toLocalDateTime(now),
+    availableUntil: toLocalDateTime(until)
+  };
+}
+
+function collectEditedPreviewQuiz() {
+  const cards = document.querySelectorAll(".preview-question-card");
+  const titleInput = document.getElementById("previewQuizTitleInput");
+
+  const quizTitle = titleInput?.value.trim() || previewQuiz.title || "제목 없는 퀴즈";
+
+  const questions = Array.from(cards).map((card, index) => {
+    const questionText = card.querySelector(".question-text-input")?.value.trim() || "";
+    const explanation = card.querySelector(".explanation-input")?.value.trim() || "";
+    const answerText = card.querySelector(".answer-select")?.value || "";
+    const optionInputs = card.querySelectorAll(".option-text-input");
+
+    const options = Array.from(optionInputs).map((input, optionIndex) => {
+      return {
+        number: Number(input.dataset.optionNumber || optionIndex + 1),
+        text: input.value.trim()
+      };
+    });
+
+    return {
+      questionType: card.dataset.questionType || "MULTIPLE_CHOICE",
+      questionText,
+      options: JSON.stringify(options),
+      answerText,
+      explanation,
+      questionOrder: index + 1
+    };
+  });
+
+  return {
+    ...previewQuiz,
+    title: quizTitle,
+    questions
+  };
+}
+
+function renderQuizPreview(quiz) {
+  const questions = quiz.questions || [];
+  const container = document.getElementById("quizPreviewContainer");
+
+  document.getElementById("previewTitleText").textContent = "생성된 퀴즈 미리보기";
+  document.getElementById("previewCountText").textContent =
+    `총 ${questions.length}문항이 생성되었습니다. 퀴즈 이름과 문제를 수정한 뒤 학생 배포를 눌러주세요.`;
+
+  updateStats(questions);
+
+  if (!container) {
+    return;
+  }
+
+  if (!questions.length) {
+    container.innerHTML = `
+      <div class="question-card">
+        <div class="q-text">생성된 문제가 없습니다.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const quizTitleEditHtml = `
+    <div class="question-card">
+      <div class="q-col-title">퀴즈 이름</div>
+      <input
+        id="previewQuizTitleInput"
+        type="text"
+        value="${escapeAttribute(quiz.title || "제목 없는 퀴즈")}"
+        style="width:100%; height:38px; border:1px solid #ddd; border-radius:8px; padding:0 10px; font-size:14px;"
+      >
+    </div>
+  `;
+
+  const questionCardsHtml = questions.map((question, index) => {
+    const options = parseOptions(question.options);
+
+    const optionInputsHtml = options.map(option => {
+      return `
+        <label class="choice" style="display:flex; align-items:center; gap:6px;">
+          <span>${option.number}.</span>
+          <input
+            class="option-text-input"
+            data-question-index="${index}"
+            data-option-number="${option.number}"
+            value="${escapeAttribute(option.text)}"
+            style="width:130px; height:30px; border:1px solid #ddd; border-radius:6px; padding:0 8px; font-size:13px;"
+          >
+        </label>
+      `;
+    }).join("");
+
+    const answerOptionsHtml = options.map(option => {
+      const selected = String(option.number) === String(question.answerText) ? "selected" : "";
+
+      return `
+        <option value="${option.number}" ${selected}>
+          ${option.number}. ${escapeHtml(option.text)}
+        </option>
+      `;
+    }).join("");
+
+    return `
+      <div class="question-card preview-question-card"
+           data-question-index="${index}"
+           data-question-type="${escapeAttribute(question.questionType || "MULTIPLE_CHOICE")}">
+        <div class="q-header">
+          <span class="q-num">${index + 1}</span>
+          <div style="flex:1">
+            <span class="q-badge">${formatQuestionType(question.questionType)}</span>
+            <textarea
+              class="question-text-input"
+              style="width:100%; min-height:42px; border:1px solid #ddd; border-radius:8px; padding:8px 10px; font-size:14px; resize:vertical;"
+            >${escapeHtml(question.questionText)}</textarea>
+          </div>
+        </div>
+
+        <div class="q-choices">
+          ${optionInputsHtml}
+        </div>
+
+        <div class="q-cols">
+          <div>
+            <div class="q-col-title">정답</div>
+            <select
+              class="answer-select"
+              data-question-index="${index}"
+              style="height:32px; border:1px solid #ddd; border-radius:6px; padding:0 8px;"
+            >
+              ${answerOptionsHtml}
+            </select>
+          </div>
+
+          <div>
+            <div class="q-col-title">해설</div>
+            <textarea
+              class="explanation-input"
+              style="width:100%; min-height:60px; border:1px solid #ddd; border-radius:8px; padding:8px 10px; font-size:12px; resize:vertical;"
+            >${escapeHtml(question.explanation || "")}</textarea>
+          </div>
+
+          <div>
+            <div class="q-col-title">피드백</div>
+            <div class="q-col-desc">학생이 문제를 푼 뒤 결과를 확인할 수 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = quizTitleEditHtml + questionCardsHtml;
+
+  bindOptionInputEvents();
+}
+
+function bindOptionInputEvents() {
+  const optionInputs = document.querySelectorAll(".option-text-input");
+
+  optionInputs.forEach(input => {
+    input.addEventListener("input", () => {
+      const questionIndex = input.dataset.questionIndex;
+      updateAnswerSelectOptions(questionIndex);
+    });
+  });
+}
+
+function updateAnswerSelectOptions(questionIndex) {
+  const questionCard = document.querySelector(
+    `.preview-question-card[data-question-index="${questionIndex}"]`
+  );
+
+  if (!questionCard) {
+    return;
+  }
+
+  const optionInputs = questionCard.querySelectorAll(".option-text-input");
+  const answerSelect = questionCard.querySelector(".answer-select");
+
+  if (!answerSelect) {
+    return;
+  }
+
+  const currentAnswer = answerSelect.value;
+
+  answerSelect.innerHTML = Array.from(optionInputs).map(input => {
+    const optionNumber = input.dataset.optionNumber;
+    const optionText = input.value.trim();
+    const selected = String(optionNumber) === String(currentAnswer) ? "selected" : "";
+
+    return `
+      <option value="${optionNumber}" ${selected}>
+        ${optionNumber}. ${escapeHtml(optionText)}
+      </option>
+    `;
+  }).join("");
+}
+
+function renderQuizDetail(quiz) {
+  const questions = quiz.questions || [];
+  const container = document.getElementById("quizPreviewContainer");
+
+  document.getElementById("previewTitleText").textContent = "퀴즈 상세보기";
+  document.getElementById("previewCountText").textContent =
+    `${quiz.title || "선택한 퀴즈"} · 총 ${questions.length}문항`;
+
+  updateStats(questions);
+
+  if (!container) {
+    return;
+  }
+
+  if (!questions.length) {
+    container.innerHTML = `
+      <div class="question-card">
+        <div class="q-text">표시할 문제가 없습니다.</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = questions.map((question, index) => {
+    const options = parseOptions(question.options);
+
+    const choicesHtml = options.map(option => {
+      const isCorrect = String(option.number) === String(question.answerText);
+
+      return `
+        <span class="choice ${isCorrect ? "correct" : ""}">
+          ${option.number}. ${escapeHtml(option.text)}
+        </span>
+      `;
+    }).join("");
+
+    return `
+      <div class="question-card">
+        <div class="q-header">
+          <span class="q-num">${index + 1}</span>
+          <div style="flex:1">
+            <span class="q-badge">${formatQuestionType(question.questionType)}</span>
+            <span class="q-text">${escapeHtml(question.questionText)}</span>
+          </div>
+        </div>
+
+        <div class="q-choices">
+          ${choicesHtml}
+        </div>
+
+        <div class="q-cols">
+          <div>
+            <div class="q-col-title">정답</div>
+            <div class="q-col-val correct">${escapeHtml(formatAnswer(question))}</div>
+          </div>
+
+          <div>
+            <div class="q-col-title">해설</div>
+            <div class="q-col-desc">${escapeHtml(question.explanation || "")}</div>
+          </div>
+
+          <div>
+            <div class="q-col-title">피드백</div>
+            <div class="q-col-desc">배포된 퀴즈 상세보기 상태입니다.</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function updateStats(questions) {
+  const totalCount = questions.length;
+  const multipleChoiceCount = questions.filter(question =>
+    !question.questionType || question.questionType === "MULTIPLE_CHOICE"
+  ).length;
+
+  const ratio = totalCount === 0
+    ? 0
+    : Math.round((multipleChoiceCount / totalCount) * 100);
+
+  const timeLimit = Number(document.getElementById("timeLimitSelect")?.value || 15);
+
+  document.getElementById("totalQuestionCount").textContent = totalCount;
+  document.getElementById("timeLimitStat").textContent = timeLimit;
+  document.getElementById("multipleChoiceRatio").textContent = `${ratio}%`;
+  document.getElementById("multipleChoiceCount").textContent = `(${multipleChoiceCount}/${totalCount})`;
+}
+
+function clearPreviewAreaAfterPublish() {
+  document.getElementById("previewTitleText").textContent = "퀴즈 상세보기";
+  document.getElementById("previewCountText").textContent = "배포된 퀴즈를 목록에서 선택해주세요.";
+
+  document.getElementById("quizPreviewContainer").innerHTML = `
+    <div class="question-card">
+      <div class="q-text">오른쪽 목록에서 퀴즈를 선택한 뒤 상세 보기를 눌러주세요.</div>
+    </div>
+  `;
+
+  updateStats([]);
+}
+
+function clearPreviewAreaAfterDelete() {
+  document.getElementById("previewTitleText").textContent = "생성된 퀴즈 미리보기";
+  document.getElementById("previewCountText").textContent = "퀴즈 생성 전입니다.";
+
+  document.getElementById("quizPreviewContainer").innerHTML = `
+    <div class="question-card">
+      <div class="q-text">퀴즈 생성 버튼을 누르면 문제가 표시됩니다.</div>
+    </div>
+  `;
+
+  updateStats([]);
+}
+
+function setPublishButtonEnabled(enabled) {
+  const publishBtn = document.getElementById("publishQuizBtn");
+
+  if (publishBtn) {
+    publishBtn.disabled = !enabled;
+  }
+}
+
+function setDetailButtonEnabled(enabled) {
+  const detailBtn = document.getElementById("detailQuizBtn");
+
+  if (detailBtn) {
+    detailBtn.disabled = !enabled;
+  }
+}
+
+function setDeleteButtonEnabled(enabled) {
+  const deleteBtn = document.getElementById("deleteQuizBtn");
+
+  if (deleteBtn) {
+    deleteBtn.disabled = !enabled;
+  }
+}
+
+function parseOptions(options) {
+  if (Array.isArray(options)) {
+    return options;
+  }
+
+  if (!options) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(options);
+  } catch (error) {
+    console.error("선택지 JSON 파싱 실패:", options);
+    return [];
+  }
+}
+
+function formatQuestionType(questionType) {
+  if (questionType === "MULTIPLE_CHOICE") {
+    return "객관식";
+  }
+
+  if (questionType === "SHORT_ANSWER") {
+    return "주관식";
+  }
+
+  return "문제";
+}
+
+function formatAnswer(question) {
+  const options = parseOptions(question.options);
+  const matchedOption = options.find(option =>
+    String(option.number) === String(question.answerText)
+  );
+
+  if (matchedOption) {
+    return `${matchedOption.number}. ${matchedOption.text}`;
+  }
+
+  return question.answerText || "";
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function toLocalDateTime(date) {
+  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return offsetDate.toISOString().slice(0, 19);
+}
+
+async function safeJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value)
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}

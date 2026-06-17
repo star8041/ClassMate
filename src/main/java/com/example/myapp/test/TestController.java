@@ -19,6 +19,12 @@ public class TestController {
         return "archive";
     }
     
+    @GetMapping("/archive/student")
+    public String archiveStudent(Model model) {
+    	model.addAttribute("userName", "홍길동");
+        return "archive_student";
+    }
+    
     @GetMapping("/quiz")
     public String quiz(Model model) {
     	model.addAttribute("userName", "홍길동");

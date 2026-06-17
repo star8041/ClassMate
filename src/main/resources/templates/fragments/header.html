@@ -1,12 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <body>
 <header th:fragment="header(userName, profileImgUrl)" id="main-header">
 
-  
-
-  <!-- ② 우측 액션 영역 -->
   <div class="header-actions">
 
     <!-- 관리자 전용: 화면 전환 버튼 (관리자 토큰일 때만 표시) -->
@@ -64,10 +60,14 @@
       </ul>
     </div>
 
-    <!-- Logout 버튼 (이미지에서 우측 상단에 별도 존재) -->
-    <a th:href="@{/members/logout}" class="header-logout-btn">
-      <span th:text="#{header.btn.logout}">Logout</span>
-    </a>
+    <!-- 사용자 이름 (아이콘 없이 텍스트만) -->
+    <span class="header-username">
+      <span th:text="${userName}">김민지</span>
+      <span th:text="#{header.user.suffix}">선생님</span>
+    </span>
+
+    <!-- 로그아웃 -->
+    <a th:href="@{/members/logout}" class="header-logout-btn">로그아웃</a>
 
   </div>
 
@@ -109,5 +109,6 @@
   </script>
 </header>
 
+</header>
 </body>
 </html>
