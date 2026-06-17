@@ -28,7 +28,6 @@ body {
 	padding: 40px 0;
 }
 
-/* 페이지 타이틀 */
 .page-title {
 	font-size: 24px;
 	font-weight: 700;
@@ -42,7 +41,6 @@ body {
 	margin-bottom: 20px;
 }
 
-/* ── 퀴즈 메타 바 ── */
 .meta-bar {
 	background: #fff;
 	border: 0.5px solid #e0e0e0;
@@ -96,7 +94,6 @@ body {
 	color: #f44336;
 }
 
-/* ── 진행 바 ── */
 .progress-wrap {
 	background: #fff;
 	border: 0.5px solid #e0e0e0;
@@ -130,7 +127,6 @@ body {
 	transition: width 0.3s ease;
 }
 
-/* ── 문제 카드 ── */
 .question-card {
 	background: #fff;
 	border: 0.5px solid #e0e0e0;
@@ -154,7 +150,6 @@ body {
 	line-height: 1.5;
 }
 
-/* 지문 박스 */
 .passage-box {
 	background: #f8f9fc;
 	border: 1px solid #e8e8e8;
@@ -173,7 +168,6 @@ body {
 	margin-bottom: 12px;
 }
 
-/* 보기 선택지 */
 .choice-list {
 	display: flex;
 	flex-direction: column;
@@ -235,7 +229,6 @@ body {
 	font-weight: 500;
 }
 
-/* 힌트 */
 .hint-wrap {
 	border: 1px solid #e8e8e8;
 	border-radius: 10px;
@@ -295,7 +288,6 @@ body {
 	line-height: 1.7;
 }
 
-/* ── 하단 버튼 ── */
 .bottom-nav {
 	display: flex;
 	align-items: center;
@@ -356,7 +348,6 @@ body {
 	background: #16a34a;
 }
 
-/* ── 팝업 오버레이 ── */
 .overlay {
 	position: fixed;
 	inset: 0;
@@ -415,611 +406,675 @@ body {
 }
 </style>
 </head>
+
 <body>
-	<!-- <div class="layout-wrapper"> -->
+<main class="solve-container">
 
-	<!-- <div th:replace="~{fragments/sidebar :: sidebar('quiz')}"></div> -->
+	<h1 class="page-title">퀴즈 풀이</h1>
+	<p class="page-subtitle">차분하게 읽고 답을 골라보세요.</p>
 
-	<!-- <div class="layout-main"> -->
-
-	<!-- <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div> -->
-
-	<!-- <main class="page-body">   -->
-	<main class="solve-container">
-
-		<h1 class="page-title">퀴즈 풀이</h1>
-		<p class="page-subtitle">차분하게 읽고 답을 골라보세요.</p>
-
-		<!-- 메타 바 -->
-		<div class="meta-bar">
-			<div class="meta-item">
-				<span class="subject-chip" id="metaSubject">국어</span>
-			</div>
-			<div class="meta-divider"></div>
-			<div class="meta-item">
-				<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-					viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
-					<path
-						d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-					<polyline points="14 2 14 8 20 8" /></svg>
-				<span id="metaTitle">4단원 복습 퀴즈</span>
-			</div>
-			<div class="meta-divider"></div>
-			<div class="meta-item">
-				<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-					viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
-					<rect x="3" y="3" width="18" height="18" rx="2" />
-					<line x1="3" y1="9" x2="21" y2="9" />
-					<line x1="9" y1="21" x2="9" y2="9" /></svg>
-				<span id="metaCount">10문제</span>
-			</div>
-			<div class="meta-divider"></div>
-			<div class="timer-wrap meta-item">
-				<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
-					viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
-					<circle cx="12" cy="12" r="10" />
-					<polyline points="12 6 12 12 16 14" /></svg>
-				<span id="timerDisplay">10:00</span>
-			</div>
+	<div class="meta-bar">
+		<div class="meta-item">
+			<span class="subject-chip" id="metaSubject">퀴즈</span>
 		</div>
 
-		<!-- 진행 바 -->
-		<div class="progress-wrap">
-			<span class="progress-label" id="progressLabel">1 / 10</span>
-			<div class="progress-track">
-				<div class="progress-fill" id="progressFill" style="width: 10%"></div>
-			</div>
+		<div class="meta-divider"></div>
+
+		<div class="meta-item">
+			<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+				viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
+				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+				<polyline points="14 2 14 8 20 8"/>
+			</svg>
+			<span id="metaTitle">퀴즈를 불러오는 중입니다.</span>
 		</div>
 
-		<!-- 문제 카드 -->
-		<div class="question-card" id="questionCard">
-			<!-- JS로 렌더링 -->
+		<div class="meta-divider"></div>
+
+		<div class="meta-item">
+			<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+				viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
+				<rect x="3" y="3" width="18" height="18" rx="2"/>
+				<line x1="3" y1="9" x2="21" y2="9"/>
+				<line x1="9" y1="21" x2="9" y2="9"/>
+			</svg>
+			<span id="metaCount">0문제</span>
 		</div>
 
-		<!-- 하단 네비게이션 -->
-		<div class="bottom-nav">
-			<button class="btn-prev" id="btnPrev" onclick="prevQuestion()">이전
-				문제</button>
-			<button class="btn-next" id="btnNext" onclick="nextQuestion()">다음
-				문제</button>
-		</div>
-	</main>
-	<!-- </div>
-</div> -->
+		<div class="meta-divider"></div>
 
-	<!-- 시간 종료 팝업 -->
-	<div class="overlay" id="timeupOverlay">
-		<div class="popup">
-			<div class="popup-icon">
-				<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"
-					viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="1.8">
-					<circle cx="12" cy="12" r="10" />
-					<line x1="12" y1="8" x2="12" y2="12" />
-					<line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-			</div>
-			<div class="popup-title">시험이 종료되었습니다.</div>
-			<div class="popup-desc">
-				제한 시간이 초과되어<br>퀴즈가 자동 종료되었습니다.
-			</div>
-			<button class="popup-btn" onclick="goBack()">확인</button>
+		<div class="timer-wrap meta-item">
+			<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+				viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2">
+				<circle cx="12" cy="12" r="10"/>
+				<polyline points="12 6 12 12 16 14"/>
+			</svg>
+			<span id="timerDisplay">00:00</span>
 		</div>
 	</div>
 
-	<!-- 제출 확인 팝업 -->
-	<div class="overlay" id="submitOverlay">
-		<div class="popup">
-			<div class="popup-icon">
-				<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"
-					viewBox="0 0 24 24" fill="none" stroke="#4f80f7" stroke-width="1.8">
-					<circle cx="12" cy="12" r="10" />
-					<polyline points="9 12 11 14 15 10" /></svg>
-			</div>
-			<div class="popup-title">퀴즈를 제출할까요?</div>
-			<div class="popup-desc">
-				제출 후에는 답변을 수정할 수 없습니다.<br>정말 제출하시겠습니까?
-			</div>
-			<div style="display: flex; gap: 8px;">
-				<button class="popup-btn"
-					style="background: #fff; color: #555; border: 1px solid #ddd;"
-					onclick="closeSubmit()">취소</button>
-				<button class="popup-btn" onclick="submitQuiz()">제출하기</button>
-			</div>
+	<div class="progress-wrap">
+		<span class="progress-label" id="progressLabel">0 / 0</span>
+		<div class="progress-track">
+			<div class="progress-fill" id="progressFill" style="width: 0%"></div>
 		</div>
 	</div>
-	<script>
-  const API = {
-    detail: function (quizId) {
-      return '/api/v1/quizzes/' + encodeURIComponent(quizId);
-    },
-    startAttempt: function (quizId) {
-      return '/api/v1/quizzes/' + encodeURIComponent(quizId) + '/attempts';
-    },
-    submit: function (quizId, attemptId) {
-      return '/api/v1/quizzes/' + encodeURIComponent(quizId)
-        + '/attempts/' + encodeURIComponent(attemptId)
-        + '/submit';
-    }
-  };
 
-  // TODO: 로그인 연동 전 임시값
-  // 나중에 학생 로그인 principal을 쓰면 이 값은 제거 가능
-  const STUDENT_ID = 1;
-
-  let quizId = null;
-  let attemptId = null;
-
-  let quiz = null;
-  let currentIndex = 0;
-  let answers = [];
-  let timeLeft = 0;
-  let timerInterval = null;
-  let hintOpen = false;
-  let submitted = false;
-
-  document.addEventListener('DOMContentLoaded', function () {
-    initQuizSolvePage();
-  });
-
-  async function initQuizSolvePage() {
-    try {
-      quizId = getQuizIdFromUrl();
-
-      if (!quizId) {
-        alert('퀴즈 ID가 없습니다.');
-        goBack();
-        return;
-      }
-
-      const quizData = await fetchQuizDetail(quizId);
-      quiz = normalizeQuiz(quizData);
-
-      if (!quiz.questions.length) {
-        alert('퀴즈에 문제가 없습니다.');
-        goBack();
-        return;
-      }
-
-      const now = new Date();
-
-      if (quiz.availableFrom && now < quiz.availableFrom) {
-        alert('아직 시작되지 않은 퀴즈입니다.');
-        goBack();
-        return;
-      }
-
-      if (quiz.availableUntil && now > quiz.availableUntil) {
-        alert('이미 종료된 퀴즈입니다.');
-        goBack();
-        return;
-      }
-
-      const attemptData = await startAttempt();
-      attemptId = attemptData.quizAttemptId || attemptData.attemptId;
-
-      if (!attemptId) {
-        console.warn('응시 시작 응답에서 attemptId를 찾지 못했습니다.', attemptData);
-      }
-
-      answers = new Array(quiz.questions.length).fill(null);
-
-      initMeta();
-      renderQuestion();
-      startTimer();
-
-    } catch (error) {
-      console.error(error);
-      alert('퀴즈를 불러오는 중 오류가 발생했습니다.');
-      goBack();
-    }
-  }
-
-  function getQuizIdFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('quizId');
-  }
-
-  async function fetchQuizDetail(quizId) {
-    const response = await fetch(API.detail(quizId));
-
-    if (!response.ok) {
-      console.error(await response.text());
-      throw new Error('퀴즈 상세 조회 실패');
-    }
-
-    const data = await response.json();
-
-    // 일반 응답 / ApiResponse 응답 둘 다 대응
-    return data.data || data.result || data;
-  }
-
-  async function startAttempt() {
-    const response = await fetch(API.startAttempt(quizId), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        studentId: STUDENT_ID
-      })
-    });
-
-    if (!response.ok) {
-      console.error(await response.text());
-      throw new Error('퀴즈 응시 시작 실패');
-    }
-
-    const data = await response.json();
-    return data.data || data.result || data;
-  }
-
-  function normalizeQuiz(raw) {
-    const questions = raw.questions || raw.questionList || [];
-
-    return {
-      quizId: raw.quizId,
-      subject: inferSubject(raw.title),
-      title: raw.title || '제목 없는 퀴즈',
-      difficulty: raw.difficulty || '',
-      availableFrom: raw.availableFrom ? new Date(raw.availableFrom) : null,
-      availableUntil: raw.availableUntil ? new Date(raw.availableUntil) : null,
-      questions: questions
-        .slice()
-        .sort(function (a, b) {
-          return (a.questionOrder || 0) - (b.questionOrder || 0);
-        })
-        .map(function (q, index) {
-          const options = parseOptions(q.options);
-
-          return {
-            quizQuestionId: q.quizQuestionId || q.questionId,
-            questionType: q.questionType || 'MULTIPLE_CHOICE',
-            instruction: getInstruction(q.questionType),
-            passage: null,
-            question: q.questionText || '',
-            choices: options,
-            hint: q.explanation || '문제를 차분히 읽고 답을 선택해보세요.',
-            order: q.questionOrder || index + 1
-          };
-        })
-    };
-  }
-
-  function parseOptions(options) {
-    if (!options) {
-      return [];
-    }
-
-    if (Array.isArray(options)) {
-      return options.map(function (option, index) {
-        if (typeof option === 'string') {
-          return {
-            number: index + 1,
-            text: option
-          };
-        }
-
-        return {
-          number: option.number || index + 1,
-          text: option.text || ''
-        };
-      });
-    }
-
-    if (typeof options === 'string') {
-      try {
-        const parsed = JSON.parse(options);
-        return parseOptions(parsed);
-      } catch (error) {
-        console.warn('options JSON 파싱 실패:', options);
-        return [];
-      }
-    }
-
-    return [];
-  }
-
-  function getInstruction(questionType) {
-    if (questionType === 'SHORT_ANSWER') {
-      return '다음 문제를 읽고 짧게 답을 작성하세요.';
-    }
-
-    if (questionType === 'ESSAY') {
-      return '다음 문제를 읽고 자신의 생각을 서술하세요.';
-    }
-
-    return '다음 문제를 읽고 알맞은 답을 고르세요.';
-  }
-
-  function inferSubject(title) {
-    if (!title) return '퀴즈';
-
-    if (title.indexOf('국어') > -1) return '국어';
-    if (title.indexOf('수학') > -1) return '수학';
-    if (title.indexOf('과학') > -1) return '과학';
-    if (title.indexOf('영어') > -1) return '영어';
-    if (title.indexOf('사회') > -1) return '사회';
-
-    return '퀴즈';
-  }
-
-  function initMeta() {
-    document.getElementById('metaSubject').textContent = quiz.subject;
-    document.getElementById('metaTitle').textContent = quiz.title;
-    document.getElementById('metaCount').textContent = quiz.questions.length + '문제';
-
-    if (quiz.availableUntil) {
-      const now = new Date();
-      timeLeft = Math.max(0, Math.floor((quiz.availableUntil.getTime() - now.getTime()) / 1000));
-    } else {
-      // 종료 시간이 없는 경우 기본 30분
-      timeLeft = 30 * 60;
-    }
-
-    document.getElementById('timerDisplay').textContent = formatTime(timeLeft);
-  }
-
-  function formatTime(sec) {
-    const m = String(Math.floor(sec / 60)).padStart(2, '0');
-    const s = String(sec % 60).padStart(2, '0');
-    return m + ':' + s;
-  }
-
-  function startTimer() {
-    clearInterval(timerInterval);
-
-    timerInterval = setInterval(function () {
-      timeLeft--;
-
-      const el = document.getElementById('timerDisplay');
-      el.textContent = formatTime(Math.max(timeLeft, 0));
-      el.classList.toggle('warning', timeLeft <= 60);
-
-      if (timeLeft <= 0) {
-        clearInterval(timerInterval);
-        handleTimeUp();
-      }
-    }, 1000);
-  }
-
-  async function handleTimeUp() {
-    if (!submitted) {
-      await submitQuiz(true);
-    }
-
-    document.getElementById('timeupOverlay').classList.add('show');
-  }
-
-  function renderQuestion() {
-    const q = quiz.questions[currentIndex];
-    const total = quiz.questions.length;
-    hintOpen = false;
-
-    document.getElementById('progressLabel').textContent = (currentIndex + 1) + ' / ' + total;
-    document.getElementById('progressFill').style.width = ((currentIndex + 1) / total) * 100 + '%';
-
-    const btnPrev = document.getElementById('btnPrev');
-    btnPrev.disabled = currentIndex === 0;
-
-    const btnNext = document.getElementById('btnNext');
-
-    if (currentIndex === total - 1) {
-      btnNext.textContent = '제출하기';
-      btnNext.className = 'btn-submit';
-      btnNext.onclick = openSubmit;
-    } else {
-      btnNext.textContent = '다음 문제';
-      btnNext.className = 'btn-next';
-      btnNext.onclick = nextQuestion;
-    }
-
-    const passageHtml = q.passage
-      ? '<div class="passage-box">' + escapeHtml(q.passage).replace(/\n/g, '<br>') + '</div>'
-      : '';
-
-    let answerHtml = '';
-
-    if (q.questionType === 'MULTIPLE_CHOICE') {
-      answerHtml = renderMultipleChoice(q);
-    } else if (q.questionType === 'SHORT_ANSWER') {
-      answerHtml = renderShortAnswer(q);
-    } else {
-      answerHtml = renderEssayAnswer(q);
-    }
-
-    const hintText = q.hint || '힌트가 없습니다.';
-
-    document.getElementById('questionCard').innerHTML =
-      '<div class="q-number">문제 ' + (currentIndex + 1) + '</div>' +
-      '<div class="q-instruction">' + escapeHtml(q.instruction) + '</div>' +
-      passageHtml +
-      '<div class="q-question">' + escapeHtml(q.question) + '</div>' +
-      answerHtml +
-      '<div class="hint-wrap">' +
-        '<div class="hint-header" onclick="toggleHint()">' +
-          '<div class="hint-header-left">' +
-            '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
-            '힌트' +
-          '</div>' +
-          '<svg class="hint-chevron" id="hintChevron" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>' +
-        '</div>' +
-        '<div class="hint-body" id="hintBody">' +
-          '<div class="hint-text">' + escapeHtml(hintText) + '</div>' +
-        '</div>' +
-      '</div>';
-  }
-
-  function renderMultipleChoice(q) {
-    const choices = q.choices || [];
-
-    if (!choices.length) {
-      return '<div class="empty">선택지가 없습니다.</div>';
-    }
-
-    return '<div class="choice-list">' +
-      choices.map(function (choice, i) {
-        const selectedAnswer = answers[currentIndex];
-        const isSelected = selectedAnswer && selectedAnswer.optionIndex === i;
-
-        return '<div class="choice-item ' + (isSelected ? 'selected' : '') + '"' +
-          ' onclick="selectChoiceAnswer(' + i + ')">' +
-            '<div class="choice-num">' + (choice.number || i + 1) + '</div>' +
-            '<div class="choice-text">' + escapeHtml(choice.text) + '</div>' +
-          '</div>';
-      }).join('') +
-    '</div>';
-  }
-
-  function renderShortAnswer(q) {
-    const value = answers[currentIndex]?.answerText || '';
-
-    return '<div class="choice-list">' +
-      '<input type="text" value="' + escapeAttribute(value) + '"' +
-      ' oninput="writeTextAnswer(this.value)"' +
-      ' placeholder="답을 입력하세요."' +
-      ' style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:13px 16px;font-size:14px;font-family:inherit;outline:none;">' +
-    '</div>';
-  }
-
-  function renderEssayAnswer(q) {
-    const value = answers[currentIndex]?.answerText || '';
-
-    return '<div class="choice-list">' +
-      '<textarea oninput="writeTextAnswer(this.value)"' +
-      ' placeholder="답을 입력하세요."' +
-      ' style="width:100%;min-height:120px;border:1.5px solid #e0e0e0;border-radius:10px;padding:13px 16px;font-size:14px;font-family:inherit;outline:none;resize:vertical;">' +
-      escapeHtml(value) +
-      '</textarea>' +
-    '</div>';
-  }
-
-  
-function selectChoiceAnswer(idx) {
-  const q = quiz.questions[currentIndex];
-  const choice = q.choices[idx];
-
-  const selectedNumber = choice.number || idx + 1;
-
-  answers[currentIndex] = {
-    quizQuestionId: q.quizQuestionId,
-    questionId: q.quizQuestionId,
-    answerText: String(selectedNumber),
-    optionNumber: selectedNumber,
-    optionIndex: idx
-  };
-
-  document.querySelectorAll('.choice-item').forEach(function (el, i) {
-    el.classList.toggle('selected', i === idx);
-  });
+	<div class="question-card" id="questionCard">
+		문제를 불러오는 중입니다.
+	</div>
+
+	<div class="bottom-nav">
+		<button class="btn-prev" id="btnPrev" onclick="prevQuestion()">이전 문제</button>
+		<button class="btn-next" id="btnNext" onclick="nextQuestion()">다음 문제</button>
+	</div>
+</main>
+
+<div class="overlay" id="timeupOverlay">
+	<div class="popup">
+		<div class="popup-icon">
+			<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"
+				viewBox="0 0 24 24" fill="none" stroke="#f44336" stroke-width="1.8">
+				<circle cx="12" cy="12" r="10"/>
+				<line x1="12" y1="8" x2="12" y2="12"/>
+				<line x1="12" y1="16" x2="12.01" y2="16"/>
+			</svg>
+		</div>
+		<div class="popup-title">시험이 종료되었습니다.</div>
+		<div class="popup-desc">
+			제한 시간이 초과되어<br>퀴즈가 자동 종료되었습니다.
+		</div>
+		<button class="popup-btn" onclick="goBack()">확인</button>
+	</div>
+</div>
+
+<div class="overlay" id="submitOverlay">
+	<div class="popup">
+		<div class="popup-icon">
+			<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44"
+				viewBox="0 0 24 24" fill="none" stroke="#4f80f7" stroke-width="1.8">
+				<circle cx="12" cy="12" r="10"/>
+				<polyline points="9 12 11 14 15 10"/>
+			</svg>
+		</div>
+		<div class="popup-title">퀴즈를 제출할까요?</div>
+		<div class="popup-desc">
+			제출 후에는 답변을 수정할 수 없습니다.<br>정말 제출하시겠습니까?
+		</div>
+		<div style="display: flex; gap: 8px;">
+			<button class="popup-btn"
+				style="background: #fff; color: #555; border: 1px solid #ddd;"
+				onclick="closeSubmit()">취소</button>
+			<button class="popup-btn" onclick="submitQuiz(false)">제출하기</button>
+		</div>
+	</div>
+</div>
+
+<script>
+const ACCESS_TOKEN = localStorage.getItem('accessToken');
+const TOKEN_TYPE = localStorage.getItem('tokenType') || 'Bearer';
+const STUDENT_ID = getStudentIdFromToken();
+
+const API = {
+	detail: function (quizId) {
+		return '/api/v1/quizzes/' + encodeURIComponent(quizId);
+	},
+	startAttempt: function (quizId) {
+		return '/api/v1/quizzes/' + encodeURIComponent(quizId) + '/attempts';
+	},
+	submit: function (quizId, attemptId) {
+		return '/api/v1/quizzes/' + encodeURIComponent(quizId)
+			+ '/attempts/' + encodeURIComponent(attemptId)
+			+ '/submit';
+	}
+};
+
+let quizId = null;
+let attemptId = null;
+let quiz = null;
+let currentIndex = 0;
+let answers = [];
+let timeLeft = 0;
+let timerInterval = null;
+let hintOpen = false;
+let submitted = false;
+
+document.addEventListener('DOMContentLoaded', function () {
+	initQuizSolvePage();
+});
+
+function getStudentIdFromToken() {
+	if (!ACCESS_TOKEN) {
+		alert('로그인이 필요합니다.');
+		location.href = '/login';
+		return null;
+	}
+
+	try {
+		const payloadBase64Url = ACCESS_TOKEN.split('.')[1];
+		const payloadBase64 = payloadBase64Url
+			.replace(/-/g, '+')
+			.replace(/_/g, '/');
+
+		const payloadJson = decodeURIComponent(
+			atob(payloadBase64)
+				.split('')
+				.map(function (char) {
+					return '%' + ('00' + char.charCodeAt(0).toString(16)).slice(-2);
+				})
+				.join('')
+		);
+
+		const payload = JSON.parse(payloadJson);
+
+		if (payload.role !== 'STUDENT') {
+			alert('학생 계정으로 로그인해주세요.');
+			location.href = '/login';
+			return null;
+		}
+
+		return Number(payload.sub);
+	} catch (error) {
+		console.error(error);
+		alert('로그인 정보가 올바르지 않습니다. 다시 로그인해주세요.');
+		location.href = '/login';
+		return null;
+	}
 }
 
+function buildAuthHeaders() {
+	return {
+		'Authorization': TOKEN_TYPE + ' ' + ACCESS_TOKEN
+	};
+}
 
+function buildJsonHeaders() {
+	return {
+		'Content-Type': 'application/json',
+		'Authorization': TOKEN_TYPE + ' ' + ACCESS_TOKEN
+	};
+}
 
-  function writeTextAnswer(value) {
-    const q = quiz.questions[currentIndex];
+async function initQuizSolvePage() {
+	try {
+		if (!STUDENT_ID) {
+			return;
+		}
 
-    answers[currentIndex] = {
-      quizQuestionId: q.quizQuestionId,
-      questionId: q.quizQuestionId,
-      answerText: value
-    };
-  }
+		quizId = getQuizIdFromUrl();
 
-  function toggleHint() {
-    hintOpen = !hintOpen;
-    document.getElementById('hintBody').classList.toggle('open', hintOpen);
-    document.getElementById('hintChevron').classList.toggle('open', hintOpen);
-  }
+		if (!quizId) {
+			alert('퀴즈 ID가 없습니다.');
+			goBack();
+			return;
+		}
 
-  function prevQuestion() {
-    if (currentIndex > 0) {
-      currentIndex--;
-      renderQuestion();
-    }
-  }
+		const quizData = await fetchQuizDetail(quizId);
+		quiz = normalizeQuiz(quizData);
 
-  function nextQuestion() {
-    if (currentIndex < quiz.questions.length - 1) {
-      currentIndex++;
-      renderQuestion();
-    }
-  }
+		if (!quiz.questions.length) {
+			alert('퀴즈에 문제가 없습니다.');
+			goBack();
+			return;
+		}
 
-  function openSubmit() {
-    document.getElementById('submitOverlay').classList.add('show');
-  }
+		const now = new Date();
 
-  function closeSubmit() {
-    document.getElementById('submitOverlay').classList.remove('show');
-  }
+		if (quiz.availableFrom && now < quiz.availableFrom) {
+			alert('아직 시작되지 않은 퀴즈입니다.');
+			goBack();
+			return;
+		}
 
-  async function submitQuiz(isAutoSubmit) {
-    if (submitted) {
-      return;
-    }
+		if (quiz.availableUntil && now > quiz.availableUntil) {
+			alert('이미 종료된 퀴즈입니다.');
+			goBack();
+			return;
+		}
 
-    try {
-      submitted = true;
-      clearInterval(timerInterval);
+		const attemptData = await startAttempt();
+		attemptId = attemptData.quizAttemptId || attemptData.attemptId;
 
-      const submitAnswers = quiz.questions.map(function (q, index) {
-        const answer = answers[index];
+		if (!attemptId) {
+			console.warn('응시 시작 응답에서 attemptId를 찾지 못했습니다.', attemptData);
+			throw new Error('응시 ID 없음');
+		}
 
-        return {
-          quizQuestionId: q.quizQuestionId,
-          questionId: q.quizQuestionId,
-          answerText: answer?.answerText || ''
-        };
-      });
+		answers = new Array(quiz.questions.length).fill(null);
 
-      const response = await fetch(API.submit(quizId, attemptId), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          answers: submitAnswers
-        })
-      });
+		initMeta();
+		renderQuestion();
+		startTimer();
 
-      if (!response.ok) {
-        console.error(await response.text());
-        throw new Error('퀴즈 제출 실패');
-      }
+	} catch (error) {
+		console.error(error);
 
-      const data = await response.json();
-      const result = data.data || data.result || data;
+		if (error.message === 'ALREADY_SUBMITTED') {
+			alert('이미 제출한 퀴즈입니다.');
+		} else {
+			alert('퀴즈를 불러오는 중 오류가 발생했습니다.');
+		}
 
-      if (isAutoSubmit) {
-        return result;
-      }
+		goBack();
+	}
+}
 
-      alert('퀴즈가 제출되었습니다.');
-      goBack();
+function getQuizIdFromUrl() {
+	const params = new URLSearchParams(window.location.search);
+	return params.get('quizId');
+}
 
-    } catch (error) {
-      submitted = false;
-      console.error(error);
-      alert('퀴즈 제출 중 오류가 발생했습니다.');
-    }
-  }
+async function fetchQuizDetail(quizId) {
+	const response = await fetch(API.detail(quizId), {
+		headers: buildAuthHeaders()
+	});
 
-  function goBack() {
-    window.location.href = '/student/quiz';
-  }
+	if (!response.ok) {
+		console.error(await response.text());
+		throw new Error('퀴즈 상세 조회 실패');
+	}
 
-  function escapeHtml(value) {
-    return String(value ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
-  }
+	const data = await response.json();
+	return data.data || data.result || data;
+}
 
-  function escapeAttribute(value) {
-    return escapeHtml(value).replaceAll('\n', '&#10;');
-  }
+async function startAttempt() {
+	const response = await fetch(API.startAttempt(quizId), {
+		method: 'POST',
+		headers: buildJsonHeaders(),
+		body: JSON.stringify({
+			studentId: STUDENT_ID
+		})
+	});
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		console.error(errorText);
+
+		if (
+			response.status === 409 ||
+			errorText.includes('이미') ||
+			errorText.toLowerCase().includes('already') ||
+			errorText.toLowerCase().includes('submitted')
+		) {
+			throw new Error('ALREADY_SUBMITTED');
+		}
+
+		throw new Error('퀴즈 응시 시작 실패');
+	}
+
+	const data = await response.json();
+	return data.data || data.result || data;
+}
+
+function normalizeQuiz(raw) {
+	const questions = raw.questions || raw.questionList || [];
+
+	return {
+		quizId: raw.quizId,
+		subject: inferSubject(raw.title),
+		title: raw.title || '제목 없는 퀴즈',
+		difficulty: raw.difficulty || '',
+		availableFrom: raw.availableFrom ? new Date(raw.availableFrom) : null,
+		availableUntil: raw.availableUntil ? new Date(raw.availableUntil) : null,
+		questions: questions
+			.slice()
+			.sort(function (a, b) {
+				return (a.questionOrder || 0) - (b.questionOrder || 0);
+			})
+			.map(function (q, index) {
+				const options = parseOptions(q.options);
+
+				return {
+					quizQuestionId: q.quizQuestionId || q.questionId,
+					questionType: q.questionType || 'MULTIPLE_CHOICE',
+					instruction: getInstruction(q.questionType),
+					passage: null,
+					question: q.questionText || '',
+					choices: options,
+					hint: q.explanation || '문제를 차분히 읽고 답을 선택해보세요.',
+					order: q.questionOrder || index + 1
+				};
+			})
+	};
+}
+
+function parseOptions(options) {
+	if (!options) {
+		return [];
+	}
+
+	if (Array.isArray(options)) {
+		return options.map(function (option, index) {
+			if (typeof option === 'string') {
+				return {
+					number: index + 1,
+					text: option
+				};
+			}
+
+			return {
+				number: option.number || index + 1,
+				text: option.text || ''
+			};
+		});
+	}
+
+	if (typeof options === 'string') {
+		try {
+			const parsed = JSON.parse(options);
+			return parseOptions(parsed);
+		} catch (error) {
+			console.warn('options JSON 파싱 실패:', options);
+			return [];
+		}
+	}
+
+	return [];
+}
+
+function getInstruction(questionType) {
+	if (questionType === 'SHORT_ANSWER') {
+		return '다음 문제를 읽고 짧게 답을 작성하세요.';
+	}
+
+	if (questionType === 'ESSAY') {
+		return '다음 문제를 읽고 자신의 생각을 서술하세요.';
+	}
+
+	return '다음 문제를 읽고 알맞은 답을 고르세요.';
+}
+
+function inferSubject(title) {
+	if (!title) return '퀴즈';
+
+	if (title.indexOf('국어') > -1) return '국어';
+	if (title.indexOf('수학') > -1) return '수학';
+	if (title.indexOf('과학') > -1) return '과학';
+	if (title.indexOf('영어') > -1) return '영어';
+	if (title.indexOf('사회') > -1) return '사회';
+
+	return '퀴즈';
+}
+
+function initMeta() {
+	document.getElementById('metaSubject').textContent = quiz.subject;
+	document.getElementById('metaTitle').textContent = quiz.title;
+	document.getElementById('metaCount').textContent = quiz.questions.length + '문제';
+
+	if (quiz.availableUntil) {
+		const now = new Date();
+		timeLeft = Math.max(0, Math.floor((quiz.availableUntil.getTime() - now.getTime()) / 1000));
+	} else {
+		timeLeft = 30 * 60;
+	}
+
+	document.getElementById('timerDisplay').textContent = formatTime(timeLeft);
+}
+
+function formatTime(sec) {
+	const m = String(Math.floor(sec / 60)).padStart(2, '0');
+	const s = String(sec % 60).padStart(2, '0');
+
+	return m + ':' + s;
+}
+
+function startTimer() {
+	clearInterval(timerInterval);
+
+	timerInterval = setInterval(function () {
+		timeLeft--;
+
+		const el = document.getElementById('timerDisplay');
+		el.textContent = formatTime(Math.max(timeLeft, 0));
+		el.classList.toggle('warning', timeLeft <= 60);
+
+		if (timeLeft <= 0) {
+			clearInterval(timerInterval);
+			handleTimeUp();
+		}
+	}, 1000);
+}
+
+async function handleTimeUp() {
+	if (!submitted) {
+		await submitQuiz(true);
+	}
+
+	document.getElementById('timeupOverlay').classList.add('show');
+}
+
+function renderQuestion() {
+	const q = quiz.questions[currentIndex];
+	const total = quiz.questions.length;
+	hintOpen = false;
+
+	document.getElementById('progressLabel').textContent = (currentIndex + 1) + ' / ' + total;
+	document.getElementById('progressFill').style.width = ((currentIndex + 1) / total) * 100 + '%';
+
+	const btnPrev = document.getElementById('btnPrev');
+	btnPrev.disabled = currentIndex === 0;
+
+	const btnNext = document.getElementById('btnNext');
+
+	if (currentIndex === total - 1) {
+		btnNext.textContent = '제출하기';
+		btnNext.className = 'btn-submit';
+		btnNext.onclick = openSubmit;
+	} else {
+		btnNext.textContent = '다음 문제';
+		btnNext.className = 'btn-next';
+		btnNext.onclick = nextQuestion;
+	}
+
+	const passageHtml = q.passage
+		? '<div class="passage-box">' + escapeHtml(q.passage).replace(/\n/g, '<br>') + '</div>'
+		: '';
+
+	let answerHtml = '';
+
+	if (q.questionType === 'MULTIPLE_CHOICE') {
+		answerHtml = renderMultipleChoice(q);
+	} else if (q.questionType === 'SHORT_ANSWER') {
+		answerHtml = renderShortAnswer(q);
+	} else {
+		answerHtml = renderEssayAnswer(q);
+	}
+
+	const hintText = q.hint || '힌트가 없습니다.';
+
+	document.getElementById('questionCard').innerHTML =
+		'<div class="q-number">문제 ' + (currentIndex + 1) + '</div>' +
+		'<div class="q-instruction">' + escapeHtml(q.instruction) + '</div>' +
+		passageHtml +
+		'<div class="q-question">' + escapeHtml(q.question) + '</div>' +
+		answerHtml +
+		'<div class="hint-wrap">' +
+			'<div class="hint-header" onclick="toggleHint()">' +
+				'<div class="hint-header-left">' +
+					'<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+					'힌트' +
+				'</div>' +
+				'<svg class="hint-chevron" id="hintChevron" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>' +
+			'</div>' +
+			'<div class="hint-body" id="hintBody">' +
+				'<div class="hint-text">' + escapeHtml(hintText) + '</div>' +
+			'</div>' +
+		'</div>';
+}
+
+function renderMultipleChoice(q) {
+	const choices = q.choices || [];
+
+	if (!choices.length) {
+		return '<div class="empty">선택지가 없습니다.</div>';
+	}
+
+	return '<div class="choice-list">' +
+		choices.map(function (choice, i) {
+			const selectedAnswer = answers[currentIndex];
+			const isSelected = selectedAnswer && selectedAnswer.optionIndex === i;
+
+			return '<div class="choice-item ' + (isSelected ? 'selected' : '') + '"' +
+				' onclick="selectChoiceAnswer(' + i + ')">' +
+					'<div class="choice-num">' + (choice.number || i + 1) + '</div>' +
+					'<div class="choice-text">' + escapeHtml(choice.text) + '</div>' +
+				'</div>';
+		}).join('') +
+	'</div>';
+}
+
+function renderShortAnswer(q) {
+	const value = answers[currentIndex]?.answerText || '';
+
+	return '<div class="choice-list">' +
+		'<input type="text" value="' + escapeAttribute(value) + '"' +
+		' oninput="writeTextAnswer(this.value)"' +
+		' placeholder="답을 입력하세요."' +
+		' style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:13px 16px;font-size:14px;font-family:inherit;outline:none;">' +
+	'</div>';
+}
+
+function renderEssayAnswer(q) {
+	const value = answers[currentIndex]?.answerText || '';
+
+	return '<div class="choice-list">' +
+		'<textarea oninput="writeTextAnswer(this.value)"' +
+		' placeholder="답을 입력하세요."' +
+		' style="width:100%;min-height:120px;border:1.5px solid #e0e0e0;border-radius:10px;padding:13px 16px;font-size:14px;font-family:inherit;outline:none;resize:vertical;">' +
+		escapeHtml(value) +
+		'</textarea>' +
+	'</div>';
+}
+
+function selectChoiceAnswer(idx) {
+	const q = quiz.questions[currentIndex];
+	const choice = q.choices[idx];
+	const selectedNumber = choice.number || idx + 1;
+
+	answers[currentIndex] = {
+		quizQuestionId: q.quizQuestionId,
+		questionId: q.quizQuestionId,
+		answerText: String(selectedNumber),
+		optionNumber: selectedNumber,
+		optionIndex: idx
+	};
+
+	document.querySelectorAll('.choice-item').forEach(function (el, i) {
+		el.classList.toggle('selected', i === idx);
+	});
+}
+
+function writeTextAnswer(value) {
+	const q = quiz.questions[currentIndex];
+
+	answers[currentIndex] = {
+		quizQuestionId: q.quizQuestionId,
+		questionId: q.quizQuestionId,
+		answerText: value
+	};
+}
+
+function toggleHint() {
+	hintOpen = !hintOpen;
+	document.getElementById('hintBody').classList.toggle('open', hintOpen);
+	document.getElementById('hintChevron').classList.toggle('open', hintOpen);
+}
+
+function prevQuestion() {
+	if (currentIndex > 0) {
+		currentIndex--;
+		renderQuestion();
+	}
+}
+
+function nextQuestion() {
+	if (currentIndex < quiz.questions.length - 1) {
+		currentIndex++;
+		renderQuestion();
+	}
+}
+
+function openSubmit() {
+	document.getElementById('submitOverlay').classList.add('show');
+}
+
+function closeSubmit() {
+	document.getElementById('submitOverlay').classList.remove('show');
+}
+
+async function submitQuiz(isAutoSubmit) {
+	if (submitted) {
+		return;
+	}
+
+	if (!attemptId) {
+		alert('응시 정보가 없습니다. 다시 시도해주세요.');
+		goBack();
+		return;
+	}
+
+	try {
+		submitted = true;
+		clearInterval(timerInterval);
+		closeSubmit();
+
+		const submitAnswers = quiz.questions.map(function (q, index) {
+			const answer = answers[index];
+
+			return {
+				quizQuestionId: q.quizQuestionId,
+				questionId: q.quizQuestionId,
+				answerText: answer?.answerText || ''
+			};
+		});
+
+		const response = await fetch(API.submit(quizId, attemptId), {
+			method: 'POST',
+			headers: buildJsonHeaders(),
+			body: JSON.stringify({
+				answers: submitAnswers
+			})
+		});
+
+		if (!response.ok) {
+			console.error(await response.text());
+			throw new Error('퀴즈 제출 실패');
+		}
+
+		const data = await response.json();
+		const result = data.data || data.result || data;
+
+		if (isAutoSubmit) {
+			return result;
+		}
+
+		alert('퀴즈가 제출되었습니다.');
+		goBack();
+
+	} catch (error) {
+		submitted = false;
+		console.error(error);
+		alert('퀴즈 제출 중 오류가 발생했습니다.');
+	}
+}
+
+function goBack() {
+	window.location.href = '/student/quiz';
+}
+
+function escapeHtml(value) {
+	return String(value ?? '')
+		.replaceAll('&', '&amp;')
+		.replaceAll('<', '&lt;')
+		.replaceAll('>', '&gt;')
+		.replaceAll('"', '&quot;')
+		.replaceAll("'", '&#39;');
+}
+
+function escapeAttribute(value) {
+	return escapeHtml(value).replaceAll('\n', '&#10;');
+}
 </script>
-
 </body>
 </html>
