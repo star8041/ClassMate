@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -105,6 +106,47 @@ select:focus,
 .datetime-input:focus {
 	outline: none;
 	border-color: #4f80f7;
+}
+
+.page-range-wrap {
+	display: grid;
+	grid-template-columns: 1fr 18px 1fr;
+	align-items: center;
+	gap: 6px;
+}
+
+.page-range-input {
+	width: 100%;
+	height: 36px;
+	border: 1px solid #ddd;
+	border-radius: 8px;
+	padding: 0 10px;
+	font-size: 13px;
+	color: #1a1a1a;
+	background: #fff;
+	font-family: inherit;
+}
+
+.page-range-input:focus {
+	outline: none;
+	border-color: #4f80f7;
+}
+
+.page-range-dash {
+	text-align: center;
+	color: #999;
+	font-size: 13px;
+}
+
+.page-range-note {
+	margin-top: 6px;
+	font-size: 11px;
+	color: #999;
+	line-height: 1.4;
+}
+
+.page-range-hidden-select {
+	display: none;
 }
 
 .schedule-note {
@@ -506,7 +548,7 @@ button:disabled:hover {
 
 			<main class="page-body">
 				<h1 class="page-title">퀴즈 생성</h1>
-				<p class="page-subtitle">과목, 단원, 난이도를 설정하면 AI가 맞춤형 퀴즈를 자동으로 생성해드립니다.</p>
+				<p class="page-subtitle">과목, 쪽 수, 난이도를 설정하면 AI가 맞춤형 퀴즈를 자동으로 생성해드립니다.</p>
 
 				<div class="top-grid">
 
@@ -524,12 +566,19 @@ button:disabled:hover {
 							</div>
 
 							<div>
-								<div class="field-label">쪽수 선택</div>
-								<select id="unitSelect">
-									<option value="1-3">1~3쪽</option>
-									<option value="4-6">4~6쪽</option>
-									<option value="7-9">7~9쪽</option>
+								<div class="field-label">쪽수 직접 지정</div>
+
+								<div class="page-range-wrap">
+									<input id="startPageInput" class="page-range-input" type="number" min="1" step="1" value="1" placeholder="시작">
+									<span class="page-range-dash">~</span>
+									<input id="endPageInput" class="page-range-input" type="number" min="1" step="1" value="3" placeholder="끝">
+								</div>
+
+								<select id="unitSelect" class="page-range-hidden-select" aria-hidden="true" tabindex="-1">
+									<option value="1-3" selected>1~3쪽</option>
 								</select>
+
+								<div class="page-range-note">예: 5쪽부터 8쪽까지 출제하려면 5 ~ 8 입력</div>
 							</div>
 
 							<div>
@@ -697,7 +746,106 @@ button:disabled:hover {
 		</div>
 	</div>
 
+	<script>
+	(function () {
+		function getPageRangeElements() {
+			return {
+				startInput: document.getElementById('startPageInput'),
+				endInput: document.getElementById('endPageInput'),
+				unitSelect: document.getElementById('unitSelect')
+			};
+		}
+
+		function normalizePageNumber(value) {
+			const number = Number(value);
+
+			if (!Number.isInteger(number) || number < 1) {
+				return null;
+			}
+
+			return number;
+		}
+
+		function syncPageRangeValue() {
+			const elements = getPageRangeElements();
+			const startPage = normalizePageNumber(elements.startInput?.value);
+			const endPage = normalizePageNumber(elements.endInput?.value);
+
+			if (!elements.unitSelect || startPage === null || endPage === null) {
+				return false;
+			}
+
+			const value = startPage + '-' + endPage;
+			const label = startPage + '~' + endPage + '쪽';
+
+			elements.unitSelect.innerHTML = '<option value="' + value + '" selected>' + label + '</option>';
+			elements.unitSelect.value = value;
+
+			return true;
+		}
+
+		function validatePageRange() {
+			const elements = getPageRangeElements();
+			const startPage = normalizePageNumber(elements.startInput?.value);
+			const endPage = normalizePageNumber(elements.endInput?.value);
+
+			if (startPage === null || endPage === null) {
+				alert('쪽 수는 1 이상의 숫자로 입력해주세요.');
+				return false;
+			}
+
+			if (startPage > endPage) {
+				alert('시작 쪽은 끝 쪽보다 클 수 없습니다.');
+				return false;
+			}
+
+			syncPageRangeValue();
+			return true;
+		}
+
+		window.validatePageRange = validatePageRange;
+		window.syncPageRangeValue = syncPageRangeValue;
+
+		document.addEventListener('DOMContentLoaded', function () {
+			const elements = getPageRangeElements();
+
+			if (elements.startInput) {
+				elements.startInput.addEventListener('input', syncPageRangeValue);
+				elements.startInput.addEventListener('change', syncPageRangeValue);
+			}
+
+			if (elements.endInput) {
+				elements.endInput.addEventListener('input', syncPageRangeValue);
+				elements.endInput.addEventListener('change', syncPageRangeValue);
+			}
+
+			const buttons = [
+				document.getElementById('generateQuizBtn'),
+				document.getElementById('regenerateQuizBtn'),
+				document.getElementById('publishQuizBtn'),
+				document.getElementById('detailQuizBtn')
+			];
+
+			buttons.forEach(function (button) {
+				if (!button) {
+					return;
+				}
+
+				button.addEventListener('click', function (event) {
+					if (!validatePageRange()) {
+						event.preventDefault();
+						event.stopImmediatePropagation();
+					}
+				}, true);
+			});
+
+			syncPageRangeValue();
+		});
+	})();
+	</script>
+
 	<script th:src="@{/js/quiz-create.js}"></script>
 	<script th:src="@{/js/layout.js}"></script>
 </body>
 </html>
+```
