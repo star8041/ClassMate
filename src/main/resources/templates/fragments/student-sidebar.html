@@ -43,8 +43,8 @@
       </a>
     </nav>
     <div class="s-user">
-      <div class="s-ava">🧑‍🎓</div>
-      <div><div class="s-name">김학생</div><div class="s-grade">3학년 2반</div></div>
+      <div class="s-ava" id="sUserAva">🧑‍🎓</div>
+      <div><div class="s-name" id="sUserName">김학생</div><div class="s-grade" id="sUserGrade">3학년 2반</div></div>
     </div>
   </aside>
 
@@ -69,16 +69,28 @@
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
-      var btn = document.getElementById('adminSwitchBtn');
-      if (!btn) return;
       var token = localStorage.getItem('accessToken');
-      var role = null;
+      var payload = null;
       if (token) {
         try {
           var b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-          role = JSON.parse(decodeURIComponent(escape(atob(b64)))).role;
-        } catch (e) { role = null; }
+          payload = JSON.parse(decodeURIComponent(escape(atob(b64))));
+        } catch (e) { payload = null; }
       }
+      var role = payload ? payload.role : null;
+
+      // 사이드바 하단 사용자: 관리자가 둘러보는 경우 '관리자'로 표기
+      if (role === 'ADMIN') {
+        var sn = document.getElementById('sUserName');
+        var sg = document.getElementById('sUserGrade');
+        var sa = document.getElementById('sUserAva');
+        if (sn) sn.textContent = payload.name || '관리자';
+        if (sg) sg.textContent = '관리자 모드';
+        if (sa) sa.textContent = '🛡️';
+      }
+
+      var btn = document.getElementById('adminSwitchBtn');
+      if (!btn) return;
       if (role !== 'ADMIN') { btn.remove(); return; }   // 관리자만 노출
       btn.style.display = 'inline-flex';
       // 상단바가 있는 페이지(홈)는 교사 화면처럼 우측 묶음의 '왼쪽'에 배치,

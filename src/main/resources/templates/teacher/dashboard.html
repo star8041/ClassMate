@@ -484,8 +484,7 @@
         if (p) {
             teacherName = p.name || p.sub || '선생님';
             document.getElementById('welcomeTitle').textContent = '안녕하세요, ' + teacherName + ' 선생님!';
-            const uname = document.querySelector('.header-username');
-            if (uname) uname.textContent = teacherName + ' 선생님';
+            // 헤더 이름 표기는 공통 header 프래그먼트에서 일괄 처리
         }
         document.querySelectorAll('.dropdown-logout, .header-logout-btn').forEach(el => {
             el.addEventListener('click', e => { e.preventDefault(); doLogout(); });

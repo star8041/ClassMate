@@ -118,9 +118,9 @@
   <div class="main">
     <div class="topbar">
       <div class="me">
-        <div class="avatar">🧒</div>
+        <div class="avatar" id="studentAvatar">🧒</div>
         <span class="name" id="studentName">학생</span>
-        <span class="grade-badge">4학년 2반</span>
+        <span class="grade-badge" id="studentGrade">4학년 2반</span>
       </div>
       <a href="/members/logout" class="logout-btn">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -203,8 +203,23 @@
   // 로그인 안 된 학생이면 로그인으로 (선택적 가드)
   // 학생은 코드 검증 후 들어오므로 토큰이 없을 수 있어 강제 리다이렉트는 하지 않음.
   (function () {
-    var name = localStorage.getItem('studentName');
-    if (name) document.getElementById('studentName').textContent = name;
+    var token = localStorage.getItem('accessToken');
+    var payload = null;
+    if (token) {
+      try {
+        var b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+        payload = JSON.parse(decodeURIComponent(escape(atob(b64))));
+      } catch (e) { payload = null; }
+    }
+    if (payload && payload.role === 'ADMIN') {
+      // 관리자가 학생 화면을 둘러보는 경우 → '관리자'로 표기
+      document.getElementById('studentName').textContent = payload.name || '관리자';
+      document.getElementById('studentGrade').textContent = '관리자 모드';
+      document.getElementById('studentAvatar').textContent = '🛡️';
+    } else {
+      var name = localStorage.getItem('studentName');
+      if (name) document.getElementById('studentName').textContent = name;
+    }
   })();
 
   // 미구현 탭: 교사 화면으로 빠지지 않도록 안내만 표시
