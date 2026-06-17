@@ -2,12 +2,15 @@ package com.example.myapp.chat.service.agent.tool;
 
 import com.example.myapp.schedule.entity.Schedule;
 import com.example.myapp.schedule.mapper.ScheduleMapper;
+import com.example.myapp.student.entity.Student;
+import com.example.myapp.student.mapper.StudentMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -23,10 +26,12 @@ public class ConsultationScheduleTool {
 
     private final Long teacherId;
     private final ScheduleMapper scheduleMapper;
+    private final StudentMapper studentMapper;
 
-    public ConsultationScheduleTool(Long teacherId, ScheduleMapper scheduleMapper) {
+    public ConsultationScheduleTool(Long teacherId, ScheduleMapper scheduleMapper, StudentMapper studentMapper) {
         this.teacherId = teacherId;
         this.scheduleMapper = scheduleMapper;
+        this.studentMapper = studentMapper;
     }
 
     /**
@@ -93,8 +98,24 @@ public class ConsultationScheduleTool {
         boolean hasParent = !isBlank(parentName);
         boolean hasStudent = !isBlank(studentName);
 
+        // 상담 유형이고 학생 이름이 있으면 student_id 조회
+        Long resolvedStudentId = null;
+        if ("상담".equals(type) && hasStudent) {
+            List<Student> matched = studentMapper.findByNameAndTeacherId(studentName, teacherId);
+            if (matched.isEmpty()) {
+                return "'" + studentName + "' 학생을 찾을 수 없습니다. 학생 이름을 다시 확인해 주세요.";
+            }
+            if (matched.size() > 1) {
+                StringBuilder sb = new StringBuilder("'" + studentName + "' 이름의 학생이 여러 명입니다. 학번을 포함해 다시 알려주세요:\n");
+                matched.forEach(s -> sb.append("- ").append(s.getStudentName()).append(" (학번: ").append(s.getStudentNumber()).append(")\n"));
+                return sb.toString();
+            }
+            resolvedStudentId = matched.get(0).getStudentId();
+        }
+
         Schedule schedule = Schedule.builder()
                 .teacherId(teacherId)
+                .studentId(resolvedStudentId)
                 .scheduleType(type)
                 .title(finalTitle)
                 .topic(blankToNull(topic))

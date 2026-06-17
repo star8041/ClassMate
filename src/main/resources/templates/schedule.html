@@ -397,8 +397,10 @@
         <!-- 상담 유형 전용 입력 (학생/학부모/주제) -->
         <div id="counsel-fields" style="display:none;">
           <div class="form-row">
-            <label class="form-label">학생명</label>
-            <input type="text" id="f-student" class="form-input" placeholder="상담 대상 학생명" />
+            <label class="form-label">학생 선택</label>
+            <select id="f-student" class="form-select">
+              <option value="">-- 학생 선택 --</option>
+            </select>
           </div>
           <div class="form-row">
             <label class="form-label">학부모명</label>
@@ -478,6 +480,7 @@ function localDateStr(date) {
 //  DATA (백엔드 연동)
 // ──────────────────────────────────────────────
 let events = [];
+let students = [];  // { studentId, studentName, studentNumber }[]
 
 function authHeaders() {
   const t = localStorage.getItem('accessToken');
@@ -514,6 +517,7 @@ function toEvent(s) {
     place: s.location || '',
     memo: s.memo || '',
     topic: s.topic || '',
+    studentId: s.studentId || null,
     studentName: s.studentName || '',
     parentName: s.parentName || ''
   };
@@ -522,6 +526,11 @@ function toEvent(s) {
 // 폼 데이터 → 백엔드 ScheduleCreateRequest
 function toRequest(data) {
   const start = data.start || '00:00';
+  const studentSel = document.getElementById('f-student');
+  const selectedStudentId = studentSel.value ? parseInt(studentSel.value) : null;
+  const selectedStudentName = selectedStudentId
+    ? (students.find(s => s.studentId === selectedStudentId)?.studentName || null)
+    : null;
   return {
     scheduleType: data.type,
     title: data.title,
@@ -530,7 +539,8 @@ function toRequest(data) {
     endAt: data.end ? (data.date + 'T' + data.end + ':00') : null,
     location: data.place || null,
     memo: data.memo || null,
-    studentName: data.studentName || null,
+    studentId: data.type === '상담' ? selectedStudentId : null,
+    studentName: data.type === '상담' ? selectedStudentName : null,
     parentName: data.parentName || null
   };
 }
@@ -542,6 +552,26 @@ async function loadSchedules() {
     if (!res.ok) console.error('일정 로드 실패', res.status);
   } catch (e) { console.error(e); events = []; }
   renderCalendar();
+}
+
+async function loadStudents() {
+  try {
+    const res = await fetch('/api/v1/teacher/students', { headers: authHeaders() });
+    students = res.ok ? await res.json() : [];
+  } catch (e) { console.error('학생 목록 로드 실패', e); students = []; }
+  renderStudentDropdown();
+}
+
+function renderStudentDropdown(selectedId) {
+  const sel = document.getElementById('f-student');
+  sel.innerHTML = '<option value="">-- 학생 선택 --</option>';
+  students.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.studentId;
+    opt.textContent = s.studentName + (s.studentNumber ? ` (${s.studentNumber})` : '');
+    if (selectedId && String(s.studentId) === String(selectedId)) opt.selected = true;
+    sel.appendChild(opt);
+  });
 }
 
 // ──────────────────────────────────────────────
@@ -730,7 +760,7 @@ function loadEventToForm(id) {
   document.getElementById('f-end').value   = ev.end;
   document.getElementById('f-place').value = ev.place;
   document.getElementById('f-memo').value  = ev.memo;
-  document.getElementById('f-student').value = ev.studentName || '';
+  renderStudentDropdown(ev.studentId);
   document.getElementById('f-parent').value  = ev.parentName || '';
   document.getElementById('f-topic').value   = ev.topic || '';
   toggleCounselFields();
@@ -746,7 +776,7 @@ function resetForm() {
   document.getElementById('f-end').value   = '';
   document.getElementById('f-place').value = '';
   document.getElementById('f-memo').value  = '';
-  document.getElementById('f-student').value = '';
+  renderStudentDropdown(null);
   document.getElementById('f-parent').value  = '';
   document.getElementById('f-topic').value   = '';
   toggleCounselFields();
@@ -779,7 +809,6 @@ function getFormData() {
     end:   document.getElementById('f-end').value,
     place: document.getElementById('f-place').value.trim(),
     memo:  document.getElementById('f-memo').value.trim(),
-    studentName: document.getElementById('f-student').value.trim(),
     parentName:  document.getElementById('f-parent').value.trim(),
     topic:       document.getElementById('f-topic').value.trim(),
   };
@@ -802,15 +831,14 @@ async function saveEvent() {
   await loadSchedules();
 }
 
-// 수정 = 삭제 후 재등록 (PUT 미제공)
+// 수정 = PUT (schedule_id 유지 → counseling_note 보존)
 async function modifyEvent() {
   if (!selectedEventId) return;
   const data = getFormData();
   if (!data.title) { alert('제목을 입력해 주세요.'); return; }
   try {
-    await fetch('/api/schedules/' + selectedEventId, { method: 'DELETE', headers: authHeaders() });
-    const res = await fetch('/api/schedules', {
-      method: 'POST',
+    const res = await fetch('/api/schedules/' + selectedEventId, {
+      method: 'PUT',
       headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
       body: JSON.stringify(toRequest(data))
     });
@@ -869,7 +897,8 @@ document.getElementById('f-type').addEventListener('change', toggleCounselFields
 document.getElementById('btn-reset').onclick = () => resetForm();
 document.getElementById('btn-save').onclick  = saveEvent;
 
-// 실제 저장된 일정 로드
+// 학생 목록 + 일정 로드
+loadStudents();
 loadSchedules();
 </script>
 <script th:src="@{/js/layout.js}"></script>

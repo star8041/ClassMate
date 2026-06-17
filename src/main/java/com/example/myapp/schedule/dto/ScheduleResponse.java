@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public record ScheduleResponse(
         Long scheduleId,
         Long teacherId,
+        Long studentId,
         String scheduleType,
         String title,
         String topic,
@@ -22,6 +23,7 @@ public record ScheduleResponse(
         return new ScheduleResponse(
                 s.getScheduleId(),
                 s.getTeacherId(),
+                s.getStudentId(),
                 s.getScheduleType(),
                 s.getTitle(),
                 s.getTopic(),

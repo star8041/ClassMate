@@ -55,6 +55,13 @@ public class CounselingNoteMapper {
                 .optional();
     }
 
+    /** 단건 삭제 */
+    public int deleteById(Long counselingNoteId) {
+        return jdbcClient.sql("DELETE FROM counseling_note WHERE counseling_note_id = ?")
+                .param(counselingNoteId)
+                .update();
+    }
+
     /** 특정 상담 일정의 기록 목록을 최신순으로 조회한다. */
     public List<CounselingNote> findByScheduleId(Long scheduleId) {
         return jdbcClient.sql("SELECT * FROM counseling_note WHERE schedule_id = ? ORDER BY created_at DESC")
@@ -75,6 +82,7 @@ public class CounselingNoteMapper {
                 FROM counseling_note cn
                 JOIN schedule s ON cn.schedule_id = s.schedule_id
                 WHERE s.student_id = ?
+                  AND s.scheduled_at < NOW()
                 ORDER BY s.scheduled_at DESC
                 LIMIT ?
                 """)

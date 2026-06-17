@@ -22,6 +22,7 @@ public class Schedule {
 
     private Long scheduleId;
     private Long teacherId;
+    private Long studentId;        // 상담 대상 학생 ID (상담 유형)
     private String scheduleType;   // 수업/상담/회의/수행평가/개인
     private String title;
     private String topic;          // 상담 주제 (상담 유형)
