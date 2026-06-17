@@ -58,7 +58,7 @@ public class StudentChatController {
     @GetMapping("/sessions/{sessionId}/messages")
     public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getMessages(
             @AuthenticationPrincipal Long studentId,
-            @PathVariable Long sessionId) {
+            @PathVariable("sessionId") Long sessionId) {
 
         chatSessionService.getOwnedSession(sessionId, studentId);
         List<ChatMessageResponse> messages = chatMessageMapper.findAllBySessionId(sessionId)
@@ -69,7 +69,7 @@ public class StudentChatController {
     @PatchMapping("/sessions/{sessionId}")
     public ResponseEntity<Void> updateTitle(
             @AuthenticationPrincipal Long studentId,
-            @PathVariable Long sessionId,
+            @PathVariable("sessionId") Long sessionId,
             @RequestBody Map<String, String> body) {
 
         chatSessionService.updateTitle(sessionId, studentId, body.get("title"));
@@ -79,7 +79,7 @@ public class StudentChatController {
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<Void> deleteSession(
             @AuthenticationPrincipal Long studentId,
-            @PathVariable Long sessionId) {
+            @PathVariable("sessionId") Long sessionId) {
 
         chatSessionService.deleteSession(sessionId, studentId);
         return ResponseEntity.noContent().build();
