@@ -73,7 +73,7 @@ public class MaterialService {
     }
 
     @Transactional
-    public MaterialResponse upload(MultipartFile file, Long teacherId, String subject) {
+    public MaterialResponse upload(MultipartFile file, Long teacherId, String subject, String category) {
         validatePdf(file);
 
         String originalName = StringUtils.cleanPath(
@@ -90,6 +90,7 @@ public class MaterialService {
                     .teacherId(teacherId)
                     .fileName(originalName)
                     .subject(subject)
+                    .category(normalizeCategory(category))
                     .storagePath(target.toString())
                     .totalPages(pageTexts.size())
                     .build();
@@ -114,6 +115,15 @@ public class MaterialService {
             deleteQuietly(target);
             throw e;
         }
+    }
+
+    /** 업로드 카테고리 정규화: LESSON(수업자료)/REFERENCE(참고자료), 미지정 시 LESSON */
+    private String normalizeCategory(String category) {
+        if (category == null) {
+            return "LESSON";
+        }
+        String c = category.trim().toUpperCase();
+        return c.equals("REFERENCE") ? "REFERENCE" : "LESSON";
     }
 
     @Transactional(readOnly = true)

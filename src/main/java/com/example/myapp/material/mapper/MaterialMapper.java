@@ -31,6 +31,7 @@ public class MaterialMapper {
             .teacherId(rs.getLong("teacher_id"))
             .fileName(rs.getString("file_name"))
             .subject(rs.getString("subject"))
+            .category(rs.getString("category"))
             .storagePath(rs.getString("storage_path"))
             .totalPages(rs.getInt("total_pages"))
             .uploadedAt(rs.getTimestamp("uploaded_at").toLocalDateTime())
@@ -42,12 +43,13 @@ public class MaterialMapper {
     public Long insert(Material material) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcClient.sql("""
-                        INSERT INTO material (teacher_id, file_name, subject, storage_path, total_pages)
-                        VALUES (?, ?, ?, ?, ?)
+                        INSERT INTO material (teacher_id, file_name, subject, category, storage_path, total_pages)
+                        VALUES (?, ?, ?, ?, ?, ?)
                         """)
                 .param(material.getTeacherId())
                 .param(material.getFileName())
                 .param(material.getSubject())
+                .param(material.getCategory())
                 .param(material.getStoragePath())
                 .param(material.getTotalPages())
                 .update(keyHolder, "material_id");

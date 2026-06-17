@@ -46,6 +46,7 @@ CREATE TABLE material (
                           teacher_id    BIGINT NOT NULL,
                           file_name     VARCHAR(255) NOT NULL,
                           subject       VARCHAR(50),
+                          category      VARCHAR(20) NOT NULL DEFAULT 'LESSON',
                           storage_path  VARCHAR(500) NOT NULL,
                           total_pages   INT NOT NULL,
                           uploaded_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
