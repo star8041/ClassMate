@@ -31,7 +31,7 @@ public class ReportController {
     /** 리포트 생성: 퀴즈 결과 + 상담 기록 → AI 분석 → DB 저장 */
     @PostMapping("/students/{studentId}/generate")
     public ResponseEntity<ApiResponse<ReportResponse>> generate(
-            @PathVariable Long studentId,
+            @PathVariable("studentId") Long studentId,
             @Valid @RequestBody ReportGenerateRequest request) {
 
         return ResponseEntity.ok(ApiResponse.created(
@@ -41,7 +41,7 @@ public class ReportController {
     /** 학생의 리포트 목록 조회 (최신순) */
     @GetMapping("/students/{studentId}")
     public ResponseEntity<ApiResponse<List<ReportResponse>>> getReports(
-            @PathVariable Long studentId) {
+            @PathVariable("studentId") Long studentId) {
 
         return ResponseEntity.ok(ApiResponse.success(
                 reportService.getReports(studentId)));
@@ -50,7 +50,7 @@ public class ReportController {
     /** 리포트 상세 조회 */
     @GetMapping("/{reportId}")
     public ResponseEntity<ApiResponse<ReportResponse>> getReport(
-            @PathVariable Long reportId) {
+            @PathVariable("reportId") Long reportId) {
 
         return ResponseEntity.ok(ApiResponse.success(
                 reportService.getReport(reportId)));
@@ -59,7 +59,7 @@ public class ReportController {
     /** 리포트 삭제 */
     @DeleteMapping("/{reportId}")
     public ResponseEntity<ApiResponse<Void>> deleteReport(
-            @PathVariable Long reportId) {
+            @PathVariable("reportId") Long reportId) {
 
         reportService.deleteReport(reportId);
         return ResponseEntity.ok(ApiResponse.success());

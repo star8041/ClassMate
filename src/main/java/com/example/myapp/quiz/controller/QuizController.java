@@ -24,7 +24,7 @@ import com.example.myapp.quiz.dto.QuizUpdateRequest;
 import com.example.myapp.quiz.service.QuizService;
 
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.web.bind.annotation.RequestParam;
 @RestController
 @RequestMapping("/api/v1/quizzes")
 @RequiredArgsConstructor
@@ -57,6 +57,17 @@ public class QuizController {
     @GetMapping
     public List<QuizListResponse> getQuizList() {
         return quizService.getQuizList();
+    }
+    
+    /**
+     * 학생용 퀴즈 목록 조회
+     * 학생이 이미 제출했는지 여부까지 함께 반환한다.
+     */
+    @GetMapping("/student")
+    public List<QuizListResponse> getStudentQuizList(
+            @RequestParam("studentId") Long studentId
+    ) {
+        return quizService.getStudentQuizList(studentId);
     }
 
     /**
