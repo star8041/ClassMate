@@ -36,10 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ── 초대코드 ── */
 let inviteTimerInterval = null;
 
-// 페이지 로드 시 서버에 유효한 코드가 있는지 확인 후 복원
+// 페이지 로드 시 서버에 유효한 코드가 있으면 복원 (새로 생성하지 않음)
 document.addEventListener('DOMContentLoaded', async function () {
   const body = document.getElementById('inviteBody');
-  if (!body) return; // 헤더가 없는 페이지(로그인 등)는 스킵
+  if (!body) return;
 
   const token = localStorage.getItem('accessToken');
   if (!token) return;
@@ -50,33 +50,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
     if (res.ok) {
       const data = await res.json();
-      _saveInviteState(data.code, data.expiresAt);
       showInviteCode(data.code, data.expiresAt);
-    } else {
-      // 서버에 유효한 코드 없음(204) 또는 오류 → localStorage 정리 후 생성 버튼 표시
-      _clearInviteState();
-      body.innerHTML = '<button class="invite-gen-btn" onclick="generateInvite()">코드 생성</button>';
     }
+    // 204 또는 오류면 버튼 그대로 유지
   } catch (e) {
-    // 네트워크 오류 시 localStorage 코드를 fallback 으로 사용
-    const saved = _loadInviteState();
-    if (saved && saved.expiresAt > Date.now()) {
-      showInviteCode(saved.code, new Date(saved.expiresAt).toISOString());
-    }
+    // 네트워크 오류 시 버튼 그대로 유지
   }
 });
-
-function _saveInviteState(code, expiresAt) {
-  localStorage.setItem('inviteCode', JSON.stringify({ code, expiresAt: new Date(expiresAt).getTime() }));
-}
-
-function _loadInviteState() {
-  try { return JSON.parse(localStorage.getItem('inviteCode')); } catch { return null; }
-}
-
-function _clearInviteState() {
-  localStorage.removeItem('inviteCode');
-}
 
 async function generateInvite() {
   const t = localStorage.getItem('accessToken');
@@ -94,7 +74,6 @@ async function generateInvite() {
       return;
     }
     const data = await res.json();
-    _saveInviteState(data.code, data.expiresAt);
     showInviteCode(data.code, data.expiresAt);
   } catch (e) {
     body.innerHTML = '<span class="invite-expired">오류가 발생했습니다</span>';
@@ -104,6 +83,7 @@ async function generateInvite() {
 function showInviteCode(code, expiresAt) {
   const body = document.getElementById('inviteBody');
   if (!body) return;
+  body.className = 'invite-wrapper';
   body.innerHTML =
     '<span class="invite-code">' + code + '</span>' +
     '<span class="invite-timer" id="inviteTimer"></span>' +
@@ -124,10 +104,10 @@ function startInviteTimer(expiryMs) {
     const remain = Math.floor((expiryMs - Date.now()) / 1000);
     if (remain <= 0) {
       clearInterval(inviteTimerInterval);
-      _clearInviteState();
-      if (body) body.innerHTML =
-        '<span class="invite-expired">코드 만료됨</span>' +
-        '<button class="invite-gen-btn" onclick="generateInvite()">다시 생성</button>';
+      if (body) {
+        body.className = '';
+        body.innerHTML = '<button class="invite-gen-btn" onclick="generateInvite()">코드 생성</button>';
+      }
       return;
     }
     const m = String(Math.floor(remain / 60)).padStart(2, '0');

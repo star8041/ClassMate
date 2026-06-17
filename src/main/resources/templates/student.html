@@ -11,15 +11,22 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; background: #f4f5f7; color: #1a1a1a; font-size: 14px; }
 
+  /* ── 페이지 레이아웃 ── */
   .page-body { padding: 32px 36px; }
   .page-title { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
   .page-subtitle { font-size: 13px; color: #999; margin-bottom: 20px; }
 
+  /* ── 메인 2컬럼 ── */
   .main-grid { display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: start; }
 
+  /* ── 카드 공통 ── */
   .card { background: #fff; border-radius: 12px; border: 0.5px solid #e0e0e0; }
 
+  /* ══════════════════════════════
+     학생 목록 사이드패널
+  ══════════════════════════════ */
   .student-list-panel { padding: 16px; }
+  #studentList { max-height: 480px; overflow-y: auto; }
   .panel-title { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 10px; }
 
   .search-wrap { position: relative; margin-bottom: 10px; }
@@ -52,6 +59,9 @@
     line-height: 1.5;
   }
 
+  /* ══════════════════════════════
+     우측 상세 패널
+  ══════════════════════════════ */
   .detail-panel { padding: 20px 24px; }
 
   .student-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
@@ -120,8 +130,6 @@
     display: flex;
     align-items: center;
   }
-
-  .comment-empty { color: #bbb; }
 
   .summary-section {
     margin-top: 20px;
@@ -321,14 +329,17 @@
     </main>
   </div>
 </div>
-
+<script th:src="@{/js/layout.js}"></script>
 <script>
-  const TEACHER_ID = 1;
+  function getAuthHeader() {
+    const token = localStorage.getItem('accessToken');
+    return token ? { 'Authorization': 'Bearer ' + token } : {};
+  }
 
   const STUDENT_API = {
-    list: '/api/v1/teacher/students?teacherId=' + TEACHER_ID,
+    list: '/api/v1/teacher/students',
     quizResults: function (studentId) {
-      return '/api/v1/teacher/students/' + studentId + '/quiz-results?teacherId=' + TEACHER_ID;
+      return '/api/v1/teacher/students/' + studentId + '/quiz-results';
     }
   };
 
@@ -361,7 +372,7 @@
 
   async function loadStudents() {
     try {
-      const response = await fetch(STUDENT_API.list);
+      const response = await fetch(STUDENT_API.list, { headers: getAuthHeader() });
 
       if (!response.ok) {
         console.error(await response.text());
@@ -433,11 +444,12 @@
     renderStudentList();
 
     try {
-      const response = await fetch(STUDENT_API.quizResults(studentId));
+      const response = await fetch(STUDENT_API.quizResults(studentId), { headers: getAuthHeader() });
 
       if (!response.ok) {
-        console.error(await response.text());
-        alert('학생 퀴즈 결과를 불러오지 못했습니다.');
+        const text = await response.text();
+        console.error('[quiz-results] status=' + response.status, text);
+        alert('학생 퀴즈 결과를 불러오지 못했습니다. (status: ' + response.status + ')');
         return;
       }
 
@@ -447,7 +459,7 @@
       renderQuizResults(data.quizResults || []);
       renderSummary(data.summary);
     } catch (error) {
-      console.error(error);
+      console.error('[quiz-results] catch error:', error);
       alert('학생 퀴즈 결과 조회 중 오류가 발생했습니다.');
     }
   }

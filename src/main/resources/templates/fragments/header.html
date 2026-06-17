@@ -5,54 +5,19 @@
 
   <div class="header-actions">
 
+    <!-- 초대코드 영역 -->
+    <div id="inviteBody">
+      <button class="invite-gen-btn" onclick="generateInvite()">코드 생성</button>
+    </div>
+
     <!-- 관리자 전용: 화면 전환 버튼 (관리자 토큰일 때만 표시) -->
     <button id="adminSwitchBtn" type="button" class="admin-switch" style="display:none;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
       <span id="adminSwitchLabel">학생 화면으로 전환</span>
     </button>
 
-    <!-- 프로필 드롭다운 -->
-    <div class="header-profile" id="profileDropdown">
-      <button class="header-profile-btn" onclick="toggleProfileMenu()" aria-haspopup="true">
-        <!-- 프로필 이미지 (없으면 아바타 폴백) -->
-        <div class="header-avatar">
-          <img th:if="${profileImgUrl != null}"
-               th:src="${profileImgUrl}"
-               th:alt="${userName}"
-               class="header-avatar-img"/>
-          <span th:unless="${profileImgUrl != null}"
-                class="header-avatar-initial"
-                th:text="${userName != null ? userName.substring(0,1) : 'T'}">T</span>
-        </div>
-        <span class="header-username">
-          <span th:text="${userName}">김민지</span>
-          <span th:text="#{header.user.suffix}">선생님</span>
-        </span>
-        <!-- 드롭다운 화살표 -->
-        <svg class="header-chevron" xmlns="http://www.w3.org/2000/svg"
-             width="14" height="14" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" stroke-width="2.5"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="6 9 12 15 18 9"/>
-        </svg>
-      </button>
-
-      <!-- 드롭다운 메뉴 -->
-      <ul class="profile-dropdown-menu" id="profileMenu" style="display:none;">
-        <li><a th:href="@{/members/logout}" class="dropdown-logout">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          <span th:text="#{dashboard.menu.logout}">로그아웃</span>
-        </a></li>
-      </ul>
-    </div>
-
-    <!-- 사용자 이름 (아이콘 없이 텍스트만) -->
-    <span class="header-username">
+    <!-- 사용자 이름 -->
+    <span class="header-username" id="headerUserName">
       <span th:text="${userName}">김민지</span>
       <!-- <span th:text="#{header.user.suffix}">선생님</span> -->
     </span>
@@ -88,10 +53,10 @@
       var role = payload ? payload.role : null;
       var name = payload ? (payload.name || payload.sub) : null;
 
-      // 로그인한 사용자 이름으로 헤더 표기 통일 (접미사 없이 이름만, 예: '관리자')
+      // JWT의 이름으로 헤더 표기 업데이트
       if (name) {
-        document.querySelectorAll('.header-username').forEach(function (el) { el.textContent = name; });
-        document.querySelectorAll('.header-avatar-initial').forEach(function (el) { el.textContent = name.charAt(0); });
+        var el = document.getElementById('headerUserName');
+        if (el) el.textContent = name + ' 선생님';
       }
 
       // 관리자 전용 화면 전환 버튼
