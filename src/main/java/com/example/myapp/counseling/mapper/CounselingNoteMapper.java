@@ -64,6 +64,27 @@ public class CounselingNoteMapper {
     }
 
     /**
+     * 특정 학생의 최근 상담 기록을 최신순으로 조회한다.
+     *
+     * @param studentId 학생 ID
+     * @param limit     최대 조회 건수
+     */
+    public List<CounselingNote> findRecentByStudentId(Long studentId, int limit) {
+        return jdbcClient.sql("""
+                SELECT cn.*
+                FROM counseling_note cn
+                JOIN schedule s ON cn.schedule_id = s.schedule_id
+                WHERE s.student_id = ?
+                ORDER BY s.scheduled_at DESC
+                LIMIT ?
+                """)
+                .param(studentId)
+                .param(limit)
+                .query(ROW_MAPPER)
+                .list();
+    }
+
+    /**
      * 특정 학생의 기간 내 상담 기록을 조회한다.
      * schedule 테이블과 JOIN 하여 student_id 와 기간으로 필터링한다.
      */
