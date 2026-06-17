@@ -23,18 +23,24 @@
       align-items: flex-start;
     }
     .col-left {
-      flex: 0 0 1000px;
+      flex: 1 1 auto;
       display: flex;
       flex-direction: column;
       gap: 20px;
       min-width: 0;
     }
     .col-right {
-      flex: 1;
-      min-width: 200px;
+      flex: 0 0 340px;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       gap: 20px;
+    }
+
+    /* 화면이 좁아지면 우측 패널을 캘린더 아래 전체폭으로 (찌그러짐 방지) */
+    @media (max-width: 1200px) {
+      main { flex-direction: column; }
+      .col-left, .col-right { flex: 1 1 auto; width: 100%; min-width: 0; }
     }
 
     /* ─── CARD BASE ─────────────────────────────────────────── */
@@ -217,9 +223,9 @@
     .sched-icon.회의   { background: #f0fdf4; color: #16a34a; }
     .sched-icon.수행평가 { background: #fffbeb; color: #d97706; }
     .sched-icon.개인   { background: #f5f3ff; color: #7c3aed; }
-    .sched-body { flex: 1; }
-    .sched-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-    .sched-desc  { font-size: 11px; color: #94a3b8; line-height: 1.4; }
+    .sched-body { flex: 1; min-width: 0; }
+    .sched-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; word-break: keep-all; overflow-wrap: anywhere; }
+    .sched-desc  { font-size: 11px; color: #94a3b8; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
     .sched-badge {
       align-self: flex-start; padding: 3px 8px;
       border-radius: 5px; font-size: 11px; font-weight: 600;
