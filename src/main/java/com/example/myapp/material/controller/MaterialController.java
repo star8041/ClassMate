@@ -50,13 +50,21 @@ public class MaterialController {
     public MaterialResponse upload(
             @AuthenticationPrincipal Long teacherId,
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "subject", required = false) String subject) {
-        return materialService.upload(file, teacherId, subject);
+            @RequestParam(value = "subject", required = false) String subject,
+            @RequestParam(value = "category", required = false) String category) {
+        return materialService.upload(file, teacherId, subject, category);
     }
 
     /** PDF 목록 조회 (본인 자료만) */
     @GetMapping
     public List<MaterialResponse> list(@AuthenticationPrincipal Long teacherId) {
+        return materialService.list(teacherId);
+    }
+
+    /** 학생용 PDF 목록 조회 (특정 교사의 자료, 인증 불필요. teacherId 생략 시 전체) */
+    @GetMapping("/public")
+    public List<MaterialResponse> listPublic(
+            @RequestParam(value = "teacherId", required = false) Long teacherId) {
         return materialService.list(teacherId);
     }
 
@@ -73,6 +81,16 @@ public class MaterialController {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, attachment(file.fileName()))
+                .body(file.resource());
+    }
+
+    /** PDF 인라인 보기 (브라우저에서 바로 열람) */
+    @GetMapping("/{id}/view")
+    public ResponseEntity<Resource> view(@PathVariable("id") Long id) {
+        MaterialFile file = materialService.download(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, inline(file.fileName()))
                 .body(file.resource());
     }
 
@@ -97,6 +115,14 @@ public class MaterialController {
     /** 한글 파일명을 위해 RFC 5987 인코딩으로 Content-Disposition 헤더를 만든다. */
     private String attachment(String fileName) {
         return ContentDisposition.attachment()
+                .filename(fileName, StandardCharsets.UTF_8)
+                .build()
+                .toString();
+    }
+
+    /** 인라인 보기용 Content-Disposition (브라우저 내 PDF 뷰어로 표시) */
+    private String inline(String fileName) {
+        return ContentDisposition.inline()
                 .filename(fileName, StandardCharsets.UTF_8)
                 .build()
                 .toString();

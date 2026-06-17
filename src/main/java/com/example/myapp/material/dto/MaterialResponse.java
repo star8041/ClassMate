@@ -13,6 +13,7 @@ public record MaterialResponse(
         Long teacherId,
         String fileName,
         String subject,
+        String category,
         int totalPages,
         LocalDateTime uploadedAt
 ) {
@@ -22,6 +23,7 @@ public record MaterialResponse(
                 material.getTeacherId(),
                 material.getFileName(),
                 material.getSubject(),
+                material.getCategory(),
                 material.getTotalPages(),
                 material.getUploadedAt()
         );

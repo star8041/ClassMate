@@ -74,6 +74,25 @@
             font-size: 13px;
             gap: 12px;
         }
+
+        /* 업로드 분류 선택 */
+        .arc-cat-pick { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; }
+        .arc-cat-pick .lbl { font-size: 13px; font-weight: 600; color: #6B7280; margin-right: 2px; }
+        .arc-seg { border: 1px solid #d8def0; background: #fff; color: #6B7280; border-radius: 999px;
+            padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .arc-seg.on { background: #2563EB; border-color: #2563EB; color: #fff; }
+
+        /* 목록 필터 탭 */
+        .arc-tabs { display: flex; gap: 6px; }
+        .arc-tab { border: none; background: transparent; padding: 7px 15px; border-radius: 9px;
+            font-size: 13px; font-weight: 600; color: #6B7280; cursor: pointer; }
+        .arc-tab.on { background: #2563EB; color: #fff; }
+
+        /* 카드 분류 배지 */
+        .arc-cat-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px;
+            border-radius: 8px; margin-bottom: 6px; }
+        .arc-cat-badge.lesson { background: #E8F0FE; color: #2563EB; }
+        .arc-cat-badge.reference { background: #FFF1DD; color: #D98A20; }
     </style>
 </head>
 <body>
@@ -113,6 +132,13 @@
                     </div>
                 </div>
 
+                <!-- 업로드 분류 선택 -->
+                <div class="arc-cat-pick">
+                    <span class="lbl">분류</span>
+                    <button type="button" class="arc-seg on" data-cat="LESSON" onclick="setUploadCategory(this)">수업 자료</button>
+                    <button type="button" class="arc-seg" data-cat="REFERENCE" onclick="setUploadCategory(this)">참고 자료</button>
+                </div>
+
                 <!-- 드래그앤드롭 업로드 영역 -->
                 <div class="arc-upload-zone" id="uploadZone"
                      ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)"
@@ -143,6 +169,11 @@
                         <div class="arc-list-title">
                             <span>업로드된 자료</span>
                             <span class="arc-count-badge" id="fileCount">0개</span>
+                        </div>
+                        <div class="arc-tabs">
+                            <button class="arc-tab on" data-f="all" onclick="setCatFilter(this)">전체</button>
+                            <button class="arc-tab" data-f="LESSON" onclick="setCatFilter(this)">수업 자료</button>
+                            <button class="arc-tab" data-f="REFERENCE" onclick="setCatFilter(this)">참고 자료</button>
                         </div>
                         <div class="arc-sort-wrap">
                             <span class="arc-sort-label">정렬 기준</span>
@@ -205,6 +236,19 @@
 
     let materials = [];
     let currentSort = 'recent';
+    let uploadCategory = 'LESSON';   // 업로드 시 분류
+    let catFilter = 'all';           // 목록 필터
+
+    function setUploadCategory(btn) {
+        uploadCategory = btn.dataset.cat;
+        document.querySelectorAll('.arc-seg').forEach(b => b.classList.toggle('on', b === btn));
+    }
+    function setCatFilter(btn) {
+        catFilter = btn.dataset.f;
+        document.querySelectorAll('.arc-tab').forEach(b => b.classList.toggle('on', b === btn));
+        renderList();
+    }
+    function catLabel(c) { return c === 'REFERENCE' ? '참고 자료' : '수업 자료'; }
 
     document.addEventListener('DOMContentLoaded', async () => {
         // 헤더 이름 표기는 공통 header 프래그먼트에서 일괄 처리
@@ -230,7 +274,8 @@
     }
 
     function renderList() {
-        const sorted = [...materials].sort((a, b) => {
+        const filtered = materials.filter(m => catFilter === 'all' || (m.category || 'LESSON') === catFilter);
+        const sorted = [...filtered].sort((a, b) => {
             if (currentSort === 'name') return a.fileName.localeCompare(b.fileName);
             return new Date(b.uploadedAt) - new Date(a.uploadedAt);
         });
@@ -271,6 +316,7 @@
                         </div>
                         <button class="arc-more-btn" onclick="toggleMenu(this)" aria-label="더보기">⋮</button>
                     </div>
+                    <span class="arc-cat-badge ${ (m.category || 'LESSON') === 'REFERENCE' ? 'reference' : 'lesson' }">${catLabel(m.category)}</span>
                     <div class="arc-file-meta">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
                              fill="none" stroke="currentColor" stroke-width="2">
@@ -349,6 +395,7 @@
             try {
                 const fd = new FormData();
                 fd.append('file', file);
+                fd.append('category', uploadCategory);
                 const res = await fetch('/api/materials', {
                     method: 'POST',
                     headers: authHeaders(),   // Content-Type은 브라우저가 자동 설정
