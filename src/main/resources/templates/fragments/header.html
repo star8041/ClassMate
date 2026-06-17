@@ -5,6 +5,11 @@
 
   <div class="header-actions">
 
+    <!-- 초대코드 영역 -->
+    <div id="inviteBody">
+      <button class="invite-gen-btn" onclick="generateInvite()">코드 생성</button>
+    </div>
+
     <!-- 관리자 전용: 화면 전환 버튼 (관리자 토큰일 때만 표시) -->
     <button id="adminSwitchBtn" type="button" class="admin-switch" style="display:none;">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>

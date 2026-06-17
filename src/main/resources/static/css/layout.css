@@ -252,6 +252,21 @@ button { cursor: pointer; }
 .dropdown-logout svg { stroke: #E53935; }
 
 /* ── 초대코드 위젯 ── */
+.invite-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f1f5ff;
+  border: 1px solid #c7d3f8;
+  border-radius: 10px;
+  padding: 5px 12px;
+}
+.invite-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3b5bdb;
+  white-space: nowrap;
+}
 #inviteBody {
   display: flex;
   align-items: center;
