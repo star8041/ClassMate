@@ -1,3 +1,7 @@
+<body>
+<!-- <style>
+  .s-logo { display: flex; align-items: center; gap: 9px; font-size: 21px; font-weight: 800; color: #2563EB; padding: 4px 10px 26px; }
+</style> -->
 <nav th:fragment="sidebar(activeMenu)" id="sidebar">
   <!-- ① 로고 -->
   <!--
@@ -6,7 +10,13 @@
       <span class="header-logo-text">ClassMate</span>
     </a>
   </div> -->
-  <h2 class="logo-font" th:text="#{sidebar.menu.logo}">ClassMate</h2>
+  <div class="header-logo"
+   style="display:flex; align-items:center; gap:9px; font-size:21px; font-weight:800; color:#2563EB; padding:30px 20px 26px;">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="#2563EB"><path d="M3 5a2 2 0 0 1 2-2h6v16H5a2 2 0 0 0-2 2zM13 3h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2h-6z"/></svg>
+    ClassMate
+  </div>
+  
+  <!-- <h2 class="logo-font" th:text="#{sidebar.menu.logo}">ClassMate</h2> -->
   
   <ul class="sidebar-menu">
 
@@ -161,3 +171,4 @@
 
   </ul>
 </nav>
+</body>
