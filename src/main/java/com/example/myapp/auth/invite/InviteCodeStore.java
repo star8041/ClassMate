@@ -61,6 +61,17 @@ public class InviteCodeStore {
     }
 
     /**
+     * 특정 교사가 현재 보유한 유효한 코드를 반환한다.
+     * 서버 재시작 후 클라이언트 localStorage 와 동기화할 때 사용한다.
+     */
+    public Optional<IssuedCode> getByTeacherId(Long teacherId) {
+        return store.entrySet().stream()
+                .filter(e -> e.getValue().teacherId().equals(teacherId) && !e.getValue().isExpired())
+                .findFirst()
+                .map(e -> new IssuedCode(e.getKey(), e.getValue().expiresAt()));
+    }
+
+    /**
      * 코드를 검증하고 연결된 teacherId 를 반환한다.
      * 없거나 만료된 코드면 빈 Optional.
      */
