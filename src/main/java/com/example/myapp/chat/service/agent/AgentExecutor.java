@@ -2,7 +2,9 @@ package com.example.myapp.chat.service.agent;
 
 import com.example.myapp.chat.entity.ChatRole;
 import com.example.myapp.chat.service.agent.tool.ConsultationScheduleTool;
+import com.example.myapp.chat.service.agent.tool.ScheduleQueryTool;
 import com.example.myapp.schedule.mapper.ScheduleMapper;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -71,14 +73,16 @@ public class AgentExecutor {
         if (context.getTeacherId() == null) {
             return Flux.just("로그인이 필요합니다.");
         }
-        ConsultationScheduleTool tool =
+        ConsultationScheduleTool registerTool =
                 new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper);
+        ScheduleQueryTool queryTool =
+                new ScheduleQueryTool(context.getTeacherId(), scheduleMapper);
 
         return ChatClient.builder(chatModel).build()
                 .prompt()
                 .system(loadSystemPrompt(ChatRole.TEACHER))
-                .user(context.getUserMessage())
-                .tools(tool)
+                .user(scheduleUserPrompt(context.getUserMessage()))
+                .tools(registerTool, queryTool)
                 .stream()
                 .content();
     }
@@ -87,16 +91,23 @@ public class AgentExecutor {
         if (context.getTeacherId() == null) {
             return "로그인이 필요합니다.";
         }
-        ConsultationScheduleTool tool =
+        ConsultationScheduleTool registerTool =
                 new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper);
+        ScheduleQueryTool queryTool =
+                new ScheduleQueryTool(context.getTeacherId(), scheduleMapper);
 
         return ChatClient.builder(chatModel).build()
                 .prompt()
                 .system(loadSystemPrompt(ChatRole.TEACHER))
-                .user(context.getUserMessage())
-                .tools(tool)
+                .user(scheduleUserPrompt(context.getUserMessage()))
+                .tools(registerTool, queryTool)
                 .call()
                 .content();
+    }
+
+    /** 상담 일정 등록 시 현재 날짜를 컨텍스트로 주입 (상대적 날짜 표현 처리용) */
+    private String scheduleUserPrompt(String userMessage) {
+        return "오늘 날짜: " + LocalDate.now() + "\n\n" + userMessage;
     }
 
     private String loadSystemPrompt(ChatRole role) {

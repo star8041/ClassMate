@@ -21,7 +21,6 @@ public class PageController {
     public String dashboard(Model model) {
         model.addAttribute("userName", null);
         model.addAttribute("profileImgUrl", null);
-        System.out.println("######## PageController dashboard 호출");
         return "teacher/dashboard";
     }
 
