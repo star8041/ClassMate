@@ -81,6 +81,26 @@ public class MaterialMapper {
                 .optional();
     }
 
+    /** 교사의 교재를 파일명·과목명 키워드로 검색 (공백 무시, 대소문자 무시) */
+    public List<Material> findByTeacherAndKeyword(Long teacherId, String keyword) {
+        // 검색어에서 공백 제거 → 파일명의 공백도 제거 후 LIKE 비교
+        String normalizedKeyword = "%" + keyword.replaceAll("\\s+", "") + "%";
+        return jdbcClient.sql("""
+                SELECT * FROM material
+                WHERE teacher_id = ?
+                  AND (
+                    LOWER(REPLACE(file_name, ' ', '')) LIKE LOWER(?)
+                    OR LOWER(COALESCE(subject, '')) LIKE LOWER(?)
+                  )
+                ORDER BY uploaded_at DESC
+                """)
+                .param(teacherId)
+                .param(normalizedKeyword)
+                .param("%" + keyword + "%")
+                .query(ROW_MAPPER)
+                .list();
+    }
+
     /** 삭제 (삭제된 행 수 반환) */
     public int deleteById(Long materialId) {
         return jdbcClient.sql("DELETE FROM material WHERE material_id = ?")

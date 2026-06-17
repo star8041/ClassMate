@@ -2,7 +2,13 @@ package com.example.myapp.chat.service.agent;
 
 import com.example.myapp.chat.entity.ChatRole;
 import com.example.myapp.chat.service.agent.tool.ConsultationScheduleTool;
+import com.example.myapp.chat.service.agent.tool.QuizPageFetchTool;
+import com.example.myapp.chat.service.agent.tool.QuizQueryTool;
+import com.example.myapp.chat.service.agent.tool.QuizSaveTool;
 import com.example.myapp.chat.service.agent.tool.ScheduleQueryTool;
+import com.example.myapp.material.mapper.MaterialMapper;
+import com.example.myapp.material.mapper.MaterialPageMapper;
+import com.example.myapp.quiz.repository.QuizRepository;
 import com.example.myapp.schedule.mapper.ScheduleMapper;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +36,9 @@ public class AgentExecutor {
 
     private final ChatModel chatModel;
     private final ScheduleMapper scheduleMapper;
+    private final MaterialMapper materialMapper;
+    private final MaterialPageMapper materialPageMapper;
+    private final QuizRepository quizRepository;
 
     @Value("classpath:prompts/teacher-system.st")
     private Resource teacherSystemPrompt;
@@ -37,12 +46,18 @@ public class AgentExecutor {
     @Value("classpath:prompts/student-system.st")
     private Resource studentSystemPrompt;
 
+    @Value("classpath:prompts/quiz-system.st")
+    private Resource quizSystemPrompt;
+
     /** SSE 스트리밍 응답 */
     public Flux<String> executeStream(AgentContext context) {
         log.debug("[Executor] role={} intent={}", context.getRole(), context.getIntentResult().intentType());
 
         if (context.getIntentResult().intentType() == IntentType.SCHEDULE_CONSULTATION) {
             return executeScheduleConsultationStream(context);
+        }
+        if (context.getIntentResult().intentType() == IntentType.QUIZ_TOOL) {
+            return executeQuizToolStream(context);
         }
 
         return ChatClient.builder(chatModel).build()
@@ -57,6 +72,9 @@ public class AgentExecutor {
     public String execute(AgentContext context) {
         if (context.getIntentResult().intentType() == IntentType.SCHEDULE_CONSULTATION) {
             return executeScheduleConsultation(context);
+        }
+        if (context.getIntentResult().intentType() == IntentType.QUIZ_TOOL) {
+            return executeQuizTool(context);
         }
 
         return ChatClient.builder(chatModel).build()
@@ -105,6 +123,36 @@ public class AgentExecutor {
                 .content();
     }
 
+    private Flux<String> executeQuizToolStream(AgentContext context) {
+        if (context.getTeacherId() == null) return Flux.just("로그인이 필요합니다.");
+        return ChatClient.builder(chatModel).build()
+                .prompt()
+                .system(loadRawPrompt(quizSystemPrompt))
+                .user(scheduleUserPrompt(context.getUserMessage()))
+                .tools(buildQuizTools(context.getTeacherId()))
+                .stream()
+                .content();
+    }
+
+    private String executeQuizTool(AgentContext context) {
+        if (context.getTeacherId() == null) return "로그인이 필요합니다.";
+        return ChatClient.builder(chatModel).build()
+                .prompt()
+                .system(loadRawPrompt(quizSystemPrompt))
+                .user(scheduleUserPrompt(context.getUserMessage()))
+                .tools(buildQuizTools(context.getTeacherId()))
+                .call()
+                .content();
+    }
+
+    private Object[] buildQuizTools(Long teacherId) {
+        return new Object[]{
+                new QuizPageFetchTool(teacherId, materialMapper, materialPageMapper),
+                new QuizSaveTool(teacherId, quizRepository),
+                new QuizQueryTool(teacherId, quizRepository)
+        };
+    }
+
     /** 상담 일정 등록 시 현재 날짜를 컨텍스트로 주입 (상대적 날짜 표현 처리용) */
     private String scheduleUserPrompt(String userMessage) {
         return "오늘 날짜: " + LocalDate.now() + "\n\n" + userMessage;
@@ -112,6 +160,10 @@ public class AgentExecutor {
 
     private String loadSystemPrompt(ChatRole role) {
         Resource resource = role == ChatRole.TEACHER ? teacherSystemPrompt : studentSystemPrompt;
+        return loadRawPrompt(resource);
+    }
+
+    private String loadRawPrompt(Resource resource) {
         try {
             return new String(resource.getContentAsByteArray(), StandardCharsets.UTF_8);
         } catch (Exception e) {
