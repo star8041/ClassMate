@@ -194,6 +194,7 @@ public class MaterialService {
             documents.add(Document.builder()
                     .text(text)
                     .metadata("materialId", material.getMaterialId())
+                    .metadata("teacherId", material.getTeacherId())
                     .metadata("pageNumber", i + 1)
                     .metadata("fileName", material.getFileName())
                     .build());
