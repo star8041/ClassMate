@@ -30,7 +30,7 @@ public class TeacherChatService {
         saveMessage(sessionId, ChatRole.TEACHER, messageText);
 
         AgentContext context = supervisorAgent.analyze(
-                messageText, ChatRole.TEACHER, sessionId, session.getMaterialId());
+                messageText, ChatRole.TEACHER, sessionId, session.getMaterialId(), teacherId);
 
         StringBuilder fullResponse = new StringBuilder();
         return agentExecutor.executeStream(context)

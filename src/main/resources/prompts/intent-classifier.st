@@ -23,6 +23,10 @@
    - 인사, 잡담, AI 기능 관련 문의, 날씨·뉴스 등 교육과 무관한 주제
    - 예) "안녕", "도움이 필요해", "오늘 날씨 어때?", "너 누구야?"
 
+4. **SCHEDULE_CONSULTATION**
+   - 교사가 학부모 또는 학생과의 상담 일정 등록을 요청하는 경우
+   - 예) "윤여옥 학생 어머니와 6월 20일 10시에 상담 잡아줘", "김민지 아버지랑 내일 오후 3시에 상담 예약해줘"
+
 ## 입력 정보
 
 - 사용자 메시지: {userMessage}
@@ -40,7 +44,7 @@ VECTOR_RAG로 분류 시 searchQuery는 벡터 검색에 최적화된 핵심 명
 
 ```json
 {
-  "intentType": "VECTOR_RAG | PAGE_SEARCH | DIRECT",
+  "intentType": "VECTOR_RAG | PAGE_SEARCH | DIRECT | SCHEDULE_CONSULTATION",
   "searchQuery": "검색에 최적화된 핵심 키워드 (DIRECT이면 null)",
   "startPage": null 또는 숫자,
   "endPage": null 또는 숫자,
