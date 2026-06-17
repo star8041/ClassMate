@@ -81,7 +81,7 @@
     .admin-switch--fixed { position: fixed; top: 18px; right: 28px; z-index: 1000; }
   </style>
   <script>
-    (function () {
+    document.addEventListener('DOMContentLoaded', function () {
       var btn = document.getElementById('adminSwitchBtn');
       if (!btn) return;
       var token = localStorage.getItem('accessToken');
@@ -94,11 +94,18 @@
       }
       if (role !== 'ADMIN') { btn.remove(); return; }   // 관리자만 노출
       btn.style.display = 'inline-flex';
+      // 상단바가 있는 페이지(홈)는 교사 화면처럼 우측 묶음의 '왼쪽'에 배치,
+      // 상단바가 없는 페이지(퀴즈/강의자료 등)는 상단 우측 고정 유지.
+      var topbar = document.querySelector('.topbar');
+      if (topbar) {
+        btn.classList.remove('admin-switch--fixed');
+        topbar.insertBefore(btn, topbar.firstChild);
+      }
       btn.addEventListener('click', function () {
         localStorage.setItem('loginRole', 'teacher');
         location.href = '/teacher/dashboard';
       });
-    })();
+    });
   </script>
   <script>
     // 학생 사이드바 공통: 미구현 탭 안내 토스트
