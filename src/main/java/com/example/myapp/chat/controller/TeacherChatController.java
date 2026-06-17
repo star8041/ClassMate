@@ -58,7 +58,7 @@ public class TeacherChatController {
     @PatchMapping("/sessions/{sessionId}")
     public ResponseEntity<Void> updateTitle(
             @AuthenticationPrincipal Long teacherId,
-            @PathVariable Long sessionId,
+            @PathVariable("sessionId") Long sessionId,
             @RequestBody java.util.Map<String, String> body) {
 
         chatSessionService.updateTitle(sessionId, teacherId, body.get("title"));
@@ -68,7 +68,7 @@ public class TeacherChatController {
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<Void> deleteSession(
             @AuthenticationPrincipal Long teacherId,
-            @PathVariable Long sessionId) {
+            @PathVariable("sessionId") Long sessionId) {
 
         chatSessionService.deleteSession(sessionId, teacherId);
         return ResponseEntity.noContent().build();
@@ -77,7 +77,7 @@ public class TeacherChatController {
     @GetMapping("/sessions/{sessionId}/messages")
     public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getMessages(
             @AuthenticationPrincipal Long teacherId,
-            @PathVariable Long sessionId) {
+            @PathVariable("sessionId") Long sessionId) {
 
         chatSessionService.getOwnedSession(sessionId, teacherId); // 본인 세션 검증
         List<ChatMessageResponse> messages = chatMessageMapper.findAllBySessionId(sessionId)

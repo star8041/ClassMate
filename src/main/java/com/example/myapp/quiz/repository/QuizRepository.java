@@ -1,17 +1,12 @@
 package com.example.myapp.quiz.repository;
 
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import com.example.myapp.quiz.domain.Quiz;
@@ -523,4 +518,103 @@ public class QuizRepository {
             return response;
         };
     }
+    
+    public List<QuizListResponse> findStudentQuizList(Long studentId) {
+        String sql = """
+            SELECT
+                q.quiz_id,
+                q.teacher_id,
+                q.material_id,
+                q.title,
+                q.difficulty,
+                q.start_page,
+                q.end_page,
+                q.available_from,
+                q.available_until,
+                q.created_at,
+                COUNT(qq.quiz_question_id) AS question_count,
+                COALESCE(BOOL_OR(qa.submitted_at IS NOT NULL), FALSE) AS submitted,
+                MAX(qa.quiz_attempt_id) FILTER (WHERE qa.submitted_at IS NOT NULL) AS attempt_id
+            FROM quiz q
+            LEFT JOIN quiz_question qq
+                ON q.quiz_id = qq.quiz_id
+            LEFT JOIN quiz_attempt qa
+                ON q.quiz_id = qa.quiz_id
+               AND qa.student_id = :studentId
+            GROUP BY
+                q.quiz_id,
+                q.teacher_id,
+                q.material_id,
+                q.title,
+                q.difficulty,
+                q.start_page,
+                q.end_page,
+                q.available_from,
+                q.available_until,
+                q.created_at
+            ORDER BY q.created_at DESC
+            """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("studentId", studentId);
+
+        return jdbcTemplate.query(sql, params, (rs, rowNum) -> {
+            QuizListResponse response = new QuizListResponse();
+
+            response.setQuizId(rs.getLong("quiz_id"));
+            response.setTeacherId(rs.getLong("teacher_id"));
+
+            Long materialId = rs.getObject("material_id", Long.class);
+            response.setMaterialId(materialId);
+
+            response.setTitle(rs.getString("title"));
+            response.setDifficulty(rs.getString("difficulty"));
+
+            Integer startPage = rs.getObject("start_page", Integer.class);
+            Integer endPage = rs.getObject("end_page", Integer.class);
+            response.setStartPage(startPage);
+            response.setEndPage(endPage);
+
+            if (rs.getTimestamp("available_from") != null) {
+                response.setAvailableFrom(rs.getTimestamp("available_from").toLocalDateTime());
+            }
+
+            if (rs.getTimestamp("available_until") != null) {
+                response.setAvailableUntil(rs.getTimestamp("available_until").toLocalDateTime());
+            }
+
+            if (rs.getTimestamp("created_at") != null) {
+                response.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+            }
+
+            response.setQuestionCount(rs.getInt("question_count"));
+            response.setSubmitted(rs.getBoolean("submitted"));
+
+            Long attemptId = rs.getObject("attempt_id", Long.class);
+            response.setAttemptId(attemptId);
+
+            return response;
+        });
+    }
+    
+    public boolean existsSubmittedAttempt(Long quizId, Long studentId) {
+        String sql = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM quiz_attempt
+                WHERE quiz_id = :quizId
+                  AND student_id = :studentId
+                  AND submitted_at IS NOT NULL
+            )
+            """;
+
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("quizId", quizId)
+                .addValue("studentId", studentId);
+
+        Boolean exists = jdbcTemplate.queryForObject(sql, params, Boolean.class);
+
+        return Boolean.TRUE.equals(exists);
+    }
+
 }
