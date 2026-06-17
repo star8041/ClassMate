@@ -96,8 +96,12 @@ public class ScheduleService {
                     .rawText(req.topic())
                     .build());
         } else if (wasConsuling) {
-            // 상담 유지: topic 변경 시 rawText 동기화
-            counselingNoteMapper.updateRawTextByScheduleId(scheduleId, req.topic());
+            // 상담 유지: 녹음 미처리(summaryText=null) 상태일 때만 topic → rawText 동기화
+            // 이미 녹음 전문이 들어있으면 덮어쓰지 않는다
+            List<CounselingNote> notes = counselingNoteMapper.findByScheduleId(scheduleId);
+            if (!notes.isEmpty() && notes.get(0).getSummaryText() == null) {
+                counselingNoteMapper.updateRawTextByScheduleId(scheduleId, req.topic());
+            }
         }
 
         return ScheduleResponse.from(scheduleMapper.findById(scheduleId).orElseThrow());

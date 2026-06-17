@@ -84,6 +84,22 @@ public class CounselingNoteMapper {
     }
 
     /**
+     * 상담 일정의 전체 내용을 갱신한다 (녹음 변환 결과 저장 시 사용).
+     */
+    public int updateByScheduleId(Long scheduleId, String rawText, String summaryText, String followUpText) {
+        return jdbcClient.sql("""
+                UPDATE counseling_note
+                SET raw_text = ?, summary_text = ?, follow_up_text = ?
+                WHERE schedule_id = ?
+                """)
+                .param(rawText)
+                .param(summaryText)
+                .param(followUpText)
+                .param(scheduleId)
+                .update();
+    }
+
+    /**
      * 특정 학생의 최근 상담 기록을 최신순으로 조회한다.
      *
      * @param studentId 학생 ID
@@ -95,8 +111,7 @@ public class CounselingNoteMapper {
                 FROM counseling_note cn
                 JOIN schedule s ON cn.schedule_id = s.schedule_id
                 WHERE s.student_id = ?
-                  AND s.scheduled_at < NOW()
-                ORDER BY s.scheduled_at DESC
+                ORDER BY s.scheduled_at DESC, cn.created_at DESC
                 LIMIT ?
                 """)
                 .param(studentId)

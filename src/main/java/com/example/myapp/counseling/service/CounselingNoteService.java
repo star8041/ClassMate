@@ -24,26 +24,40 @@ public class CounselingNoteService {
         this.counselingNoteMapper = counselingNoteMapper;
     }
 
-    /** 상담 기록 등록 */
+    /**
+     * 상담 기록 등록 (upsert).
+     * 동일 scheduleId의 레코드가 이미 있으면 UPDATE, 없으면 INSERT한다.
+     */
     @Transactional
     public CounselingNoteResponse create(CounselingNoteCreateRequest request) {
         if (request.scheduleId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "scheduleId 는 필수입니다.");
         }
 
-        CounselingNote note = CounselingNote.builder()
-                .scheduleId(request.scheduleId())
-                .rawText(request.rawText())
-                .summaryText(request.summaryText())
-                .followUpText(request.followUpText())
-                .build();
-
         try {
+            List<CounselingNote> existing = counselingNoteMapper.findByScheduleId(request.scheduleId());
+            if (!existing.isEmpty()) {
+                // 이미 존재하면 UPDATE
+                counselingNoteMapper.updateByScheduleId(
+                        request.scheduleId(),
+                        request.rawText(),
+                        request.summaryText(),
+                        request.followUpText());
+                return CounselingNoteResponse.from(
+                        counselingNoteMapper.findByScheduleId(request.scheduleId()).get(0));
+            }
+
+            // 없으면 INSERT
+            CounselingNote note = CounselingNote.builder()
+                    .scheduleId(request.scheduleId())
+                    .rawText(request.rawText())
+                    .summaryText(request.summaryText())
+                    .followUpText(request.followUpText())
+                    .build();
             Long id = counselingNoteMapper.insert(note);
             return CounselingNoteResponse.from(
                     counselingNoteMapper.findById(id).orElse(note));
         } catch (DataIntegrityViolationException e) {
-            // schedule_id FK 위반
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "존재하지 않는 상담 일정입니다. scheduleId=" + request.scheduleId(), e);
         }

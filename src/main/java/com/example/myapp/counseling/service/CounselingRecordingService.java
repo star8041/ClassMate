@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * 상담 녹음 파일 → 텍스트 변환(OpenAI Whisper) + 자동 요약(OpenAI Chat).
  * <p>
@@ -43,7 +46,12 @@ public class CounselingRecordingService {
                     .getResult()
                     .getOutput();
         } catch (Exception e) {
-            log.warn("음성 변환 실패: {}", e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : "";
+            log.warn("음성 변환 실패: {}", msg);
+            if (msg.contains("Invalid file format") || msg.contains("400")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "지원하지 않는 파일 형식입니다. mp3, m4a, wav, webm, ogg 형식으로 업로드해 주세요.");
+            }
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
                     "음성 변환에 실패했습니다. (OpenAI 음성 인식 호출 오류 — API 키/네트워크 확인)");
         }
@@ -52,25 +60,38 @@ public class CounselingRecordingService {
                     "녹음에서 텍스트를 추출하지 못했습니다.");
         }
 
-        // 2) 자동 요약 (실패해도 변환 결과는 반환)
+        // 2) 자동 요약 + 후속 조치 생성 (실패해도 변환 결과는 반환)
         String summary = "";
+        String followUp = "";
         try {
-            summary = chatClient.prompt()
+            String aiResult = chatClient.prompt()
                     .user("""
                             아래는 학부모 상담 녹음을 받아쓴 내용입니다.
-                            교사가 빠르게 확인할 수 있도록 한국어로 핵심만 4~6개의 불릿으로 요약해 주세요.
-                            각 줄은 '- '로 시작하고, 불릿 외 다른 문장은 출력하지 마세요.
+                            교사가 빠르게 확인할 수 있도록 아래 형식으로 정리해 주세요.
+
+                            [요약]
+                            핵심 내용을 4~6개 불릿으로 작성. 각 줄은 '- '로 시작.
+
+                            [후속조치]
+                            상담 내용을 바탕으로 교사가 취해야 할 후속 조치를 2~4개 불릿으로 작성. 각 줄은 '- '로 시작.
+                            없으면 '- 특이사항 없음'으로 작성.
 
                             [상담 내용]
                             %s
                             """.formatted(transcript))
                     .call()
                     .content();
+
+            if (aiResult != null) {
+                Matcher sumMatcher = Pattern.compile("\\[요약\\]\\s*(.*?)(?=\\[후속조치\\]|$)", Pattern.DOTALL).matcher(aiResult);
+                Matcher followMatcher = Pattern.compile("\\[후속조치\\]\\s*(.*?)$", Pattern.DOTALL).matcher(aiResult);
+                if (sumMatcher.find()) summary = sumMatcher.group(1).trim();
+                if (followMatcher.find()) followUp = followMatcher.group(1).trim();
+            }
         } catch (Exception e) {
             log.warn("자동 요약 실패: {}", e.getMessage());
         }
 
-        return new TranscriptionResponse(transcript, summary == null ? "" : summary.trim(),
-                transcript.length());
+        return new TranscriptionResponse(transcript, summary, followUp, transcript.length());
     }
 }
