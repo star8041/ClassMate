@@ -520,8 +520,6 @@ tbody tr:last-child td {
 						AI 리포트 생성
 					</button>
 
-					<button class="btn btn-primary" type="button" onclick="alert('리포트는 생성 시 자동 저장됩니다.')">저장</button>
-
 					<button class="btn btn-primary" type="button" onclick="window.print()">
 						<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15"
 							viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -608,7 +606,7 @@ tbody tr:last-child td {
 
 					<div class="card block">
 						<div class="block-title">
-							상담 요약 <span class="sub">상담 기록 2건 사용</span>
+							상담 요약 <span id="counselSummarySub" class="sub">불러오는 중…</span>
 						</div>
 
 						<div class="counsel-grid">
@@ -626,7 +624,7 @@ tbody tr:last-child td {
 									</span>
 									<div>
 										<div class="k">최근 상담일</div>
-										<div class="vv">2024.05.22</div>
+										<div id="counselLastDate" class="vv">-</div>
 									</div>
 								</div>
 
@@ -641,21 +639,15 @@ tbody tr:last-child td {
 									</span>
 									<div>
 										<div class="k">상담 기록 수</div>
-										<div class="vv">2건</div>
+										<div id="counselCount" class="vv">-</div>
 									</div>
 								</div>
 							</div>
 
-							<div>
-								<div class="counsel-sub-title">상담 주요 내용 (요약)</div>
-								<div class="counsel-text">영어 문법 학습에 자신감이 낮고, 시험 시간 관리가 어려움을 느끼고 있음. 특히 시제와 문장 구성에서 실수가 잦으며, 문제를 꼼꼼히 읽는 습관이 필요함.</div>
-
-								<div class="counsel-sub-title">다음 단계 / 후속 조치</div>
-								<div class="counsel-text">주요 시제 개념 정리 및 기출 문제 반복 연습, 시간 관리 연습 병행 권장.</div>
+							<div id="counselContent">
+								<div class="counsel-text" style="color:#aaa">학생을 선택해주세요.</div>
 							</div>
 						</div>
-
-						<div class="data-note">※ 상담 요약은 아직 표시용 예시입니다. 퀴즈 분석 요약과 최근 퀴즈 성과 추이는 실제 API와 연동됩니다.</div>
 					</div>
 				</div>
 
@@ -823,6 +815,9 @@ const REPORT_API = {
 	},
 	generateReport: function (studentId) {
 		return '/api/v1/reports/students/' + encodeURIComponent(studentId) + '/generate';
+	},
+	counseling: function (studentId) {
+		return '/api/v1/reports/students/' + encodeURIComponent(studentId) + '/counseling';
 	},
 	reportDetail: function (reportId) {
 		return '/api/v1/reports/' + encodeURIComponent(reportId);
@@ -1006,7 +1001,8 @@ async function loadStudentReportPageData() {
 
 	await Promise.all([
 		loadQuizAnalysis(),
-		loadReports()
+		loadReports(),
+		loadCounselingSection()
 	]);
 }
 
@@ -1220,6 +1216,71 @@ function clearQuizAnalysis() {
 	renderAverageScoreDonut(0);
 	renderQuizTrend([]);
 	renderRecentQuizList([]);
+}
+
+async function loadCounselingSection() {
+	if (!currentStudentId) {
+		return;
+	}
+
+	try {
+		const response = await fetch(REPORT_API.counseling(currentStudentId), {
+			headers: authHeaders()
+		});
+
+		const body = await response.json();
+		const notes = unwrapResponse(body) || [];
+
+		renderCounselingSection(notes);
+	} catch (error) {
+		console.error(error);
+		renderCounselingSection([]);
+	}
+}
+
+function renderCounselingSection(notes) {
+	const subEl = document.getElementById('counselSummarySub');
+	const lastDateEl = document.getElementById('counselLastDate');
+	const countEl = document.getElementById('counselCount');
+	const contentEl = document.getElementById('counselContent');
+
+	if (!notes.length) {
+		subEl.textContent = '상담 기록 없음';
+		lastDateEl.textContent = '없음';
+		countEl.textContent = '없음';
+		contentEl.innerHTML = '<div class="counsel-text" style="color:#aaa">상담 기록이 없습니다.</div>';
+		return;
+	}
+
+	const note = notes[0];
+
+	subEl.textContent = '최근 상담 기준';
+
+	if (note.createdAt) {
+		const d = new Date(note.createdAt);
+		lastDateEl.textContent = d.getFullYear() + '.' +
+			String(d.getMonth() + 1).padStart(2, '0') + '.' +
+			String(d.getDate()).padStart(2, '0');
+	} else {
+		lastDateEl.textContent = '-';
+	}
+
+	countEl.textContent = note.summaryText ? '있음' : '없음';
+
+	let html = '';
+	if (note.summaryText) {
+		html += '<div class="counsel-sub-title">상담 주요 내용 (요약)</div>';
+		html += '<div class="counsel-text">' + escapeHtml(note.summaryText) + '</div>';
+	}
+	if (note.followUpText) {
+		html += '<div class="counsel-sub-title">다음 단계 / 후속 조치</div>';
+		html += '<div class="counsel-text">' + escapeHtml(note.followUpText) + '</div>';
+	}
+	if (!html) {
+		html = '<div class="counsel-text" style="color:#aaa">상담 내용이 아직 작성되지 않았습니다.</div>';
+	}
+
+	contentEl.innerHTML = html;
 }
 
 async function loadReports() {

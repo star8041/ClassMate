@@ -2,6 +2,7 @@ package com.example.myapp.report.service;
 
 import com.example.myapp.common.exception.BusinessException;
 import com.example.myapp.common.exception.ErrorCode;
+import com.example.myapp.counseling.dto.CounselingNoteResponse;
 import com.example.myapp.counseling.entity.CounselingNote;
 import com.example.myapp.counseling.mapper.CounselingNoteMapper;
 import com.example.myapp.quiz.entity.QuizAttempt;
@@ -118,6 +119,18 @@ public class ReportService {
         getOrThrow(reportId);
         achievementReportMapper.deleteById(reportId);
     }
+
+    /**
+     * 학생의 최근 상담 기록 1건을 반환한다 (리포트 페이지 상담 요약 섹션용).
+     */
+    @Transactional(readOnly = true)
+    public List<CounselingNoteResponse> getRecentCounseling(Long studentId) {
+        return counselingNoteMapper.findRecentByStudentId(studentId, 1).stream()
+                .map(CounselingNoteResponse::from)
+                .toList();
+    }
+
+    // ─── private ──────────────────────────────────────────────────────────────
 
     private AchievementReport getOrThrow(Long reportId) {
         return achievementReportMapper.findById(reportId)
