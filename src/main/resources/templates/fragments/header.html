@@ -39,15 +39,6 @@
 
       <!-- 드롭다운 메뉴 -->
       <ul class="profile-dropdown-menu" id="profileMenu" style="display:none;">
-        <li><a th:href="@{/members/profile}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          <span th:text="#{header.menu.profile}">내 프로필</span>
-        </a></li>
-        <li class="dropdown-divider"></li>
         <li><a th:href="@{/members/logout}" class="dropdown-logout">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                fill="none" stroke="currentColor" stroke-width="2">
@@ -107,8 +98,6 @@
       });
     })();
   </script>
-</header>
-
 </header>
 </body>
 </html>
