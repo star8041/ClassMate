@@ -110,15 +110,12 @@
 </style>
 </head>
 <body>
-<div class="layout-wrapper">
-  <div th:replace="~{fragments/sidebar :: sidebar('quiz')}"></div>
-
-  <div class="layout-main">
-    <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
-
-    <main class="page-body">
-      <h1 class="page-title">퀴즈</h1>
-      <p class="page-subtitle">선생님이 올린 퀴즈를 확인하고 풀어보세요.</p>
+<div class="s-wrap">
+  <div th:replace="~{fragments/student-sidebar :: studentSidebar('quiz')}"></div>
+  <main class="s-main">
+    <div th:replace="~{fragments/student-topbar :: studentTopbar}"></div>
+    <h1 class="page-title">퀴즈</h1>
+    <p class="page-sub">선생님이 올린 퀴즈를 확인하고 풀어보세요.</p>
 
       <div class="stat-grid">
         <div class="stat-card" onclick="setFilter('진행 중')">
@@ -174,7 +171,6 @@
       </div>
     </main>
   </div>
-</div>
 
 <script>
   const STUDENT_ID = 1;

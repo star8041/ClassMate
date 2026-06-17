@@ -207,12 +207,7 @@
     let currentSort = 'recent';
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // 헤더 이름 반영
-        const p = jwtPayload(token);
-        if (p) {
-            const uname = document.querySelector('.header-username');
-            if (uname) uname.textContent = (p.name || p.sub || '') + ' 선생님';
-        }
+        // 헤더 이름 표기는 공통 header 프래그먼트에서 일괄 처리
         document.querySelectorAll('.dropdown-logout, .header-logout-btn').forEach(el => {
             el.addEventListener('click', e => { e.preventDefault(); localStorage.clear(); location.href = '/login'; });
         });
