@@ -2,6 +2,7 @@ package com.example.myapp.chat.service.agent;
 
 import com.example.myapp.chat.entity.ChatRole;
 import com.example.myapp.chat.service.agent.tool.ConsultationScheduleTool;
+import com.example.myapp.counseling.mapper.CounselingNoteMapper;
 import com.example.myapp.chat.service.agent.tool.QuizPageFetchTool;
 import com.example.myapp.chat.service.agent.tool.QuizQueryTool;
 import com.example.myapp.chat.service.agent.tool.QuizSaveTool;
@@ -41,6 +42,7 @@ public class AgentExecutor {
     private final MaterialMapper materialMapper;
     private final MaterialPageMapper materialPageMapper;
     private final QuizRepository quizRepository;
+    private final CounselingNoteMapper counselingNoteMapper;
 
     @Value("classpath:prompts/teacher-system.st")
     private Resource teacherSystemPrompt;
@@ -94,7 +96,7 @@ public class AgentExecutor {
             return Flux.just("로그인이 필요합니다.");
         }
         ConsultationScheduleTool registerTool =
-                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper, studentMapper);
+                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper, studentMapper, counselingNoteMapper);
         ScheduleQueryTool queryTool =
                 new ScheduleQueryTool(context.getTeacherId(), scheduleMapper);
 
@@ -112,7 +114,7 @@ public class AgentExecutor {
             return "로그인이 필요합니다.";
         }
         ConsultationScheduleTool registerTool =
-                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper, studentMapper);
+                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper, studentMapper, counselingNoteMapper);
         ScheduleQueryTool queryTool =
                 new ScheduleQueryTool(context.getTeacherId(), scheduleMapper);
 

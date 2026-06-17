@@ -71,6 +71,19 @@ public class CounselingNoteMapper {
     }
 
     /**
+     * 상담 일정의 rawText(주제)를 갱신한다.
+     * 일정 수정 시 상담노트 주제를 동기화하는 데 사용한다.
+     */
+    public int updateRawTextByScheduleId(Long scheduleId, String rawText) {
+        return jdbcClient.sql("""
+                UPDATE counseling_note SET raw_text = ? WHERE schedule_id = ?
+                """)
+                .param(rawText)
+                .param(scheduleId)
+                .update();
+    }
+
+    /**
      * 특정 학생의 최근 상담 기록을 최신순으로 조회한다.
      *
      * @param studentId 학생 ID

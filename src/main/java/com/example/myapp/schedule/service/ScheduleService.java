@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ScheduleService {
@@ -46,7 +45,7 @@ public class ScheduleService {
         if ("상담".equals(req.scheduleType())) {
             CounselingNote note = CounselingNote.builder()
                     .scheduleId(id)
-                    .rawText(req.topic())       // 상담 주제를 초기 텍스트로
+                    .rawText(req.topic())
                     .summaryText(null)
                     .followUpText(null)
                     .build();
@@ -83,8 +82,7 @@ public class ScheduleService {
 
         scheduleMapper.update(updated);
 
-        // counseling_note 처리
-        boolean wasConsuling  = "상담".equals(oldType);
+        boolean wasConsuling   = "상담".equals(oldType);
         boolean isNowCounseling = "상담".equals(newType);
 
         if (wasConsuling && !isNowCounseling) {
@@ -97,8 +95,10 @@ public class ScheduleService {
                     .scheduleId(scheduleId)
                     .rawText(req.topic())
                     .build());
+        } else if (wasConsuling) {
+            // 상담 유지: topic 변경 시 rawText 동기화
+            counselingNoteMapper.updateRawTextByScheduleId(scheduleId, req.topic());
         }
-        // wasConsuling && isNowCounseling: 기존 counseling_note 유지 (데이터 보존)
 
         return ScheduleResponse.from(scheduleMapper.findById(scheduleId).orElseThrow());
     }
