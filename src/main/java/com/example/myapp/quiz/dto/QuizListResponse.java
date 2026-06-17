@@ -22,4 +22,7 @@ public class QuizListResponse {
 
     private LocalDateTime createdAt;
     private Integer questionCount;
+    
+    private Boolean submitted;
+    private Long attemptId;
 }

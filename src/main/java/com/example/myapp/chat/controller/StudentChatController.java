@@ -37,7 +37,7 @@ public class StudentChatController {
     @PostMapping(value = "/sessions/{sessionId}/messages", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> sendMessage(
             @AuthenticationPrincipal Long studentId,
-            @PathVariable Long sessionId,
+            @PathVariable("sessionId") Long sessionId,
             @Valid @RequestBody ChatMessageRequest request) {
 
         return studentChatService.sendMessage(studentId, sessionId, request.messageText());

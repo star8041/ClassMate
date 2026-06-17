@@ -135,6 +135,13 @@ public class QuizService {
     public List<QuizListResponse> getQuizList() {
         return quizRepository.findQuizList();
     }
+    
+    /**
+     * 학생용 퀴즈 목록 조회
+     */
+    public List<QuizListResponse> getStudentQuizList(Long studentId) {
+        return quizRepository.findStudentQuizList(studentId);
+    }
 
     /**
      * 퀴즈 상세 조회
@@ -198,10 +205,20 @@ public class QuizService {
      */
     @Transactional
     public QuizAttemptResponse startAttempt(Long quizId, QuizAttemptStartRequest request) {
-        Quiz quiz = quizRepository.findQuizById(quizId);
+    	
+    	Quiz quiz = quizRepository.findQuizById(quizId);
 
         if (quiz == null) {
             throw new IllegalArgumentException("존재하지 않는 퀴즈입니다. quizId=" + quizId);
+        }
+        
+        boolean alreadySubmitted = quizRepository.existsSubmittedAttempt(
+                quizId,
+                request.getStudentId()
+        );
+
+        if (alreadySubmitted) {
+            throw new IllegalArgumentException("이미 제출한 퀴즈는 다시 응시할 수 없습니다. quizId=" + quizId);
         }
 
         validateQuizAvailable(quiz);
@@ -240,29 +257,56 @@ public class QuizService {
             throw new IllegalArgumentException("이미 제출된 퀴즈입니다. attemptId=" + attemptId);
         }
 
-        if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
+        /*
+         * 핵심 추가:
+         * 같은 학생이 같은 퀴즈를 이미 제출한 기록이 있으면
+         * 새 attemptId로 다시 제출하는 것도 막는다.
+         */
+        boolean alreadySubmitted = quizRepository.existsSubmittedAttempt(
+                quizId,
+                attempt.getStudentId()
+        );
+
+        if (alreadySubmitted) {
+            throw new IllegalArgumentException("이미 제출한 퀴즈는 다시 제출할 수 없습니다. quizId=" + quizId);
+        }
+
+        if (request.getAnswers() == null) {
             throw new IllegalArgumentException("제출된 답안이 없습니다.");
         }
 
         List<QuizQuestion> questions = quizRepository.findQuestionsByQuizId(quizId);
 
-        Map<Long, QuizQuestion> questionMap = questions.stream()
-                .collect(Collectors.toMap(QuizQuestion::getQuizQuestionId, Function.identity()));
+        if (questions == null || questions.isEmpty()) {
+            throw new IllegalArgumentException("퀴즈에 포함된 문제가 없습니다. quizId=" + quizId);
+        }
 
-        int totalCount = request.getAnswers().size();
+        Map<Long, QuizQuestion> questionMap = questions.stream()
+                .collect(Collectors.toMap(
+                        QuizQuestion::getQuizQuestionId,
+                        Function.identity()
+                ));
+
+        Map<Long, QuizAnswerSubmitRequest> submittedAnswerMap = request.getAnswers().stream()
+                .filter(answer -> answer.getQuizQuestionId() != null)
+                .collect(Collectors.toMap(
+                        QuizAnswerSubmitRequest::getQuizQuestionId,
+                        Function.identity(),
+                        (oldValue, newValue) -> newValue
+                ));
+
+        int totalCount = questions.size();
         int correctCount = 0;
 
-        for (QuizAnswerSubmitRequest submittedAnswer : request.getAnswers()) {
-            QuizQuestion question = questionMap.get(submittedAnswer.getQuizQuestionId());
+        for (QuizQuestion question : questions) {
+            QuizAnswerSubmitRequest submittedAnswer = submittedAnswerMap.get(question.getQuizQuestionId());
 
-            if (question == null) {
-                throw new IllegalArgumentException(
-                        "퀴즈에 포함되지 않은 문제입니다. questionId=" + submittedAnswer.getQuizQuestionId()
-                );
-            }
+            String submittedAnswerText = submittedAnswer == null
+                    ? ""
+                    : submittedAnswer.getAnswerText();
 
             boolean isCorrect = normalize(question.getAnswerText())
-                    .equals(normalize(submittedAnswer.getAnswerText()));
+                    .equals(normalize(submittedAnswerText));
 
             if (isCorrect) {
                 correctCount++;
@@ -270,19 +314,22 @@ public class QuizService {
 
             QuizAnswer answer = new QuizAnswer();
             answer.setQuizAttemptId(attemptId);
-            answer.setQuizQuestionId(submittedAnswer.getQuizQuestionId());
-            answer.setAnswerText(submittedAnswer.getAnswerText());
+            answer.setQuizQuestionId(question.getQuizQuestionId());
+            answer.setAnswerText(submittedAnswerText);
             answer.setIsCorrect(isCorrect);
 
             quizRepository.insertQuizAnswer(answer);
         }
 
-        int score = totalCount == 0 ? 0 : (int) Math.round((correctCount * 100.0) / totalCount);
+        int score = totalCount == 0
+                ? 0
+                : (int) Math.round((correctCount * 100.0) / totalCount);
 
         quizRepository.updateAttemptResult(attemptId, score, totalCount, correctCount);
 
         return getAttemptResult(quizId, attemptId);
     }
+
 
     /**
      * 학생 퀴즈 결과 조회

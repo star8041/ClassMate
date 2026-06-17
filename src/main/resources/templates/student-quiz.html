@@ -70,56 +70,278 @@
 
 <script>
   var SUBJ = {
-    국어: { bg:'#E8EEFF', c:'#3F62D6' }, 수학: { bg:'#E5F7EC', c:'#22A65A' },
-    과학: { bg:'#EFE8FE', c:'#7C4DD6' }, 영어: { bg:'#FFF1DD', c:'#D98A20' }, 사회: { bg:'#FDE7E7', c:'#D9534F' }
+    국어: { bg:'#E8EEFF', c:'#3F62D6' },
+    수학: { bg:'#E5F7EC', c:'#22A65A' },
+    과학: { bg:'#EFE8FE', c:'#7C4DD6' },
+    영어: { bg:'#FFF1DD', c:'#D98A20' },
+    사회: { bg:'#FDE7E7', c:'#D9534F' },
+    퀴즈: { bg:'#EEF1F6', c:'#6B7280' }
   };
-  var QUIZZES = [
-    { subj:'국어', title:'4단원 복습 퀴즈',     q:10, min:10, due:'오늘 마감', dueToday:true, status:'ing' },
-    { subj:'수학', title:'분수의 덧셈 퀴즈',     q:8,  min:15, due:'내일',     status:'ing' },
-    { subj:'과학', title:'식물의 한살이 확인 퀴즈', q:6, min:10, due:'05.28',  status:'soon' },
-    { subj:'영어', title:'Unit 3 단어 퀴즈',    q:12, min:8,  due:'완료',     status:'done' },
-    { subj:'사회', title:'우리 고장 탐구 퀴즈',  q:7,  min:10, due:'완료',     status:'done' }
-  ];
-  var STATUS = { ing:{t:'진행 중',c:'b-ing'}, soon:{t:'예정',c:'b-soon'}, done:{t:'완료',c:'b-done'} };
+
+  var STATUS = {
+    ing: { t:'진행 중', c:'b-ing' },
+    soon: { t:'예정', c:'b-soon' },
+    done: { t:'종료', c:'b-done' }
+  };
+
+  var QUIZZES = [];
   var filter = 'all';
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadQuizzes();
+  });
+
+  async function loadQuizzes() {
+    try {
+      var response = await fetch('/api/v1/quizzes');
+
+      if (!response.ok) {
+        console.error(await response.text());
+        document.getElementById('list').innerHTML =
+          '<div class="empty">퀴즈 목록을 불러오지 못했어요.</div>';
+        return;
+      }
+
+      var data = await response.json();
+
+      // API가 배열로 내려오는 경우와 ApiResponse 형태로 내려오는 경우 둘 다 대응
+      var quizzes = Array.isArray(data)
+        ? data
+        : (data.data || data.result || data.quizzes || []);
+
+      QUIZZES = quizzes.map(function (quiz) {
+        return toViewQuiz(quiz);
+      });
+
+      render();
+    } catch (error) {
+      console.error(error);
+      document.getElementById('list').innerHTML =
+        '<div class="empty">퀴즈 목록을 불러오는 중 오류가 발생했어요.</div>';
+    }
+  }
+
+  function toViewQuiz(quiz) {
+    var now = new Date();
+
+    var availableFrom = quiz.availableFrom ? new Date(quiz.availableFrom) : null;
+    var availableUntil = quiz.availableUntil ? new Date(quiz.availableUntil) : null;
+
+    var status = getQuizStatus(now, availableFrom, availableUntil);
+
+    return {
+      quizId: quiz.quizId,
+      subj: inferSubject(quiz.title),
+      title: quiz.title || '제목 없는 퀴즈',
+      q: quiz.questionCount ?? quiz.questions?.length ?? 0,
+      min: getMinuteLimit(availableFrom, availableUntil),
+      due: getDueText(now, availableFrom, availableUntil, status),
+      dueToday: isToday(availableUntil),
+      status: status,
+      availableFrom: availableFrom,
+      availableUntil: availableUntil
+    };
+  }
+
+  function getQuizStatus(now, availableFrom, availableUntil) {
+    if (availableFrom && now < availableFrom) {
+      return 'soon';
+    }
+
+    if (availableUntil && now > availableUntil) {
+      return 'done';
+    }
+
+    return 'ing';
+  }
+
+  function getMinuteLimit(availableFrom, availableUntil) {
+    if (!availableFrom || !availableUntil) {
+      return '-';
+    }
+
+    var diffMs = availableUntil.getTime() - availableFrom.getTime();
+    var diffMin = Math.round(diffMs / 1000 / 60);
+
+    if (diffMin <= 0) {
+      return '-';
+    }
+
+    return diffMin;
+  }
+
+  function getDueText(now, availableFrom, availableUntil, status) {
+    if (status === 'soon') {
+      if (!availableFrom) {
+        return '예정';
+      }
+
+      if (isToday(availableFrom)) {
+        return '오늘 시작';
+      }
+
+      if (isTomorrow(availableFrom)) {
+        return '내일 시작';
+      }
+
+      return formatMonthDay(availableFrom) + ' 시작';
+    }
+
+    if (status === 'done') {
+      return '종료';
+    }
+
+    if (!availableUntil) {
+      return '상시';
+    }
+
+    if (isToday(availableUntil)) {
+      return '오늘 마감';
+    }
+
+    if (isTomorrow(availableUntil)) {
+      return '내일 마감';
+    }
+
+    return formatMonthDay(availableUntil) + ' 마감';
+  }
+
+  function inferSubject(title) {
+    if (!title) {
+      return '퀴즈';
+    }
+
+    if (title.indexOf('국어') > -1) return '국어';
+    if (title.indexOf('수학') > -1) return '수학';
+    if (title.indexOf('과학') > -1) return '과학';
+    if (title.indexOf('영어') > -1) return '영어';
+    if (title.indexOf('사회') > -1) return '사회';
+
+    return '퀴즈';
+  }
 
   function setFilter(btn) {
     filter = btn.dataset.filter;
-    document.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('on', t === btn); });
+
+    document.querySelectorAll('.tab').forEach(function (tab) {
+      tab.classList.toggle('on', tab === btn);
+    });
+
     render();
   }
 
   function actBtn(q) {
-    if (q.status === 'ing')  return '<button class="act a-solve" onclick="goSolve(\'' + q.title + '\')">풀기</button>';
-    if (q.status === 'soon') return '<button class="act a-wait" disabled>대기</button>';
-    return '<button class="act a-result" onclick="alert(\'결과 보기는 준비 중이에요!\')">결과 보기</button>';
+    if (q.status === 'ing') {
+      return '<button class="act a-solve" onclick="goSolve(' + q.quizId + ')">풀기</button>';
+    }
+
+    if (q.status === 'soon') {
+      return '<button class="act a-wait" disabled>대기</button>';
+    }
+
+    return '<button class="act a-result" onclick="alert(\'종료된 퀴즈입니다.\')">종료</button>';
   }
 
   function render() {
-    var kw = document.getElementById('searchBox').value.trim();
+    var searchBox = document.getElementById('searchBox');
+    var kw = searchBox ? searchBox.value.trim() : '';
+
     var list = document.getElementById('list');
+
     var rows = QUIZZES.filter(function (q) {
-      return (filter === 'all' || q.status === filter) && (!kw || q.title.indexOf(kw) > -1);
+      var matchesFilter = filter === 'all' || q.status === filter;
+      var matchesKeyword = !kw || q.title.indexOf(kw) > -1;
+
+      return matchesFilter && matchesKeyword;
     });
-    if (!rows.length) { list.innerHTML = '<div class="empty">해당하는 퀴즈가 없어요.</div>'; }
-    else {
+
+    if (!rows.length) {
+      list.innerHTML = '<div class="empty">해당하는 퀴즈가 없어요.</div>';
+    } else {
       list.innerHTML = rows.map(function (q) {
-        var s = SUBJ[q.subj] || { bg:'#eee', c:'#666' };
+        var s = SUBJ[q.subj] || SUBJ['퀴즈'];
         var st = STATUS[q.status];
-        var due = q.dueToday ? '<span class="due-today">📅 ' + q.due + '</span>' : '📅 ' + q.due;
+        var due = q.dueToday && q.status === 'ing'
+          ? '<span class="due-today">📅 ' + q.due + '</span>'
+          : '📅 ' + q.due;
+
+        var minuteText = q.min === '-' ? '-' : q.min + '분';
+
         return '<div class="qrow">' +
-          '<span class="subj" style="background:' + s.bg + ';color:' + s.c + '">' + q.subj + '</span>' +
-          '<div class="qinfo"><div class="qtitle">' + q.title + '</div>' +
-          '<div class="qmeta"><span>📄 ' + q.q + '문제</span><span>⏱ ' + q.min + '분</span><span>' + due + '</span></div></div>' +
-          '<span class="badge ' + st.c + '">' + st.t + '</span>' + actBtn(q) + '</div>';
+          '<span class="subj" style="background:' + s.bg + ';color:' + s.c + '">' + escapeHtml(q.subj) + '</span>' +
+          '<div class="qinfo">' +
+            '<div class="qtitle">' + escapeHtml(q.title) + '</div>' +
+            '<div class="qmeta">' +
+              '<span>📄 ' + q.q + '문제</span>' +
+              '<span>⏱ ' + minuteText + '</span>' +
+              '<span>' + due + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<span class="badge ' + st.c + '">' + st.t + '</span>' +
+          actBtn(q) +
+        '</div>';
       }).join('');
     }
-    document.getElementById('cntIng').innerHTML  = QUIZZES.filter(function(q){return q.status==='ing';}).length + ' <small>개</small>';
-    document.getElementById('cntSoon').innerHTML = QUIZZES.filter(function(q){return q.status==='soon';}).length + ' <small>개</small>';
-    document.getElementById('cntDone').innerHTML = QUIZZES.filter(function(q){return q.status==='done';}).length + ' <small>개</small>';
+
+    document.getElementById('cntIng').innerHTML =
+      QUIZZES.filter(function(q) { return q.status === 'ing'; }).length + ' <small>개</small>';
+
+    document.getElementById('cntSoon').innerHTML =
+      QUIZZES.filter(function(q) { return q.status === 'soon'; }).length + ' <small>개</small>';
+
+    document.getElementById('cntDone').innerHTML =
+      QUIZZES.filter(function(q) { return q.status === 'done'; }).length + ' <small>개</small>';
   }
-  function goSolve(title) { location.href = '/student/quiz/solve?title=' + encodeURIComponent(title); }
-  render();
+
+  function goSolve(quizId) {
+    location.href = '/student/quiz/solve?quizId=' + encodeURIComponent(quizId);
+  }
+
+  function isToday(date) {
+    if (!date) {
+      return false;
+    }
+
+    var now = new Date();
+
+    return date.getFullYear() === now.getFullYear()
+      && date.getMonth() === now.getMonth()
+      && date.getDate() === now.getDate();
+  }
+
+  function isTomorrow(date) {
+    if (!date) {
+      return false;
+    }
+
+    var tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return date.getFullYear() === tomorrow.getFullYear()
+      && date.getMonth() === tomorrow.getMonth()
+      && date.getDate() === tomorrow.getDate();
+  }
+
+  function formatMonthDay(date) {
+    if (!date) {
+      return '';
+    }
+
+    var month = String(date.getMonth() + 1).padStart(2, '0');
+    var day = String(date.getDate()).padStart(2, '0');
+
+    return month + '.' + day;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
 </script>
+
 </body>
 </html>
