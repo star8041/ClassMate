@@ -26,6 +26,7 @@
      학생 목록 사이드패널
   ══════════════════════════════ */
   .student-list-panel { padding: 16px; }
+  #studentList { max-height: 480px; overflow-y: auto; }
   .panel-title { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 10px; }
 
   .search-wrap { position: relative; margin-bottom: 10px; }
@@ -50,22 +51,19 @@
   .student-name { font-size: 13px; font-weight: 600; color: #1a1a1a; }
   .student-meta { font-size: 11px; color: #aaa; }
 
-  /* 페이지네이션 */
-  .pagination { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 14px; }
-  .page-btn {
-    width: 26px; height: 26px; border-radius: 6px; border: none; background: none;
-    font-size: 12px; color: #555; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  .student-list-empty {
+    padding: 24px 8px;
+    font-size: 13px;
+    color: #aaa;
+    text-align: center;
+    line-height: 1.5;
   }
-  .page-btn:hover { background: #f0f0f0; }
-  .page-btn.active { background: #4f80f7; color: #fff; font-weight: 600; }
-  .page-btn.nav { color: #aaa; }
 
   /* ══════════════════════════════
      우측 상세 패널
   ══════════════════════════════ */
   .detail-panel { padding: 20px 24px; }
 
-  /* 학생 헤더 */
   .student-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
   .student-header-avatar {
     width: 50px; height: 50px; border-radius: 50%; background: #e8e8e8;
@@ -74,12 +72,14 @@
   .student-header-name { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
   .student-header-meta { font-size: 12px; color: #aaa; }
   .header-actions { margin-left: auto; display: flex; gap: 8px; }
+
   .btn-preview {
     background: #fff; border: 1px solid #4f80f7; color: #4f80f7; border-radius: 8px;
     padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer;
     display: flex; align-items: center; gap: 5px;
   }
   .btn-preview:hover { background: #f0f4ff; }
+
   .btn-download {
     background: #4f80f7; border: none; color: #fff; border-radius: 8px;
     padding: 7px 14px; font-size: 13px; font-weight: 500; cursor: pointer;
@@ -87,7 +87,6 @@
   }
   .btn-download:hover { background: #3a6ae0; }
 
-  /* 탭 */
   .tabs { display: flex; gap: 0; border-bottom: 1.5px solid #e8e8e8; margin-bottom: 18px; }
   .tab-btn {
     padding: 8px 16px; font-size: 13px; font-weight: 500; color: #aaa; background: none;
@@ -95,45 +94,50 @@
   }
   .tab-btn.active { color: #4f80f7; border-bottom-color: #4f80f7; }
 
-  /* 과제 점수 관리 */
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .section-title { font-size: 14px; font-weight: 600; color: #1a1a1a; }
-  .btn-add {
+
+  .btn-refresh {
     background: #fff; border: 1px solid #ddd; border-radius: 8px;
     padding: 6px 14px; font-size: 12px; color: #333; cursor: pointer;
   }
-  .btn-add:hover { background: #f5f5f5; }
+  .btn-refresh:hover { background: #f5f5f5; }
 
-  /* 테이블 */
   table { width: 100%; border-collapse: collapse; }
   thead th {
     text-align: left; font-size: 12px; color: #aaa; font-weight: 500;
     padding: 8px 6px; border-bottom: 0.5px solid #e8e8e8;
   }
-  tbody td { padding: 10px 6px; font-size: 13px; color: #333; border-bottom: 0.5px solid #f2f2f2; vertical-align: middle; }
+  tbody td {
+    padding: 10px 6px; font-size: 13px; color: #333;
+    border-bottom: 0.5px solid #f2f2f2; vertical-align: middle;
+  }
   tbody tr:last-child td { border-bottom: none; }
 
   .score-wrap { display: flex; align-items: center; gap: 2px; }
   .score-val { font-size: 14px; font-weight: 600; color: #1a1a1a; }
-  .score-max { font-size: 12px; color: #aaa; }
+  .score-unit { font-size: 12px; color: #aaa; }
 
-  .comment-input {
-    width: 100%; border: 1px solid #e0e0e0; border-radius: 6px;
-    padding: 5px 8px; font-size: 12px; color: #333; outline: none; background: #fafafa;
+  .comment-box {
+    width: 100%;
+    min-height: 30px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: #999;
+    background: #fafafa;
+    display: flex;
+    align-items: center;
   }
-  .comment-input:focus { border-color: #4f80f7; background: #fff; }
 
-  .btn-save-icon {
-    background: #fff; border: 1px solid #e0e0e0; border-radius: 6px;
-    width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: #888; flex-shrink: 0;
+  .summary-section {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 16px;
+    align-items: start;
   }
-  .btn-save-icon:hover { background: #f0f0f0; }
-
-  .td-comment { display: flex; align-items: center; gap: 6px; }
-
-  /* 과제 점수 요약 */
-  .summary-section { margin-top: 20px; display: grid; grid-template-columns: 1fr 300px; gap: 16px; align-items: start; }
   .summary-title { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 10px; }
 
   .stat-cards { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
@@ -141,9 +145,7 @@
   .stat-card-label { font-size: 11px; color: #aaa; margin-bottom: 6px; }
   .stat-card-val { font-size: 20px; font-weight: 700; color: #1a1a1a; }
   .stat-card-unit { font-size: 12px; color: #888; }
-  .stat-card-sub { font-size: 12px; color: #888; }
 
-  /* 도넛 차트 */
   .chart-wrap { background: #f8f9fc; border-radius: 10px; padding: 14px; }
   .chart-title { font-size: 12px; color: #aaa; margin-bottom: 10px; }
   .chart-inner { display: flex; align-items: center; gap: 14px; }
@@ -153,334 +155,191 @@
   .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 </style>
 </head>
+
 <body>
 <div class="layout-wrapper">
 
   <div th:replace="~{fragments/sidebar :: sidebar('student')}"></div>
+
   <div class="layout-main">
-	<div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
-	<main class="page-body">
-	<h1 class="page-title">학생 관리</h1>
-	<p class="page-subtitle">학생별 과제·시험 점수 및 코멘트를 입력하고, 성취도 리포트를 확인하세요.</p>
-	
-	<div class="main-grid">
-	
-	  <!-- ── 학생 목록 ── -->
-	  <div class="card student-list-panel">
-	    <div class="panel-title">학생 목록</div>
-	
-	    <div class="search-wrap">
-	      <input type="text" placeholder="이름 검색">
-	      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-	    </div>
-	
-	    <!-- 학생 리스트 -->
-	    <div class="student-item active">
-	      <div class="student-avatar">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-	      </div>
-	      <div>
-	        <div class="student-name">김민지</div>
-	        <div class="student-meta">중1 · Class A</div>
-	      </div>
-	    </div>
-	
-	    <div class="student-item">
-	      <div class="student-avatar">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-	      </div>
-	      <div>
-	        <div class="student-name">박서준</div>
-	        <div class="student-meta">중1 · Class A</div>
-	      </div>
-	    </div>
-	
-	    <div class="student-item">
-	      <div class="student-avatar">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-	      </div>
-	      <div>
-	        <div class="student-name">이서연</div>
-	        <div class="student-meta">중1 · Class A</div>
-	      </div>
-	    </div>
-	
-	    <div class="student-item">
-	      <div class="student-avatar">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-	      </div>
-	      <div>
-	        <div class="student-name">최지호</div>
-	        <div class="student-meta">중1 · Class A</div>
-	      </div>
-	    </div>
-	
-	    <div class="student-item">
-	      <div class="student-avatar">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-	      </div>
-	      <div>
-	        <div class="student-name">정다은</div>
-	        <div class="student-meta">중1 · Class A</div>
-	      </div>
-	    </div>
-	
-	    <div class="student-item">
-	      <div class="student-avatar">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-	      </div>
-	      <div>
-	        <div class="student-name">한예준</div>
-	        <div class="student-meta">중1 · Class A</div>
-	      </div>
-	    </div>
-	
-	    <!-- 페이지네이션 -->
-	    <div class="pagination">
-	      <button class="page-btn nav">&#8249;</button>
-	      <button class="page-btn active">1</button>
-	      <button class="page-btn">2</button>
-	      <button class="page-btn">3</button>
-	      <button class="page-btn nav">&#8250;</button>
-	    </div>
-	  </div>
-	
-	  <!-- ── 우측 상세 ── -->
-	  <div class="card detail-panel">
-	
-	    <!-- 학생 헤더 -->
-	    <div class="student-header">
-	      <div class="student-header-avatar">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.6"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-	      </div>
-	      <div>
-	        <div class="student-header-name">김민지</div>
-	        <div class="student-header-meta">중1 · Class A</div>
-	      </div>
-	      <div class="header-actions">
-	        <button class="btn-preview">
-	          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-	          리포트 미리보기
-	        </button>
-	        <button class="btn-download">
-	          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-	          리포트 다운로드
-	        </button>
-	      </div>
-	    </div>
-	
-	    <!-- 탭 -->
-	    <div class="tabs">
-	      <button class="tab-btn active">과제 점수</button>
-	      <button class="tab-btn" onclick="location.href='/student/report'">성취도 리포트</button>
-	    </div>
-	
-	    <!-- 과제 점수 관리 -->
-	    <div class="section-header">
-	      <div class="section-title">과제 점수 관리</div>
-	      <button class="btn-add">과제 추가</button>
-	    </div>
-	
-	    <table>
-	      <thead>
-	        <tr>
-	          <th style="width:160px">과제명</th>
-	          <th style="width:50px">배점</th>
-	          <th style="width:90px">제출일</th>
-	          <th style="width:80px">점수</th>
-	          <th>코멘트</th>
-	          <th style="width:36px"></th>
-	        </tr>
-	      </thead>
-	      <tbody>
-	        <tr>
-	          <td>Unit 1 Vocabulary</td>
-	          <td>10</td>
-	          <td>2024.05.01</td>
-	          <td>
-	            <div class="score-wrap">
-	              <span class="score-val">9</span>
-	              <span class="score-max">&nbsp;/10</span>
-	            </div>
-	          </td>
-	          <td>
-	            <div class="td-comment">
-	              <input class="comment-input" type="text" value="단어 이해도가 매우 좋습니다!">
-	            </div>
-	          </td>
-	          <td>
-	            <button class="btn-save-icon">
-	              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-	            </button>
-	          </td>
-	        </tr>
-	        <tr>
-	          <td>Unit 1 Reading</td>
-	          <td>20</td>
-	          <td>2024.05.08</td>
-	          <td>
-	            <div class="score-wrap">
-	              <span class="score-val">18</span>
-	              <span class="score-max">&nbsp;/20</span>
-	            </div>
-	          </td>
-	          <td>
-	            <div class="td-comment">
-	              <input class="comment-input" type="text" value="주요 내용 파악이 정확해요.">
-	            </div>
-	          </td>
-	          <td>
-	            <button class="btn-save-icon">
-	              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-	            </button>
-	          </td>
-	        </tr>
-	        <tr>
-	          <td>Unit 2 Grammar</td>
-	          <td>15</td>
-	          <td>2024.05.15</td>
-	          <td>
-	            <div class="score-wrap">
-	              <span class="score-val">12</span>
-	              <span class="score-max">&nbsp;/15</span>
-	            </div>
-	          </td>
-	          <td>
-	            <div class="td-comment">
-	              <input class="comment-input" type="text" value="문법 개념을 잘 이해하고 있어요.">
-	            </div>
-	          </td>
-	          <td>
-	            <button class="btn-save-icon">
-	              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-	            </button>
-	          </td>
-	        </tr>
-	        <tr>
-	          <td>Unit 2 Writing</td>
-	          <td>20</td>
-	          <td>2024.05.22</td>
-	          <td>
-	            <div class="score-wrap">
-	              <span class="score-val">17</span>
-	              <span class="score-max">&nbsp;/20</span>
-	            </div>
-	          </td>
-	          <td>
-	            <div class="td-comment">
-	              <input class="comment-input" type="text" value="문장 구성이 자연스럽고 표현이 좋아요.">
-	            </div>
-	          </td>
-	          <td>
-	            <button class="btn-save-icon">
-	              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-	            </button>
-	          </td>
-	        </tr>
-	        <tr>
-	          <td>Unit 3 Listening</td>
-	          <td>15</td>
-	          <td>2024.05.29</td>
-	          <td>
-	            <div class="score-wrap">
-	              <span class="score-val">13</span>
-	              <span class="score-max">&nbsp;/15</span>
-	            </div>
-	          </td>
-	          <td>
-	            <div class="td-comment">
-	              <input class="comment-input" type="text" value="세부 내용 파악 연습이 필요해요.">
-	            </div>
-	          </td>
-	          <td>
-	            <button class="btn-save-icon">
-	              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-	            </button>
-	          </td>
-	        </tr>
-	      </tbody>
-	    </table>
-	
-	    <!-- 과제 점수 요약 -->
-	    <div class="summary-section">
-	      <div>
-	        <div class="summary-title">과제 점수 요약</div>
-	        <div class="stat-cards">
-	          <div class="stat-card">
-	            <div class="stat-card-label">총점</div>
-	            <div>
-	              <span class="stat-card-val">69</span>
-	              <span class="stat-card-unit"> / 80</span>
-	            </div>
-	          </div>
-	          <div class="stat-card">
-	            <div class="stat-card-label">평균 점수</div>
-	            <div>
-	              <span class="stat-card-val">86.3</span>
-	              <span class="stat-card-unit">%</span>
-	            </div>
-	          </div>
-	          <div class="stat-card">
-	            <div class="stat-card-label">과제 제출률</div>
-	            <div>
-	              <span class="stat-card-val">100</span>
-	              <span class="stat-card-unit">%</span>
-	            </div>
-	          </div>
-	          <div class="stat-card">
-	            <div class="stat-card-label">코멘트 작성률</div>
-	            <div>
-	              <span class="stat-card-val">100</span>
-	              <span class="stat-card-unit">%</span>
-	            </div>
-	          </div>
-	        </div>
-	      </div>
-	
-	      <!-- 도넛 차트 -->
-	      <div class="chart-wrap">
-	        <div class="chart-title">점수 분포</div>
-	        <div class="chart-inner">
-	          <svg class="donut-svg" width="80" height="80" viewBox="0 0 80 80">
-	            <!-- 도넛 차트: 90~100점 1명(20%), 80~89점 2명(40%), 70~79점 1명(20%), ~69점 1명(20%) -->
-	            <!-- 배경 원 -->
-	            <circle cx="40" cy="40" r="30" fill="none" stroke="#f0f0f0" stroke-width="14"/>
-	            <!-- 90~100: 20% = 72deg, 파란색, 시작 -90deg (top) -->
-	            <circle cx="40" cy="40" r="30" fill="none" stroke="#4f80f7" stroke-width="14"
-	              stroke-dasharray="18.85 94.25" stroke-dashoffset="23.56" transform="rotate(-90 40 40)"/>
-	            <!-- 80~89: 40% = 144deg, 하늘색 -->
-	            <circle cx="40" cy="40" r="30" fill="none" stroke="#38bdf8" stroke-width="14"
-	              stroke-dasharray="37.70 74.60" stroke-dashoffset="4.71" transform="rotate(-90 40 40)"/>
-	            <!-- 70~79: 20% = 72deg, 초록 -->
-	            <circle cx="40" cy="40" r="30" fill="none" stroke="#34d399" stroke-width="14"
-	              stroke-dasharray="18.85 94.25" stroke-dashoffset="-32.99" transform="rotate(-90 40 40)"/>
-	            <!-- ~69: 20% = 72deg, 주황 -->
-	            <circle cx="40" cy="40" r="30" fill="none" stroke="#fb923c" stroke-width="14"
-	              stroke-dasharray="18.85 94.25" stroke-dashoffset="-51.84" transform="rotate(-90 40 40)"/>
-	          </svg>
-	          <div class="legend">
-	            <div class="legend-item"><div class="legend-dot" style="background:#4f80f7"></div>90~100점 &nbsp;1명 (20%)</div>
-	            <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div>80~89점 &nbsp;2명 (40%)</div>
-	            <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div>70~79점 &nbsp;1명 (20%)</div>
-	            <div class="legend-item"><div class="legend-dot" style="background:#fb923c"></div>~69점 &nbsp;&nbsp;&nbsp;&nbsp;1명 (20%)</div>
-	          </div>
-	        </div>
-	      </div>
-	    </div>
-	
-	  </div><!-- /detail-panel -->
-	</div><!-- /main-grid -->
-  </main>
+    <div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
+
+    <main class="page-body">
+      <h1 class="page-title">학생 관리</h1>
+      <p class="page-subtitle">학생별 퀴즈 응시 결과를 확인하고, 성취도 리포트를 관리하세요.</p>
+
+      <div class="main-grid">
+
+        <div class="card student-list-panel">
+          <div class="panel-title">학생 목록</div>
+
+          <div class="search-wrap">
+            <input id="studentSearchInput" type="text" placeholder="이름 검색">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+
+          <div id="studentList">
+            <div class="student-list-empty">학생 목록을 불러오는 중입니다.</div>
+          </div>
+        </div>
+
+        <div class="card detail-panel">
+
+          <div class="student-header">
+            <div class="student-header-avatar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"
+                   viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.6">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+
+            <div>
+              <div id="selectedStudentName" class="student-header-name">학생을 선택해주세요</div>
+              <div id="selectedStudentMeta" class="student-header-meta">-</div>
+            </div>
+
+            <div class="header-actions">
+              <button class="btn-preview" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                리포트 미리보기
+              </button>
+
+              <button class="btn-download" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                리포트 다운로드
+              </button>
+            </div>
+          </div>
+
+          <div class="tabs">
+            <button class="tab-btn active" type="button">퀴즈 결과</button>
+            <button class="tab-btn" type="button" onclick="location.href='/student/report'">성취도 리포트</button>
+          </div>
+
+          <div class="section-header">
+            <div class="section-title">퀴즈 결과 관리</div>
+            <button id="refreshStudentBtn" class="btn-refresh" type="button">새로고침</button>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width:220px">퀴즈명</th>
+                <th style="width:110px">응시일</th>
+                <th style="width:90px">점수</th>
+                <th>코멘트</th>
+              </tr>
+            </thead>
+
+            <tbody id="quizResultBody">
+              <tr>
+                <td colspan="4" style="text-align:center; color:#aaa; padding:30px;">
+                  왼쪽에서 학생을 선택해주세요.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="summary-section">
+            <div>
+              <div class="summary-title">퀴즈 결과 요약</div>
+
+              <div class="stat-cards">
+                <div class="stat-card">
+                  <div class="stat-card-label">응시 퀴즈</div>
+                  <div>
+                    <span id="submittedQuizCount" class="stat-card-val">0</span>
+                    <span class="stat-card-unit">개</span>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-label">평균 점수</div>
+                  <div>
+                    <span id="averageScore" class="stat-card-val">0</span>
+                    <span class="stat-card-unit">점</span>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-label">퀴즈 응시율</div>
+                  <div>
+                    <span id="quizAttemptRate" class="stat-card-val">0</span>
+                    <span class="stat-card-unit">%</span>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-card-label">AI 코멘트</div>
+                  <div>
+                    <span id="aiCommentCount" class="stat-card-val">0</span>
+                    <span class="stat-card-unit">개</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-wrap">
+              <div class="chart-title">점수 분포</div>
+
+              <div class="chart-inner">
+                <svg class="donut-svg" width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="30" fill="none" stroke="#f0f0f0" stroke-width="14"/>
+                  <g id="scoreChartSegments"></g>
+                </svg>
+
+                <div class="legend">
+                  <div class="legend-item">
+                    <div class="legend-dot" style="background:#4f80f7"></div>
+                    90~100점 <span id="legend90">0개 (0%)</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-dot" style="background:#38bdf8"></div>
+                    80~89점 <span id="legend80">0개 (0%)</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-dot" style="background:#34d399"></div>
+                    70~79점 <span id="legend70">0개 (0%)</span>
+                  </div>
+                  <div class="legend-item">
+                    <div class="legend-dot" style="background:#fb923c"></div>
+                    ~69점 <span id="legend69">0개 (0%)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
   </div>
 </div>
 <script th:src="@{/js/layout.js}"></script>
 <script>
-  const TEACHER_ID = 1;
+  function getAuthHeader() {
+    const token = localStorage.getItem('accessToken');
+    return token ? { 'Authorization': 'Bearer ' + token } : {};
+  }
 
   const STUDENT_API = {
-    list: '/api/v1/teacher/students?teacherId=' + TEACHER_ID,
+    list: '/api/v1/teacher/students',
     quizResults: function (studentId) {
-      return '/api/v1/teacher/students/' + studentId + '/quiz-results?teacherId=' + TEACHER_ID;
+      return '/api/v1/teacher/students/' + studentId + '/quiz-results';
     }
   };
 
@@ -513,7 +372,7 @@
 
   async function loadStudents() {
     try {
-      const response = await fetch(STUDENT_API.list);
+      const response = await fetch(STUDENT_API.list, { headers: getAuthHeader() });
 
       if (!response.ok) {
         console.error(await response.text());
@@ -585,11 +444,12 @@
     renderStudentList();
 
     try {
-      const response = await fetch(STUDENT_API.quizResults(studentId));
+      const response = await fetch(STUDENT_API.quizResults(studentId), { headers: getAuthHeader() });
 
       if (!response.ok) {
-        console.error(await response.text());
-        alert('학생 퀴즈 결과를 불러오지 못했습니다.');
+        const text = await response.text();
+        console.error('[quiz-results] status=' + response.status, text);
+        alert('학생 퀴즈 결과를 불러오지 못했습니다. (status: ' + response.status + ')');
         return;
       }
 
@@ -599,7 +459,7 @@
       renderQuizResults(data.quizResults || []);
       renderSummary(data.summary);
     } catch (error) {
-      console.error(error);
+      console.error('[quiz-results] catch error:', error);
       alert('학생 퀴즈 결과 조회 중 오류가 발생했습니다.');
     }
   }
