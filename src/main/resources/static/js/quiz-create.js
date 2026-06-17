@@ -1,35 +1,50 @@
-const TEACHER_ID = 1;
-const MATERIAL_ID = null;
+let currentTeacherId = null;
 
 const API = {
   preview: "/api/v1/quizzes/preview",
   publish: "/api/v1/quizzes/generate",
-  list: "/api/v1/quizzes",
-  detail: (quizId) => `/api/v1/quizzes/${quizId}`,
-  remove: (quizId) => `/api/v1/quizzes/${quizId}`
+  list: function (teacherId) {
+    return teacherId
+      ? "/api/v1/quizzes?teacherId=" + encodeURIComponent(teacherId)
+      : "/api/v1/quizzes";
+  },
+  detail: function (quizId) {
+    return "/api/v1/quizzes/" + encodeURIComponent(quizId);
+  },
+  remove: function (quizId) {
+    return "/api/v1/quizzes/" + encodeURIComponent(quizId);
+  },
+  me: "/api/v1/users/me"
 };
 
 let previewQuiz = null;
 let selectedQuizId = null;
 let currentMode = "empty";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async function () {
   const generateBtn = document.getElementById("generateQuizBtn");
   const regenerateBtn = document.getElementById("regenerateQuizBtn");
   const publishBtn = document.getElementById("publishQuizBtn");
   const detailBtn = document.getElementById("detailQuizBtn");
   const deleteBtn = document.getElementById("deleteQuizBtn");
-  const timeLimitSelect = document.getElementById("timeLimitSelect");
+  const timeLimitInput = document.getElementById("timeLimitInput");
   const startDateTimeInput = document.getElementById("startDateTimeInput");
 
+  currentTeacherId = await resolveTeacherId();
+
+  if (typeof window.loadMaterialsForTeacher === "function") {
+    await window.loadMaterialsForTeacher(currentTeacherId);
+  }
+
   initializeStartDateTimeInput();
+  initializeDefaultNumberInputs();
 
   generateBtn?.addEventListener("click", handleGeneratePreview);
   regenerateBtn?.addEventListener("click", handleGeneratePreview);
   publishBtn?.addEventListener("click", handlePublishQuiz);
   deleteBtn?.addEventListener("click", handleDeleteSelectedQuiz);
 
-  detailBtn?.addEventListener("click", async () => {
+  detailBtn?.addEventListener("click", async function () {
     if (!selectedQuizId) {
       alert("상세보기 할 퀴즈를 먼저 선택해주세요.");
       return;
@@ -38,13 +53,11 @@ document.addEventListener("DOMContentLoaded", () => {
     await showQuizDetail(selectedQuizId);
   });
 
-  timeLimitSelect?.addEventListener("change", () => {
+  timeLimitInput?.addEventListener("input", function () {
     if (currentMode !== "detail") {
-      document.getElementById("timeLimitStat").textContent = timeLimitSelect.value;
+      document.getElementById("timeLimitStat").textContent = Number(timeLimitInput.value || 0);
     }
-  });
 
-  startDateTimeInput?.addEventListener("change", () => {
     if (currentMode === "preview" && previewQuiz) {
       const schedule = buildQuizSchedule();
 
@@ -55,8 +68,111 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  loadSavedQuizList();
+  startDateTimeInput?.addEventListener("change", function () {
+    if (currentMode === "preview" && previewQuiz) {
+      const schedule = buildQuizSchedule();
+
+      if (schedule) {
+        previewQuiz.availableFrom = schedule.availableFrom;
+        previewQuiz.availableUntil = schedule.availableUntil;
+      }
+    }
+  });
+
+  await loadSavedQuizList();
 });
+
+function authHeaders(extra = {}) {
+  const token = localStorage.getItem("accessToken");
+
+  return {
+    ...extra,
+    ...(token ? { Authorization: "Bearer " + token } : {})
+  };
+}
+
+function unwrapResponse(body) {
+  return body?.data || body?.result || body;
+}
+
+async function resolveTeacherId() {
+  try {
+    const response = await fetch(API.me, {
+      headers: authHeaders()
+    });
+
+    if (response.ok) {
+      const body = await response.json();
+      const me = unwrapResponse(body);
+
+      const teacherId = me.teacherId ?? me.teacher_id ?? me.userId ?? me.user_id ?? me.id;
+
+      if (teacherId) {
+        return Number(teacherId);
+      }
+    }
+  } catch (error) {
+    console.warn("교사 정보 조회 실패, 토큰에서 teacherId를 추출합니다.", error);
+  }
+
+  return getTeacherIdFromToken();
+}
+
+function getTeacherIdFromToken() {
+  const token = localStorage.getItem("accessToken");
+
+  if (!token) {
+    alert("로그인이 필요합니다.");
+    location.href = "/login";
+    return null;
+  }
+
+  try {
+    const payloadBase64Url = token.split(".")[1];
+    const payloadBase64 = payloadBase64Url
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+    const payloadJson = decodeURIComponent(
+      atob(payloadBase64)
+        .split("")
+        .map(function (char) {
+          return "%" + ("00" + char.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+
+    const payload = JSON.parse(payloadJson);
+
+    const role = payload.role || payload.authority || "";
+
+    if (role && role !== "TEACHER" && role !== "ROLE_TEACHER" && role !== "ADMIN" && role !== "ROLE_ADMIN") {
+      console.warn("교사 권한 토큰이 아닐 수 있습니다.", payload);
+    }
+
+    return Number(payload.sub);
+  } catch (error) {
+    console.error(error);
+    alert("로그인 정보가 올바르지 않습니다. 다시 로그인해주세요.");
+    location.href = "/login";
+    return null;
+  }
+}
+
+function initializeDefaultNumberInputs() {
+  const questionCountInput = document.getElementById("questionCountInput");
+  const timeLimitInput = document.getElementById("timeLimitInput");
+
+  if (questionCountInput && !questionCountInput.value) {
+    questionCountInput.value = 3;
+  }
+
+  if (timeLimitInput && !timeLimitInput.value) {
+    timeLimitInput.value = 15;
+  }
+
+  document.getElementById("timeLimitStat").textContent = Number(timeLimitInput?.value || 15);
+}
 
 async function handleGeneratePreview() {
   const generateBtn = document.getElementById("generateQuizBtn");
@@ -74,9 +190,9 @@ async function handleGeneratePreview() {
 
     const response = await fetch(API.preview, {
       method: "POST",
-      headers: {
+      headers: authHeaders({
         "Content-Type": "application/json"
-      },
+      }),
       body: JSON.stringify(requestBody)
     });
 
@@ -87,11 +203,14 @@ async function handleGeneratePreview() {
       return;
     }
 
-    const quiz = await response.json();
+    const body = await response.json();
+    const quiz = unwrapResponse(body);
 
     previewQuiz = {
       ...requestBody,
       ...quiz,
+      teacherId: currentTeacherId,
+      materialId: requestBody.materialId,
       questions: quiz.questions || []
     };
 
@@ -140,9 +259,9 @@ async function handlePublishQuiz() {
 
     const response = await fetch(API.publish, {
       method: "POST",
-      headers: {
+      headers: authHeaders({
         "Content-Type": "application/json"
-      },
+      }),
       body: JSON.stringify(finalQuiz)
     });
 
@@ -154,7 +273,8 @@ async function handlePublishQuiz() {
       return;
     }
 
-    const savedQuiz = await safeJson(response);
+    const body = await safeJson(response);
+    const savedQuiz = unwrapResponse(body);
 
     alert("학생 배포가 완료되었습니다.");
 
@@ -198,7 +318,8 @@ async function handleDeleteSelectedQuiz() {
     }
 
     const response = await fetch(API.remove(selectedQuizId), {
-      method: "DELETE"
+      method: "DELETE",
+      headers: authHeaders()
     });
 
     if (!response.ok) {
@@ -232,7 +353,9 @@ async function loadSavedQuizList(selectedAfterLoad = null) {
   const listContainer = document.getElementById("savedQuizList");
 
   try {
-    const response = await fetch(API.list);
+    const response = await fetch(API.list(currentTeacherId), {
+      headers: authHeaders()
+    });
 
     if (!response.ok) {
       if (listContainer) {
@@ -245,10 +368,12 @@ async function loadSavedQuizList(selectedAfterLoad = null) {
       return;
     }
 
-    const data = await response.json();
+    const body = await response.json();
+    const data = unwrapResponse(body);
+
     const quizzes = Array.isArray(data)
       ? data
-      : (data.data || data.result || data.quizzes || []);
+      : (data.quizzes || []);
 
     renderSavedQuizList(quizzes);
 
@@ -337,7 +462,9 @@ function selectQuizInList(quizId) {
 
 async function showQuizDetail(quizId) {
   try {
-    const response = await fetch(API.detail(quizId));
+    const response = await fetch(API.detail(quizId), {
+      headers: authHeaders()
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -346,7 +473,8 @@ async function showQuizDetail(quizId) {
       return;
     }
 
-    const quiz = await response.json();
+    const body = await response.json();
+    const quiz = unwrapResponse(body);
 
     currentMode = "detail";
     previewQuiz = null;
@@ -361,22 +489,58 @@ async function showQuizDetail(quizId) {
 }
 
 function createQuizRequestBody() {
-  const subject = document.getElementById("subjectSelect").value;
-  const difficulty = document.getElementById("difficultySelect").value;
-  const questionCount = Number(document.getElementById("questionCountSelect").value);
-  const unitValue = document.getElementById("unitSelect").value;
+  if (!currentTeacherId) {
+    alert("교사 정보를 불러오지 못했습니다. 다시 로그인해주세요.");
+    return null;
+  }
 
+  const selectedMaterial = typeof window.getSelectedMaterial === "function"
+    ? window.getSelectedMaterial()
+    : null;
+
+  const materialId = typeof window.getSelectedMaterialId === "function"
+    ? window.getSelectedMaterialId()
+    : null;
+
+  const materialTotalPages = typeof window.getSelectedMaterialTotalPages === "function"
+    ? window.getSelectedMaterialTotalPages()
+    : 0;
+
+  if (!selectedMaterial || !materialId) {
+    alert("강의자료를 선택해주세요.");
+    return null;
+  }
+
+  if (typeof window.validatePageRange === "function" && !window.validatePageRange()) {
+    return null;
+  }
+
+  const difficulty = document.getElementById("difficultySelect").value;
+  const questionCount = getQuestionCount();
+  const unitValue = document.getElementById("unitSelect").value;
   const [startPage, endPage] = unitValue.split("-").map(Number);
   const schedule = buildQuizSchedule();
+
+  if (!questionCount) {
+    return null;
+  }
 
   if (!schedule) {
     return null;
   }
 
+  if (materialTotalPages > 0 && endPage > materialTotalPages) {
+    alert("선택한 강의자료는 총 " + materialTotalPages + "쪽입니다. 끝 쪽을 다시 입력해주세요.");
+    return null;
+  }
+
+  const subject = getMaterialSubject(selectedMaterial);
+  const fileName = getMaterialFileName(selectedMaterial);
+
   return {
-    teacherId: TEACHER_ID,
-    materialId: MATERIAL_ID,
-    title: `${subject} 퀴즈`,
+    teacherId: currentTeacherId,
+    materialId: Number(materialId),
+    title: subject ? subject + " 퀴즈" : fileName + " 퀴즈",
     difficulty,
     startPage,
     endPage,
@@ -384,6 +548,23 @@ function createQuizRequestBody() {
     availableFrom: schedule.availableFrom,
     availableUntil: schedule.availableUntil
   };
+}
+
+function getQuestionCount() {
+  const input = document.getElementById("questionCountInput");
+  const value = Number(input?.value);
+
+  if (!Number.isInteger(value) || value < 1) {
+    alert("문제 수는 1 이상의 숫자로 입력해주세요.");
+    return null;
+  }
+
+  if (value > 50) {
+    alert("문제 수는 최대 50문항까지 입력할 수 있습니다.");
+    return null;
+  }
+
+  return value;
 }
 
 function collectEditedPreviewQuiz() {
@@ -422,6 +603,8 @@ function collectEditedPreviewQuiz() {
 
   return {
     ...previewQuiz,
+    teacherId: currentTeacherId,
+    materialId: previewQuiz.materialId,
     title: quizTitle,
     availableFrom: schedule.availableFrom,
     availableUntil: schedule.availableUntil,
@@ -673,7 +856,7 @@ function updateStats(questions, timeLimitOverride = null) {
     ? 0
     : Math.round((multipleChoiceCount / totalCount) * 100);
 
-  const timeLimit = timeLimitOverride ?? Number(document.getElementById("timeLimitSelect")?.value || 15);
+  const timeLimit = timeLimitOverride ?? Number(document.getElementById("timeLimitInput")?.value || 15);
 
   document.getElementById("totalQuestionCount").textContent = totalCount;
   document.getElementById("timeLimitStat").textContent = timeLimit || 0;
@@ -748,10 +931,10 @@ function initializeStartDateTimeInput() {
 
 function buildQuizSchedule() {
   const startInput = document.getElementById("startDateTimeInput");
-  const timeLimitSelect = document.getElementById("timeLimitSelect");
+  const timeLimitInput = document.getElementById("timeLimitInput");
 
   const startValue = startInput?.value;
-  const timeLimit = Number(timeLimitSelect?.value || 15);
+  const timeLimit = Number(timeLimitInput?.value);
 
   if (!startValue) {
     alert("퀴즈 시작 시간을 선택해주세요.");
@@ -765,8 +948,13 @@ function buildQuizSchedule() {
     return null;
   }
 
-  if (!timeLimit || timeLimit <= 0) {
-    alert("시간 제한을 선택해주세요.");
+  if (!Number.isInteger(timeLimit) || timeLimit <= 0) {
+    alert("시간 제한은 1분 이상의 숫자로 입력해주세요.");
+    return null;
+  }
+
+  if (timeLimit > 180) {
+    alert("시간 제한은 최대 180분까지 입력할 수 있습니다.");
     return null;
   }
 
@@ -807,6 +995,14 @@ function getTimeLimitFromDates(availableFrom, availableUntil) {
   const diffMin = Math.round(diffMs / 1000 / 60);
 
   return diffMin > 0 ? diffMin : 0;
+}
+
+function getMaterialSubject(material) {
+  return material.subject || material.subjectName || "";
+}
+
+function getMaterialFileName(material) {
+  return material.fileName ?? material.file_name ?? material.title ?? "강의자료";
 }
 
 function parseOptions(options) {
