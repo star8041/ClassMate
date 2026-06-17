@@ -1,6 +1,10 @@
 package com.example.myapp.chat.service.agent;
 
 import com.example.myapp.chat.entity.ChatRole;
+import com.example.myapp.chat.service.agent.tool.ConsultationScheduleTool;
+import com.example.myapp.chat.service.agent.tool.ScheduleQueryTool;
+import com.example.myapp.schedule.mapper.ScheduleMapper;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -17,6 +21,7 @@ import java.nio.charset.StandardCharsets;
  *
  * TEACHER → teacher-system.st (전문적·간결, 교수법 조언)
  * STUDENT → student-system.st (친절·쉬운 설명, 격려)
+ * SCHEDULE_CONSULTATION → Tool Calling으로 DB 저장 후 결과 스트리밍
  */
 @Slf4j
 @Component
@@ -24,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 public class AgentExecutor {
 
     private final ChatModel chatModel;
+    private final ScheduleMapper scheduleMapper;
 
     @Value("classpath:prompts/teacher-system.st")
     private Resource teacherSystemPrompt;
@@ -34,6 +40,11 @@ public class AgentExecutor {
     /** SSE 스트리밍 응답 */
     public Flux<String> executeStream(AgentContext context) {
         log.debug("[Executor] role={} intent={}", context.getRole(), context.getIntentResult().intentType());
+
+        if (context.getIntentResult().intentType() == IntentType.SCHEDULE_CONSULTATION) {
+            return executeScheduleConsultationStream(context);
+        }
+
         return ChatClient.builder(chatModel).build()
                 .prompt()
                 .system(loadSystemPrompt(context.getRole()))
@@ -44,6 +55,10 @@ public class AgentExecutor {
 
     /** 논-스트리밍 단건 호출 (리포트 생성 등) */
     public String execute(AgentContext context) {
+        if (context.getIntentResult().intentType() == IntentType.SCHEDULE_CONSULTATION) {
+            return executeScheduleConsultation(context);
+        }
+
         return ChatClient.builder(chatModel).build()
                 .prompt()
                 .system(loadSystemPrompt(context.getRole()))
@@ -53,6 +68,47 @@ public class AgentExecutor {
     }
 
     // ── private ──────────────────────────────────────────────────────────────
+
+    private Flux<String> executeScheduleConsultationStream(AgentContext context) {
+        if (context.getTeacherId() == null) {
+            return Flux.just("로그인이 필요합니다.");
+        }
+        ConsultationScheduleTool registerTool =
+                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper);
+        ScheduleQueryTool queryTool =
+                new ScheduleQueryTool(context.getTeacherId(), scheduleMapper);
+
+        return ChatClient.builder(chatModel).build()
+                .prompt()
+                .system(loadSystemPrompt(ChatRole.TEACHER))
+                .user(scheduleUserPrompt(context.getUserMessage()))
+                .tools(registerTool, queryTool)
+                .stream()
+                .content();
+    }
+
+    private String executeScheduleConsultation(AgentContext context) {
+        if (context.getTeacherId() == null) {
+            return "로그인이 필요합니다.";
+        }
+        ConsultationScheduleTool registerTool =
+                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper);
+        ScheduleQueryTool queryTool =
+                new ScheduleQueryTool(context.getTeacherId(), scheduleMapper);
+
+        return ChatClient.builder(chatModel).build()
+                .prompt()
+                .system(loadSystemPrompt(ChatRole.TEACHER))
+                .user(scheduleUserPrompt(context.getUserMessage()))
+                .tools(registerTool, queryTool)
+                .call()
+                .content();
+    }
+
+    /** 상담 일정 등록 시 현재 날짜를 컨텍스트로 주입 (상대적 날짜 표현 처리용) */
+    private String scheduleUserPrompt(String userMessage) {
+        return "오늘 날짜: " + LocalDate.now() + "\n\n" + userMessage;
+    }
 
     private String loadSystemPrompt(ChatRole role) {
         Resource resource = role == ChatRole.TEACHER ? teacherSystemPrompt : studentSystemPrompt;

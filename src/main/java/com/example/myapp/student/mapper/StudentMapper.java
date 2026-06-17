@@ -116,4 +116,21 @@ public class StudentMapper {
                 .param(studentId)
                 .update();
     }
+
+    /**
+     * 이름 + 담임교사 ID로 학생 목록을 조회한다.
+     * 동명이인이 있을 수 있으므로 List 반환.
+     */
+    public List<Student> findByNameAndTeacherId(String studentName, Long teacherId) {
+        return jdbcClient.sql("""
+                        SELECT * FROM student
+                         WHERE student_name = ?
+                           AND teacher_id = ?
+                         ORDER BY student_number
+                        """)
+                .param(studentName)
+                .param(teacherId)
+                .query(ROW_MAPPER)
+                .list();
+    }
 }
