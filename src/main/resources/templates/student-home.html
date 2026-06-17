@@ -508,21 +508,22 @@
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
-          const chunk = line.slice(5);
-          if (!chunk || chunk.trim() === '[DONE]') continue;
-          fullText += chunk;
+        buf += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const events = buf.split('\n\n');
+        buf = events.pop();
+        for (const event of events) {
+          const dataLines = event.split('\n').filter(l => l.startsWith('data:')).map(l => l.slice(5));
+          const text = dataLines.join('\n');
+          if (!text || text.trim() === '[DONE]') continue;
+          fullText += text;
           aiBubble.textContent = fullText;
           area.scrollTop = area.scrollHeight;
         }
       }
-      if (buf.startsWith('data:')) {
-        const chunk = buf.slice(5);
-        if (chunk && chunk.trim() !== '[DONE]') { fullText += chunk; aiBubble.textContent = fullText; }
+      if (buf) {
+        const dataLines = buf.split('\n').filter(l => l.startsWith('data:')).map(l => l.slice(5));
+        const text = dataLines.join('\n');
+        if (text && text.trim() !== '[DONE]') { fullText += text; aiBubble.textContent = fullText; }
       }
       if (!fullText) aiBubble.textContent = '응답을 받지 못했어요.';
 
