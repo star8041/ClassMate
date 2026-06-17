@@ -36,6 +36,28 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ── 초대코드 ── */
 let inviteTimerInterval = null;
 
+// 페이지 로드 시 서버에 유효한 코드가 있으면 복원 (새로 생성하지 않음)
+document.addEventListener('DOMContentLoaded', async function () {
+  const body = document.getElementById('inviteBody');
+  if (!body) return;
+
+  const token = localStorage.getItem('accessToken');
+  if (!token) return;
+
+  try {
+    const res = await fetch('/api/v1/teachers/me/invite-code', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      showInviteCode(data.code, data.expiresAt);
+    }
+    // 204 또는 오류면 버튼 그대로 유지
+  } catch (e) {
+    // 네트워크 오류 시 버튼 그대로 유지
+  }
+});
+
 async function generateInvite() {
   const t = localStorage.getItem('accessToken');
   const body = document.getElementById('inviteBody');
