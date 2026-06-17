@@ -2,8 +2,7 @@ package com.example.myapp.chat.service.agent;
 
 import com.example.myapp.chat.entity.ChatRole;
 import com.example.myapp.chat.service.agent.tool.ConsultationScheduleTool;
-import com.example.myapp.counseling.mapper.ScheduleMapper;
-import com.example.myapp.student.mapper.StudentMapper;
+import com.example.myapp.schedule.mapper.ScheduleMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -29,7 +28,6 @@ public class AgentExecutor {
 
     private final ChatModel chatModel;
     private final ScheduleMapper scheduleMapper;
-    private final StudentMapper studentMapper;
 
     @Value("classpath:prompts/teacher-system.st")
     private Resource teacherSystemPrompt;
@@ -74,7 +72,7 @@ public class AgentExecutor {
             return Flux.just("로그인이 필요합니다.");
         }
         ConsultationScheduleTool tool =
-                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper, studentMapper);
+                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper);
 
         return ChatClient.builder(chatModel).build()
                 .prompt()
@@ -90,7 +88,7 @@ public class AgentExecutor {
             return "로그인이 필요합니다.";
         }
         ConsultationScheduleTool tool =
-                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper, studentMapper);
+                new ConsultationScheduleTool(context.getTeacherId(), scheduleMapper);
 
         return ChatClient.builder(chatModel).build()
                 .prompt()
