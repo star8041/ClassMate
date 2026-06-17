@@ -210,126 +210,83 @@
 	    </div>
 	
 	    <div class="upload-grid">
-	
-	      <!-- ① 녹음 업로드 -->
-	      <div>
-	        <div class="step-header">
-	          <div class="step-num">1</div>
-	          <div class="step-title">녹음 업로드</div>
-	        </div>
-	
-	        <div class="dropzone">
-	          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-	          <div class="dropzone-main">녹음 파일을 드래그하거나<br>클릭하여 업로드하세요</div>
-	          <div class="dropzone-sub">지원 형식: MP3, M4A, WAV (최대 100MB)</div>
-	        </div>
-	
-	        <div class="file-item">
-	          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
-	          <div style="flex:1">
-	            <div class="file-name">상담_김지우_20240524.mp3</div>
-	            <div class="file-size">8.7 MB</div>
-	          </div>
-	          <button class="file-del">
-	            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-	          </button>
-	        </div>
-	
-	        <div class="player-row">
-	          <button class="play-btn">
-	            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-	          </button>
-	          <span class="time-text">00:00 / 12:45</span>
-	          <div class="progress"><div class="progress-fill"></div></div>
-	          <button class="volume-btn">
-	            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-	          </button>
-	          <button class="more-btn">⋮</button>
-	        </div>
-	
-	        <button class="btn-upload-new">
-	          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-	          새 파일 업로드
-	        </button>
-	      </div>
-	
-	      <!-- 화살표 -->
-	      <div class="arrow-col">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-	      </div>
-	
-	      <!-- ② 텍스트 변환 결과 -->
-	      <div>
-	        <div class="step-header">
-	          <div class="step-num">2</div>
-	          <div class="step-title">텍스트 변환 결과</div>
-	        </div>
-	
-	        <div class="lang-tag">언어: 한국어</div>
-	
-	        <div class="transcript-box">
-	          학습 태도는 전반적으로 좋은 편이고, 수업 시간 집중도도 높습니다.<br>
-	          다만, 과제 제출 기한을 가끔 놓치는 경우가 있어 시간 관리가 필요해 보입니다.<br>
-	          수학 단원 중 함수 파트에서 어려움을 느끼고 있어 보충 학습을 권장합니다.
-	        </div>
-	
-	        <div class="transcript-meta">
-	          <span>변환 일시: 2024.05.24 10:42</span>
-	          <span>글자 수: 324</span>
-	        </div>
-	
-	        <div class="player-row">
-	          <button class="play-btn">
-	            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-	          </button>
-	          <span class="time-text">00:00 / 12:45</span>
-	          <div class="progress"><div class="progress-fill"></div></div>
-	          <button class="volume-btn">
-	            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-	          </button>
-	        </div>
-	
-	        <button class="btn-retranscribe">
-	          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.52"/></svg>
-	          다시 변환하기
-	        </button>
-	      </div>
-	
-	      <!-- 화살표 -->
-	      <div class="arrow-col">
-	        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-	      </div>
-	
-	      <!-- ③ 자동 요약 -->
-	      <div>
-	        <div class="step-header">
-	          <div class="step-num">3</div>
-	          <div class="step-title">자동 요약</div>
-	        </div>
-	
-	        <div>
-	          <span class="summary-badge">
-	            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-	            요약 완료
-	          </span>
-	        </div>
-	
-	        <div class="summary-box">
-	          <ul class="summary-list">
-	            <li>학습 태도와 수업 집중도가 전반적으로 우수함.</li>
-	            <li>과제 제출 기한을 가끔 놓쳐 시간 관리가 필요함.</li>
-	            <li>수학 '함수' 단원에서 어려움을 겪고 있으며 보충 학습 권장.</li>
-	            <li>전반적으로 성실하며, 꾸준한 노력이 기대됨.</li>
-	          </ul>
-	        </div>
-	
-	        <div class="summary-actions">
-	          <button class="btn-save-summary">요약 저장</button>
-	          <button class="btn-copy">요약 복사</button>
-	        </div>
-	      </div>
-	
-	    </div><!-- /upload-grid -->
+
+      <!-- ① 녹음 업로드 -->
+      <div>
+        <div class="step-header">
+          <div class="step-num">1</div>
+          <div class="step-title">녹음 업로드</div>
+        </div>
+
+        <input type="file" id="audioInput" accept="audio/*" style="display:none" />
+        <div class="dropzone" id="dropzone">
+          <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          <div class="dropzone-main">녹음 파일을 드래그하거나<br>클릭하여 업로드하세요</div>
+          <div class="dropzone-sub">지원 형식: MP3, M4A, WAV (최대 25MB)</div>
+        </div>
+
+        <div class="file-item" id="fileInfo" style="display:none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          <div style="flex:1">
+            <div class="file-name" id="fileName">-</div>
+            <div class="file-size" id="fileSize"></div>
+          </div>
+          <button class="file-del" id="fileDel" title="제거">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div style="margin-top:10px">
+          <label style="font-size:11px;color:#999;display:block;margin-bottom:4px">연결할 상담 일정 (저장용)</label>
+          <select id="noteSchedule" style="width:100%;padding:7px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:12px;color:#444;background:#fff">
+            <option value="">상담 일정을 선택하세요</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 화살표 -->
+      <div class="arrow-col">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <!-- ② 텍스트 변환 결과 -->
+      <div>
+        <div class="step-header">
+          <div class="step-num">2</div>
+          <div class="step-title">텍스트 변환 결과</div>
+        </div>
+
+        <div class="transcript-box" id="transcriptBox" style="white-space:pre-wrap">녹음 파일을 업로드하면 자동으로 텍스트로 변환됩니다.</div>
+        <div class="transcript-meta" id="transcriptMeta"></div>
+
+        <button class="btn-retranscribe" id="btnRetranscribe" disabled style="opacity:.5;cursor:default">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.52"/></svg>
+          다시 변환하기
+        </button>
+      </div>
+
+      <!-- 화살표 -->
+      <div class="arrow-col">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+
+      <!-- ③ 자동 요약 -->
+      <div>
+        <div class="step-header">
+          <div class="step-num">3</div>
+          <div class="step-title">자동 요약</div>
+        </div>
+
+        <div id="summaryBadgeWrap"></div>
+        <div class="summary-box" id="summaryBox"><span style="font-size:12px;color:#aaa">변환이 끝나면 AI가 핵심 내용을 요약합니다.</span></div>
+
+        <div class="summary-actions">
+          <button class="btn-save-summary" id="btnSaveSummary">요약 저장</button>
+          <button class="btn-copy" id="btnCopySummary">요약 복사</button>
+        </div>
+      </div>
+
+    </div><!-- /upload-grid -->
 	  </div>
     </main>
   </div>
@@ -394,8 +351,122 @@
           '<td><button class="btn-menu">⋮</button></td>' +
         '</tr>';
       }).join('');
+
+      // 저장용 상담 일정 드롭다운 채우기
+      var sel = document.getElementById('noteSchedule');
+      if (sel) {
+        sel.innerHTML = '<option value="">상담 일정을 선택하세요</option>' + rows.map(function (s) {
+          var label = (s.studentName || s.title || '상담') + ' · ' + fmtDate(s.scheduledAt);
+          return '<option value="' + s.scheduleId + '">' + esc(label) + '</option>';
+        }).join('');
+      }
     }
 
+    // ── 녹음 업로드 → 변환 → 요약 ───────────────────────────
+    var lastResult = null;  // { transcript, summary }
+
+    function humanSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+
+    async function uploadAndTranscribe(file) {
+      document.getElementById('fileInfo').style.display = 'flex';
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSize').textContent = humanSize(file.size);
+      var tBox = document.getElementById('transcriptBox');
+      var sBox = document.getElementById('summaryBox');
+      var badge = document.getElementById('summaryBadgeWrap');
+      tBox.textContent = '🎧 음성을 텍스트로 변환하는 중... (잠시만 기다려 주세요)';
+      document.getElementById('transcriptMeta').textContent = '';
+      badge.innerHTML = '';
+      sBox.innerHTML = '<span style="font-size:12px;color:#aaa">변환 후 요약됩니다.</span>';
+
+      var fd = new FormData();
+      fd.append('file', file);
+      try {
+        var res = await fetch('/api/v1/counseling/transcribe', {
+          method: 'POST', headers: authHeaders(), body: fd
+        });
+        if (!res.ok) {
+          var msg = res.status === 502
+            ? '음성 변환에 실패했어요. (OpenAI 음성 인식 호출 오류 — 서버 API 키 확인)'
+            : '변환에 실패했어요. (상태 ' + res.status + ')';
+          tBox.textContent = '⚠️ ' + msg;
+          return;
+        }
+        var data = await res.json();
+        lastResult = data;
+        tBox.textContent = data.transcript || '(추출된 텍스트가 없습니다)';
+        document.getElementById('transcriptMeta').innerHTML =
+          '<span>변환 일시: ' + fmtDate(new Date().toISOString()) + ' ' + fmtTime(new Date().toISOString()) + '</span>' +
+          '<span>글자 수: ' + (data.charCount || 0) + '</span>';
+        renderSummary(data.summary);
+      } catch (e) {
+        console.error(e);
+        tBox.textContent = '⚠️ 변환 중 오류가 발생했어요.';
+      }
+    }
+
+    function renderSummary(summary) {
+      var sBox = document.getElementById('summaryBox');
+      var badge = document.getElementById('summaryBadgeWrap');
+      if (!summary) {
+        sBox.innerHTML = '<span style="font-size:12px;color:#aaa">요약을 생성하지 못했어요.</span>';
+        return;
+      }
+      badge.innerHTML = '<span class="summary-badge"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>요약 완료</span>';
+      var lines = summary.split('\n').map(function (l) { return l.replace(/^[-•*]\s*/, '').trim(); }).filter(Boolean);
+      sBox.innerHTML = '<ul class="summary-list">' + lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>';
+    }
+
+    function wireRecording() {
+      var input = document.getElementById('audioInput');
+      var zone = document.getElementById('dropzone');
+      zone.addEventListener('click', function () { input.click(); });
+      input.addEventListener('change', function (e) {
+        if (e.target.files && e.target.files[0]) uploadAndTranscribe(e.target.files[0]);
+      });
+      zone.addEventListener('dragover', function (e) { e.preventDefault(); zone.style.borderColor = '#4f80f7'; });
+      zone.addEventListener('dragleave', function () { zone.style.borderColor = ''; });
+      zone.addEventListener('drop', function (e) {
+        e.preventDefault(); zone.style.borderColor = '';
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) uploadAndTranscribe(e.dataTransfer.files[0]);
+      });
+      document.getElementById('fileDel').addEventListener('click', function () {
+        input.value = ''; lastResult = null;
+        document.getElementById('fileInfo').style.display = 'none';
+        document.getElementById('transcriptBox').textContent = '녹음 파일을 업로드하면 자동으로 텍스트로 변환됩니다.';
+        document.getElementById('transcriptMeta').textContent = '';
+        document.getElementById('summaryBadgeWrap').innerHTML = '';
+        document.getElementById('summaryBox').innerHTML = '<span style="font-size:12px;color:#aaa">변환이 끝나면 AI가 핵심 내용을 요약합니다.</span>';
+      });
+
+      document.getElementById('btnSaveSummary').addEventListener('click', async function () {
+        if (!lastResult) { alert('먼저 녹음을 변환해 주세요.'); return; }
+        var scheduleId = document.getElementById('noteSchedule').value;
+        if (!scheduleId) { alert('저장할 상담 일정을 선택해 주세요.'); return; }
+        try {
+          var res = await fetch('/api/v1/counseling-notes', {
+            method: 'POST',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+            body: JSON.stringify({ scheduleId: Number(scheduleId), rawText: lastResult.transcript, summaryText: lastResult.summary })
+          });
+          alert(res.ok ? '상담 기록이 저장되었어요.' : '저장에 실패했어요. (상태 ' + res.status + ')');
+        } catch (e) { alert('저장 중 오류가 발생했어요.'); }
+      });
+
+      document.getElementById('btnCopySummary').addEventListener('click', function () {
+        if (!lastResult || !lastResult.summary) { alert('복사할 요약이 없어요.'); return; }
+        navigator.clipboard && navigator.clipboard.writeText(lastResult.summary).then(function () {
+          var b = document.getElementById('btnCopySummary'); var t = b.textContent;
+          b.textContent = '복사됨!'; setTimeout(function () { b.textContent = t; }, 1200);
+        });
+      });
+    }
+
+    wireRecording();
     load();
   })();
 </script>
