@@ -28,7 +28,13 @@ public class SchemaMigrationRunner implements ApplicationRunner {
     /** 매 기동 시 보장할 멱등 DDL 목록 */
     private static final String[] MIGRATIONS = {
             // 강의자료 분류(수업/참고) 컬럼
-            "ALTER TABLE material ADD COLUMN IF NOT EXISTS category VARCHAR(20) NOT NULL DEFAULT 'LESSON'"
+            "ALTER TABLE material ADD COLUMN IF NOT EXISTS category VARCHAR(20) NOT NULL DEFAULT 'LESSON'",
+            // 일정: 폼 입력값(장소/메모/종료시각) + 상담 추가필드(학생/학부모) 보강
+            "ALTER TABLE schedule ADD COLUMN IF NOT EXISTS end_at TIMESTAMP",
+            "ALTER TABLE schedule ADD COLUMN IF NOT EXISTS location VARCHAR(200)",
+            "ALTER TABLE schedule ADD COLUMN IF NOT EXISTS memo TEXT",
+            "ALTER TABLE schedule ADD COLUMN IF NOT EXISTS student_name VARCHAR(100)",
+            "ALTER TABLE schedule ADD COLUMN IF NOT EXISTS parent_name VARCHAR(100)"
     };
 
     private final JdbcTemplate jdbcTemplate;

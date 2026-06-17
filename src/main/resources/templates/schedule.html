@@ -394,6 +394,22 @@
           </select>
         </div>
 
+        <!-- 상담 유형 전용 입력 (학생/학부모/주제) -->
+        <div id="counsel-fields" style="display:none;">
+          <div class="form-row">
+            <label class="form-label">학생명</label>
+            <input type="text" id="f-student" class="form-input" placeholder="상담 대상 학생명" />
+          </div>
+          <div class="form-row">
+            <label class="form-label">학부모명</label>
+            <input type="text" id="f-parent" class="form-input" placeholder="학부모명" />
+          </div>
+          <div class="form-row">
+            <label class="form-label">상담 주제</label>
+            <input type="text" id="f-topic" class="form-input" placeholder="상담 주제" />
+          </div>
+        </div>
+
         <div class="form-row">
           <label class="form-label">제목</label>
           <input type="text" id="f-title" class="form-input" placeholder="일정 제목을 입력하세요" />
@@ -453,46 +469,58 @@ const today = new Date();
 let curYear  = today.getFullYear();
 let curMonth = today.getMonth();  // 0-based
 
-// Generate some default events
+// ──────────────────────────────────────────────
+//  DATA (백엔드 연동)
+// ──────────────────────────────────────────────
 let events = [];
-let nextId = 1;
 
-function addEvent(obj) {
-  events.push({ id: nextId++, ...obj });
+function authHeaders() {
+  const t = localStorage.getItem('accessToken');
+  return t ? { 'Authorization': 'Bearer ' + t } : {};
 }
 
-// Sample events based on the screenshot (May 2024 → but use current year/month so it's live)
-const SAMPLE_MONTH = today.getMonth();
-const SAMPLE_YEAR  = today.getFullYear();
-function d(day) {
-  const dt = new Date(SAMPLE_YEAR, SAMPLE_MONTH, day);
-  return dt.toISOString().split('T')[0];
+// 백엔드 ScheduleResponse → 캘린더 이벤트 객체
+function toEvent(s) {
+  const at = s.scheduledAt || '';
+  return {
+    id: s.scheduleId,
+    type: s.scheduleType || '수업',
+    title: s.title || '',
+    date: at.slice(0, 10),
+    start: at.slice(11, 16),
+    end: s.endAt ? s.endAt.slice(11, 16) : '',
+    place: s.location || '',
+    memo: s.memo || '',
+    topic: s.topic || '',
+    studentName: s.studentName || '',
+    parentName: s.parentName || ''
+  };
 }
 
-addEvent({ date: d(1), title:'교과 회의', type:'회의', start:'14:00', end:'15:00', place:'교무실', memo:'다음 학기 교과 과정 논의' });
-addEvent({ date: d(2), title:'수행평가 준비', type:'수행평가', start:'09:00', end:'10:00', place:'3학년 교실', memo:'주제 선정 및 문항 구성' });
-addEvent({ date: d(3), title:'학부모 상담', type:'상담', start:'10:30', end:'11:00', place:'상담실', memo:'박서준 학생 보호자 학습 태도 및 진도 점검' });
-addEvent({ date: d(6), title:'영어 수업', type:'수업', start:'11:20', end:'12:10', place:'1학년 3반 교실', memo:'교과서 Unit 5 본문 학습' });
-addEvent({ date: d(8), title:'학부모 상담', type:'상담', start:'10:30', end:'11:00', place:'상담실', memo:'2학년 학부모 면담' });
-addEvent({ date: d(8), title:'개인 일정', type:'개인', start:'19:00', end:'20:00', place:'', memo:'연구 수업 준비' });
-addEvent({ date: d(10), title:'영어 수업', type:'수업', start:'11:20', end:'12:10', place:'1학년 3반 교실', memo:'Unit 6 듣기 활동' });
-addEvent({ date: d(13), title:'교과 회의', type:'회의', start:'13:30', end:'14:10', place:'교무실', memo:'교과 협의회 (영어과) 다음 달 평가 계획 논의' });
-addEvent({ date: d(14), title:'영어 수업', type:'수업', start:'11:20', end:'12:10', place:'1학년 3반 교실', memo:'Unit 6 읽기 활동' });
-addEvent({ date: d(15), title:'수행평가 준비', type:'수행평가', start:'15:30', end:'16:20', place:'3학년 교실', memo:'2학년 영어 수행평가 주제 선정 및 문항 구성' });
-addEvent({ date: today.toISOString().split('T')[0], title:'학부모 상담', type:'상담', start:'10:30', end:'11:00', place:'상담실', memo:'박서준 학생 보호자 학습 태도 및 진도 점검' });
-addEvent({ date: today.toISOString().split('T')[0], title:'영어 수업 (1학년 3반)', type:'수업', start:'11:20', end:'12:10', place:'1학년 3반 교실', memo:'교과서 Unit 5 본문 학습 및 활동지 풀이' });
-addEvent({ date: today.toISOString().split('T')[0], title:'교과 회의', type:'회의', start:'13:30', end:'14:10', place:'교무실', memo:'교과 협의회 (영어과) 다음 달 평가 계획 논의' });
-addEvent({ date: today.toISOString().split('T')[0], title:'수행평가 준비', type:'수행평가', start:'15:30', end:'16:20', place:'3학년 교실', memo:'2학년 영어 수행평가 주제 선정 및 문항 구성' });
-addEvent({ date: today.toISOString().split('T')[0], title:'개인 일정', type:'개인', start:'19:00', end:'20:00', place:'', memo:'연구 수업 준비' });
-addEvent({ date: d(17), title:'학부모 상담', type:'상담', start:'10:30', end:'11:00', place:'상담실', memo:'학부모 면담' });
-addEvent({ date: d(20), title:'영어 수업', type:'수업', start:'11:20', end:'12:10', place:'1학년 3반 교실', memo:'Unit 7 본문' });
-addEvent({ date: d(22), title:'교과 회의', type:'회의', start:'13:30', end:'14:10', place:'교무실', memo:'회의' });
-addEvent({ date: d(22), title:'개인 일정', type:'개인', start:'17:00', end:'18:00', place:'', memo:'개인 메모' });
-addEvent({ date: d(24), title:'학부모 상담', type:'상담', start:'10:30', end:'11:00', place:'상담실', memo:'학부모 면담' });
-addEvent({ date: d(26), title:'수행평가 준비', type:'수행평가', start:'15:30', end:'16:20', place:'교실', memo:'준비' });
-addEvent({ date: d(27), title:'영어 수업', type:'수업', start:'11:20', end:'12:10', place:'1학년 3반 교실', memo:'Unit 7' });
-addEvent({ date: d(29), title:'영어 수업', type:'수업', start:'11:20', end:'12:10', place:'1학년 3반 교실', memo:'Unit 8' });
-addEvent({ date: d(30), title:'교과 회의', type:'회의', start:'13:30', end:'14:10', place:'교무실', memo:'회의' });
+// 폼 데이터 → 백엔드 ScheduleCreateRequest
+function toRequest(data) {
+  const start = data.start || '00:00';
+  return {
+    scheduleType: data.type,
+    title: data.title,
+    topic: data.topic || null,
+    scheduledAt: data.date + 'T' + start + ':00',
+    endAt: data.end ? (data.date + 'T' + data.end + ':00') : null,
+    location: data.place || null,
+    memo: data.memo || null,
+    studentName: data.studentName || null,
+    parentName: data.parentName || null
+  };
+}
+
+async function loadSchedules() {
+  try {
+    const res = await fetch('/api/schedules', { headers: authHeaders() });
+    events = res.ok ? (await res.json()).map(toEvent) : [];
+    if (!res.ok) console.error('일정 로드 실패', res.status);
+  } catch (e) { console.error(e); events = []; }
+  renderCalendar();
+}
 
 // ──────────────────────────────────────────────
 //  STATE
@@ -663,6 +691,12 @@ function renderUpcoming() {
 // ──────────────────────────────────────────────
 //  FORM: load / reset / save / delete
 // ──────────────────────────────────────────────
+// 상담 유형일 때만 학생/학부모/주제 입력칸 표시
+function toggleCounselFields() {
+  const isCounsel = document.getElementById('f-type').value === '상담';
+  document.getElementById('counsel-fields').style.display = isCounsel ? 'block' : 'none';
+}
+
 function loadEventToForm(id) {
   const ev = events.find(e => e.id === id);
   if (!ev) return;
@@ -674,6 +708,10 @@ function loadEventToForm(id) {
   document.getElementById('f-end').value   = ev.end;
   document.getElementById('f-place').value = ev.place;
   document.getElementById('f-memo').value  = ev.memo;
+  document.getElementById('f-student').value = ev.studentName || '';
+  document.getElementById('f-parent').value  = ev.parentName || '';
+  document.getElementById('f-topic').value   = ev.topic || '';
+  toggleCounselFields();
   setFormMode('edit');
 }
 
@@ -686,6 +724,10 @@ function resetForm() {
   document.getElementById('f-end').value   = '';
   document.getElementById('f-place').value = '';
   document.getElementById('f-memo').value  = '';
+  document.getElementById('f-student').value = '';
+  document.getElementById('f-parent').value  = '';
+  document.getElementById('f-topic').value   = '';
+  toggleCounselFields();
   setFormMode('create');
 }
 
@@ -715,38 +757,59 @@ function getFormData() {
     end:   document.getElementById('f-end').value,
     place: document.getElementById('f-place').value.trim(),
     memo:  document.getElementById('f-memo').value.trim(),
+    studentName: document.getElementById('f-student').value.trim(),
+    parentName:  document.getElementById('f-parent').value.trim(),
+    topic:       document.getElementById('f-topic').value.trim(),
   };
 }
 
-function saveEvent() {
+async function saveEvent() {
   const data = getFormData();
   if (!data.title) { alert('제목을 입력해 주세요.'); return; }
   if (!data.date)  { alert('날짜를 선택해 주세요.'); return; }
-  addEvent(data);
+  try {
+    const res = await fetch('/api/schedules', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify(toRequest(data))
+    });
+    if (!res.ok) { alert('저장에 실패했어요. 로그인 상태(교사 계정)를 확인해 주세요.'); return; }
+  } catch (e) { alert('저장 중 오류가 발생했어요.'); return; }
   selectedDate = data.date;
   resetForm();
-  renderCalendar();
+  await loadSchedules();
 }
 
-function modifyEvent() {
+// 수정 = 삭제 후 재등록 (PUT 미제공)
+async function modifyEvent() {
   if (!selectedEventId) return;
   const data = getFormData();
   if (!data.title) { alert('제목을 입력해 주세요.'); return; }
-  const idx = events.findIndex(e => e.id === selectedEventId);
-  if (idx !== -1) events[idx] = { id: selectedEventId, ...data };
+  try {
+    await fetch('/api/schedules/' + selectedEventId, { method: 'DELETE', headers: authHeaders() });
+    const res = await fetch('/api/schedules', {
+      method: 'POST',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify(toRequest(data))
+    });
+    if (!res.ok) { alert('수정에 실패했어요.'); return; }
+  } catch (e) { alert('수정 중 오류가 발생했어요.'); return; }
   selectedDate = data.date;
   selectedEventId = null;
   resetForm();
-  renderCalendar();
+  await loadSchedules();
 }
 
-function deleteEvent() {
+async function deleteEvent() {
   if (!selectedEventId) return;
   if (!confirm('이 일정을 삭제하시겠습니까?')) return;
-  events = events.filter(e => e.id !== selectedEventId);
+  try {
+    const res = await fetch('/api/schedules/' + selectedEventId, { method: 'DELETE', headers: authHeaders() });
+    if (!res.ok && res.status !== 204) { alert('삭제에 실패했어요.'); return; }
+  } catch (e) { alert('삭제 중 오류가 발생했어요.'); return; }
   selectedEventId = null;
   resetForm();
-  renderCalendar();
+  await loadSchedules();
 }
 
 // ──────────────────────────────────────────────
@@ -777,12 +840,15 @@ document.getElementById('btn-add-schedule').onclick = () => {
 //  INIT
 // ──────────────────────────────────────────────
 resetForm();
-renderCalendar();
 document.getElementById('f-date').value = selectedDate;
+document.getElementById('f-type').addEventListener('change', toggleCounselFields);
 
 // Wire up initial buttons
 document.getElementById('btn-reset').onclick = () => resetForm();
 document.getElementById('btn-save').onclick  = saveEvent;
+
+// 실제 저장된 일정 로드
+loadSchedules();
 </script>
 <script th:src="@{/js/layout.js}"></script>
 </body>
