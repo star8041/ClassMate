@@ -1,6 +1,7 @@
 package com.example.myapp.report.controller;
 
 import com.example.myapp.common.ApiResponse;
+import com.example.myapp.counseling.dto.CounselingNoteResponse;
 import com.example.myapp.report.dto.ReportGenerateRequest;
 import com.example.myapp.report.dto.ReportResponse;
 import com.example.myapp.report.service.ReportService;
@@ -54,6 +55,15 @@ public class ReportController {
 
         return ResponseEntity.ok(ApiResponse.success(
                 reportService.getReport(reportId)));
+    }
+
+    /** 학생의 최근 상담 기록 조회 (리포트 페이지 상담 요약 섹션용) */
+    @GetMapping("/students/{studentId}/counseling")
+    public ResponseEntity<ApiResponse<List<CounselingNoteResponse>>> getRecentCounseling(
+            @PathVariable("studentId") Long studentId) {
+
+        return ResponseEntity.ok(ApiResponse.success(
+                reportService.getRecentCounseling(studentId)));
     }
 
     /** 리포트 삭제 */
