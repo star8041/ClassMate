@@ -597,6 +597,53 @@ public class QuizRepository {
         });
     }
     
+    /** 교사의 퀴즈를 제목 키워드로 검색 */
+    public List<Quiz> findByTeacherAndKeyword(Long teacherId, String keyword) {
+        String sql = """
+                SELECT quiz_id, teacher_id, material_id, title, difficulty,
+                       start_page, end_page, available_from, available_until, created_at
+                FROM quiz
+                WHERE teacher_id = :teacherId
+                  AND LOWER(title) LIKE LOWER(:keyword)
+                ORDER BY created_at DESC
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("teacherId", teacherId)
+                .addValue("keyword", "%" + keyword + "%");
+        return jdbcTemplate.query(sql, params, quizRowMapper());
+    }
+
+    /** 퀴즈 응시 통계 조회 */
+    public QuizAttemptStats getAttemptStats(Long quizId) {
+        String sql = """
+                SELECT
+                    COUNT(DISTINCT student_id)                                   AS student_count,
+                    COUNT(*) FILTER (WHERE submitted_at IS NOT NULL)             AS submitted_count,
+                    COALESCE(AVG(score) FILTER (WHERE submitted_at IS NOT NULL), 0) AS avg_score,
+                    COALESCE(MAX(score) FILTER (WHERE submitted_at IS NOT NULL), 0) AS max_score,
+                    COALESCE(MIN(score) FILTER (WHERE submitted_at IS NOT NULL), 0) AS min_score
+                FROM quiz_attempt
+                WHERE quiz_id = :quizId
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource().addValue("quizId", quizId);
+        return jdbcTemplate.queryForObject(sql, params, (rs, rowNum) -> new QuizAttemptStats(
+                rs.getInt("student_count"),
+                rs.getInt("submitted_count"),
+                rs.getDouble("avg_score"),
+                rs.getInt("max_score"),
+                rs.getInt("min_score")
+        ));
+    }
+
+    /** 퀴즈 응시 통계 DTO */
+    public record QuizAttemptStats(
+            int studentCount,
+            int submittedCount,
+            double avgScore,
+            int maxScore,
+            int minScore
+    ) {}
+
     public boolean existsSubmittedAttempt(Long quizId, Long studentId) {
         String sql = """
             SELECT EXISTS (
