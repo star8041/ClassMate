@@ -1,6 +1,7 @@
 package com.example.myapp.quiz.repository;
 
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -599,18 +600,32 @@ public class QuizRepository {
     
     /** 교사의 퀴즈를 제목 키워드로 검색 */
     public List<Quiz> findByTeacherAndKeyword(Long teacherId, String keyword) {
-        String sql = """
+        return findByTeacherAndKeywordAndDateRange(teacherId, keyword, null, null);
+    }
+
+    /** 교사의 퀴즈를 제목 키워드 + 생성일 범위로 검색 */
+    public List<Quiz> findByTeacherAndKeywordAndDateRange(
+            Long teacherId, String keyword, LocalDate startDate, LocalDate endDate) {
+        StringBuilder sql = new StringBuilder("""
                 SELECT quiz_id, teacher_id, material_id, title, difficulty,
                        start_page, end_page, available_from, available_until, created_at
                 FROM quiz
                 WHERE teacher_id = :teacherId
                   AND LOWER(title) LIKE LOWER(:keyword)
-                ORDER BY created_at DESC
-                """;
+                """);
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("teacherId", teacherId)
                 .addValue("keyword", "%" + keyword + "%");
-        return jdbcTemplate.query(sql, params, quizRowMapper());
+        if (startDate != null) {
+            sql.append("  AND created_at >= :startDate\n");
+            params.addValue("startDate", startDate.atStartOfDay());
+        }
+        if (endDate != null) {
+            sql.append("  AND created_at < :endDate\n");
+            params.addValue("endDate", endDate.plusDays(1).atStartOfDay());
+        }
+        sql.append("ORDER BY created_at DESC");
+        return jdbcTemplate.query(sql.toString(), params, quizRowMapper());
     }
 
     /** 퀴즈 응시 통계 조회 */
