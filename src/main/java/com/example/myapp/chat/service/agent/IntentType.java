@@ -6,5 +6,7 @@ public enum IntentType {
     /** 특정 페이지 번호 기반 질문 → material_page 직접 조회 */
     PAGE_SEARCH,
     /** 교재 무관 일반 질문 → AI 직접 응답 */
-    DIRECT
+    DIRECT,
+    /** 교사가 학부모/학생 상담 일정 등록을 요청 → Tool Calling으로 DB 등록 */
+    SCHEDULE_CONSULTATION
 }

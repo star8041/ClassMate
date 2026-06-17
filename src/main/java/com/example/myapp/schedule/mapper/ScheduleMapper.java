@@ -78,6 +78,51 @@ public class ScheduleMapper {
                 .list();
     }
 
+    /** 교사의 특정 날짜 일정 (시간순) */
+    public List<Schedule> findByTeacherAndDate(Long teacherId, java.time.LocalDate date) {
+        return jdbcClient.sql("""
+                SELECT * FROM schedule
+                WHERE teacher_id = ?
+                  AND DATE(scheduled_at) = ?
+                ORDER BY scheduled_at
+                """)
+                .param(teacherId)
+                .param(date)
+                .query(ROW_MAPPER)
+                .list();
+    }
+
+    /** 교사의 특정 날짜 + 유형 일정 */
+    public List<Schedule> findByTeacherAndDateAndType(Long teacherId, java.time.LocalDate date, String type) {
+        return jdbcClient.sql("""
+                SELECT * FROM schedule
+                WHERE teacher_id = ?
+                  AND DATE(scheduled_at) = ?
+                  AND schedule_type = ?
+                ORDER BY scheduled_at
+                """)
+                .param(teacherId)
+                .param(date)
+                .param(type)
+                .query(ROW_MAPPER)
+                .list();
+    }
+
+    /** 교사의 기간별 일정 (시작일 ~ 종료일 포함) */
+    public List<Schedule> findByTeacherAndDateRange(Long teacherId, java.time.LocalDate from, java.time.LocalDate to) {
+        return jdbcClient.sql("""
+                SELECT * FROM schedule
+                WHERE teacher_id = ?
+                  AND DATE(scheduled_at) BETWEEN ? AND ?
+                ORDER BY scheduled_at
+                """)
+                .param(teacherId)
+                .param(from)
+                .param(to)
+                .query(ROW_MAPPER)
+                .list();
+    }
+
     public int deleteById(Long scheduleId, Long teacherId) {
         return jdbcClient.sql("DELETE FROM schedule WHERE schedule_id = ? AND teacher_id = ?")
                 .param(scheduleId)

@@ -45,19 +45,31 @@ public class SupervisorAgent {
     @Value("classpath:prompts/intent-classifier.st")
     private Resource intentClassifierPrompt;
 
-    /** 교사 채팅용 (teacherMaterialIds 없음) */
+    /** 교사 채팅용 (teacherId 포함, teacherMaterialIds 없음) */
+    public AgentContext analyze(String userMessage, ChatRole role, Long sessionId, Long materialId, Long teacherId) {
+        return analyze(userMessage, role, sessionId, materialId, Collections.emptyList(), teacherId);
+    }
+
+    /** 교사 채팅용 (teacherMaterialIds 없음, teacherId 없음 - 하위 호환) */
     public AgentContext analyze(String userMessage, ChatRole role, Long sessionId, Long materialId) {
-        return analyze(userMessage, role, sessionId, materialId, Collections.emptyList());
+        return analyze(userMessage, role, sessionId, materialId, Collections.emptyList(), null);
     }
 
     /** 학생 채팅용 (담임선생님 자료 ID 목록 포함) */
     public AgentContext analyze(String userMessage, ChatRole role, Long sessionId,
                                 Long materialId, List<Long> teacherMaterialIds) {
+        return analyze(userMessage, role, sessionId, materialId, teacherMaterialIds, null);
+    }
+
+    /** 공통 내부 구현 */
+    public AgentContext analyze(String userMessage, ChatRole role, Long sessionId,
+                                Long materialId, List<Long> teacherMaterialIds, Long teacherId) {
         IntentResult intentResult = classifyIntent(userMessage, materialId != null || !teacherMaterialIds.isEmpty());
         log.info("[Supervisor] sessionId={} intent={} reason={}",
                 sessionId, intentResult.intentType(), intentResult.reasoning());
 
-        String context = retrieveContext(intentResult, materialId, teacherMaterialIds);
+        String context = intentResult.intentType() == IntentType.SCHEDULE_CONSULTATION
+                ? "" : retrieveContext(intentResult, materialId, teacherMaterialIds);
         String history = buildHistory(sessionId);
 
         return AgentContext.builder()
@@ -69,6 +81,7 @@ public class SupervisorAgent {
                 .sessionId(sessionId)
                 .materialId(materialId)
                 .teacherMaterialIds(teacherMaterialIds)
+                .teacherId(teacherId)
                 .build();
     }
 
@@ -156,6 +169,7 @@ public class SupervisorAgent {
             }
 
             case DIRECT -> "";
+            case SCHEDULE_CONSULTATION -> "";
         };
     }
 

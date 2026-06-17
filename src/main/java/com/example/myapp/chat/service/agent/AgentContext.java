@@ -26,4 +26,7 @@ public class AgentContext {
      * VECTOR_RAG 필터링에 사용 (materialId가 null일 때 선생님 자료로 범위 한정).
      */
     private final List<Long> teacherMaterialIds;
+
+    /** 교사 채팅 시 teacherId (Tool Calling용) */
+    private final Long teacherId;
 }

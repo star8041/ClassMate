@@ -469,6 +469,11 @@ const today = new Date();
 let curYear  = today.getFullYear();
 let curMonth = today.getMonth();  // 0-based
 
+// UTC 변환 없이 로컬 날짜를 YYYY-MM-DD 문자열로 반환
+function localDateStr(date) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
 // ──────────────────────────────────────────────
 //  DATA (백엔드 연동)
 // ──────────────────────────────────────────────
@@ -479,16 +484,33 @@ function authHeaders() {
   return t ? { 'Authorization': 'Bearer ' + t } : {};
 }
 
+// LocalDateTime이 문자열("2026-06-22T10:00:00") 또는 배열([2026,6,22,10,0]) 형태일 수 있어 둘 다 처리
+function parseDT(val) {
+  if (!val) return { date: '', time: '' };
+  if (typeof val === 'string') {
+    return { date: val.slice(0, 10), time: val.slice(11, 16) };
+  }
+  if (Array.isArray(val)) {
+    const [y, mo, d, h = 0, m = 0] = val;
+    return {
+      date: `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`,
+      time: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
+    };
+  }
+  return { date: '', time: '' };
+}
+
 // 백엔드 ScheduleResponse → 캘린더 이벤트 객체
 function toEvent(s) {
-  const at = s.scheduledAt || '';
+  const start = parseDT(s.scheduledAt);
+  const end   = parseDT(s.endAt);
   return {
     id: s.scheduleId,
     type: s.scheduleType || '수업',
     title: s.title || '',
-    date: at.slice(0, 10),
-    start: at.slice(11, 16),
-    end: s.endAt ? s.endAt.slice(11, 16) : '',
+    date: start.date,
+    start: start.time,
+    end: end.time,
     place: s.location || '',
     memo: s.memo || '',
     topic: s.topic || '',
@@ -525,7 +547,7 @@ async function loadSchedules() {
 // ──────────────────────────────────────────────
 //  STATE
 // ──────────────────────────────────────────────
-let selectedDate = today.toISOString().split('T')[0];
+let selectedDate = localDateStr(today);
 let selectedEventId = null;   // null = 등록 모드, number = 수정 모드
 
 // ──────────────────────────────────────────────
@@ -565,7 +587,7 @@ function renderCalendar() {
   const first = new Date(curYear, curMonth, 1);
   const last  = new Date(curYear, curMonth+1, 0);
   const startDay = first.getDay();
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = localDateStr(today);
 
   let cells = [];
   // prev month filler
@@ -587,7 +609,7 @@ function renderCalendar() {
     const tr = document.createElement('tr');
     for (let c = 0; c < 7; c++) {
       const { date, other } = cells[r*7+c];
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = localDateStr(date);
       const td = document.createElement('td');
       if (other)              td.classList.add('other-month');
       if (dateStr === todayStr) td.classList.add('today');
@@ -662,7 +684,7 @@ function renderTodaySchedule() {
 //  RENDER UPCOMING
 // ──────────────────────────────────────────────
 function renderUpcoming() {
-  const todayStr = today.toISOString().split('T')[0];
+  const todayStr = localDateStr(today);
   const upcoming = events
     .filter(e => e.date >= todayStr)
     .sort((a,b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start))
