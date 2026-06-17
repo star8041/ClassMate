@@ -128,7 +128,7 @@ public class AgentExecutor {
         return ChatClient.builder(chatModel).build()
                 .prompt()
                 .system(loadRawPrompt(quizSystemPrompt))
-                .user(scheduleUserPrompt(context.getUserMessage()))
+                .user(buildQuizUserPrompt(context))
                 .tools(buildQuizTools(context.getTeacherId()))
                 .stream()
                 .content();
@@ -139,7 +139,7 @@ public class AgentExecutor {
         return ChatClient.builder(chatModel).build()
                 .prompt()
                 .system(loadRawPrompt(quizSystemPrompt))
-                .user(scheduleUserPrompt(context.getUserMessage()))
+                .user(buildQuizUserPrompt(context))
                 .tools(buildQuizTools(context.getTeacherId()))
                 .call()
                 .content();
@@ -156,6 +156,21 @@ public class AgentExecutor {
     /** 상담 일정 등록 시 현재 날짜를 컨텍스트로 주입 (상대적 날짜 표현 처리용) */
     private String scheduleUserPrompt(String userMessage) {
         return "오늘 날짜: " + LocalDate.now() + "\n\n" + userMessage;
+    }
+
+    /**
+     * 퀴즈 Tool Calling용 유저 프롬프트.
+     * 날짜 + 이전 대화 히스토리 + 현재 메시지를 포함한다.
+     * 히스토리가 없으면 첫 요청, 있으면 "발행해줘" 같은 후속 응답 처리가 가능.
+     */
+    private String buildQuizUserPrompt(AgentContext ctx) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("오늘 날짜: ").append(LocalDate.now()).append("\n\n");
+        if (!ctx.getConversationHistory().isBlank()) {
+            sb.append("## 이전 대화\n").append(ctx.getConversationHistory()).append("\n\n");
+        }
+        sb.append("## 요청\n").append(ctx.getUserMessage());
+        return sb.toString();
     }
 
     private String loadSystemPrompt(ChatRole role) {
