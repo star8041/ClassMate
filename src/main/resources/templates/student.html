@@ -474,5 +474,314 @@
   </div>
 </div>
 <script th:src="@{/js/layout.js}"></script>
+<script>
+  const TEACHER_ID = 1;
+
+  const STUDENT_API = {
+    list: '/api/v1/teacher/students?teacherId=' + TEACHER_ID,
+    quizResults: function (studentId) {
+      return '/api/v1/teacher/students/' + studentId + '/quiz-results?teacherId=' + TEACHER_ID;
+    }
+  };
+
+  let students = [];
+  let selectedStudentId = null;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    loadStudents();
+
+    const searchInput = document.getElementById('studentSearchInput');
+    const refreshButton = document.getElementById('refreshStudentBtn');
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        renderStudentList();
+      });
+    }
+
+    if (refreshButton) {
+      refreshButton.addEventListener('click', function () {
+        if (!selectedStudentId) {
+          alert('학생을 먼저 선택해주세요.');
+          return;
+        }
+
+        selectStudent(selectedStudentId);
+      });
+    }
+  });
+
+  async function loadStudents() {
+    try {
+      const response = await fetch(STUDENT_API.list);
+
+      if (!response.ok) {
+        console.error(await response.text());
+        renderStudentListError();
+        return;
+      }
+
+      students = await response.json();
+      renderStudentList();
+
+      if (students.length > 0) {
+        selectStudent(students[0].studentId);
+      } else {
+        clearStudentDetail();
+      }
+    } catch (error) {
+      console.error(error);
+      renderStudentListError();
+    }
+  }
+
+  function renderStudentList() {
+    const container = document.getElementById('studentList');
+    const searchInput = document.getElementById('studentSearchInput');
+    const keyword = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    if (!container) {
+      return;
+    }
+
+    const filteredStudents = students.filter(function (student) {
+      return String(student.studentName || '').toLowerCase().includes(keyword)
+        || String(student.studentNumber || '').toLowerCase().includes(keyword);
+    });
+
+    if (filteredStudents.length === 0) {
+      container.innerHTML = '<div class="student-list-empty">학생이 없습니다.</div>';
+      return;
+    }
+
+    container.innerHTML = filteredStudents.map(function (student) {
+      const activeClass = Number(student.studentId) === Number(selectedStudentId) ? ' active' : '';
+
+      return '' +
+        '<div class="student-item' + activeClass + '" onclick="selectStudent(' + student.studentId + ')">' +
+          '<div class="student-avatar">' +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' +
+          '</div>' +
+          '<div>' +
+            '<div class="student-name">' + escapeHtml(student.studentName) + '</div>' +
+            '<div class="student-meta">' + escapeHtml(student.studentNumber || '-') + '</div>' +
+          '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderStudentListError() {
+    const container = document.getElementById('studentList');
+
+    if (!container) {
+      return;
+    }
+
+    container.innerHTML = '<div class="student-list-empty">학생 목록을 불러오지 못했습니다.</div>';
+  }
+
+  async function selectStudent(studentId) {
+    selectedStudentId = studentId;
+    renderStudentList();
+
+    try {
+      const response = await fetch(STUDENT_API.quizResults(studentId));
+
+      if (!response.ok) {
+        console.error(await response.text());
+        alert('학생 퀴즈 결과를 불러오지 못했습니다.');
+        return;
+      }
+
+      const data = await response.json();
+
+      renderSelectedStudent(data);
+      renderQuizResults(data.quizResults || []);
+      renderSummary(data.summary);
+    } catch (error) {
+      console.error(error);
+      alert('학생 퀴즈 결과 조회 중 오류가 발생했습니다.');
+    }
+  }
+
+  function renderSelectedStudent(data) {
+    document.getElementById('selectedStudentName').textContent = data.studentName || '학생';
+    document.getElementById('selectedStudentMeta').textContent = data.studentNumber || '-';
+  }
+
+  function renderQuizResults(results) {
+    const tbody = document.getElementById('quizResultBody');
+
+    if (!tbody) {
+      return;
+    }
+
+    if (!results.length) {
+      tbody.innerHTML = '' +
+        '<tr>' +
+          '<td colspan="4" style="text-align:center; color:#aaa; padding:30px;">' +
+            '아직 제출한 퀴즈가 없습니다.' +
+          '</td>' +
+        '</tr>';
+      return;
+    }
+
+    tbody.innerHTML = results.map(function (result) {
+      const submittedAt = formatDate(result.submittedAt);
+      const score = result.score ?? 0;
+      const comment = result.comment || '';
+
+      return '' +
+        '<tr>' +
+          '<td>' + escapeHtml(result.quizTitle || '제목 없는 퀴즈') + '</td>' +
+          '<td>' + escapeHtml(submittedAt) + '</td>' +
+          '<td>' +
+            '<div class="score-wrap">' +
+              '<span class="score-val">' + score + '</span>' +
+              '<span class="score-unit">점</span>' +
+            '</div>' +
+          '</td>' +
+          '<td>' +
+            '<div class="comment-box">' +
+              '<span class="comment-empty">' + escapeHtml(comment) + '</span>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function renderSummary(summary) {
+    if (!summary) {
+      summary = {
+        submittedQuizCount: 0,
+        totalQuizCount: 0,
+        averageScore: 0,
+        quizAttemptRate: 0,
+        aiCommentCount: 0,
+        score90Count: 0,
+        score80Count: 0,
+        score70Count: 0,
+        score69Count: 0
+      };
+    }
+
+    document.getElementById('submittedQuizCount').textContent = summary.submittedQuizCount ?? 0;
+    document.getElementById('averageScore').textContent = summary.averageScore ?? 0;
+    document.getElementById('quizAttemptRate').textContent = summary.quizAttemptRate ?? 0;
+    document.getElementById('aiCommentCount').textContent = summary.aiCommentCount ?? 0;
+
+    renderScoreDistribution(summary);
+  }
+
+  function renderScoreDistribution(summary) {
+    const score90Count = summary.score90Count ?? 0;
+    const score80Count = summary.score80Count ?? 0;
+    const score70Count = summary.score70Count ?? 0;
+    const score69Count = summary.score69Count ?? 0;
+
+    const total = score90Count + score80Count + score70Count + score69Count;
+
+    setLegendText('legend90', score90Count, total);
+    setLegendText('legend80', score80Count, total);
+    setLegendText('legend70', score70Count, total);
+    setLegendText('legend69', score69Count, total);
+
+    const segmentContainer = document.getElementById('scoreChartSegments');
+
+    if (!segmentContainer) {
+      return;
+    }
+
+    if (total === 0) {
+      segmentContainer.innerHTML = '';
+      return;
+    }
+
+    const circumference = 188.5;
+    let offset = 0;
+
+    const segments = [
+      { count: score90Count, color: '#4f80f7' },
+      { count: score80Count, color: '#38bdf8' },
+      { count: score70Count, color: '#34d399' },
+      { count: score69Count, color: '#fb923c' }
+    ];
+
+    segmentContainer.innerHTML = segments.map(function (segment) {
+      if (segment.count <= 0) {
+        return '';
+      }
+
+      const length = circumference * (segment.count / total);
+      const dashOffset = -offset;
+
+      offset += length;
+
+      return '' +
+        '<circle cx="40" cy="40" r="30" fill="none" stroke="' + segment.color + '" stroke-width="14" ' +
+        'stroke-dasharray="' + length + ' ' + (circumference - length) + '" ' +
+        'stroke-dashoffset="' + dashOffset + '" transform="rotate(-90 40 40)"/>';
+    }).join('');
+  }
+
+  function setLegendText(elementId, count, total) {
+    const element = document.getElementById(elementId);
+
+    if (!element) {
+      return;
+    }
+
+    const percent = total === 0
+      ? 0
+      : Math.round((count * 1000) / total) / 10;
+
+    element.textContent = count + '개 (' + percent + '%)';
+  }
+
+  function clearStudentDetail() {
+    document.getElementById('selectedStudentName').textContent = '학생을 선택해주세요';
+    document.getElementById('selectedStudentMeta').textContent = '-';
+
+    const tbody = document.getElementById('quizResultBody');
+
+    if (tbody) {
+      tbody.innerHTML = '' +
+        '<tr>' +
+          '<td colspan="4" style="text-align:center; color:#aaa; padding:30px;">' +
+            '학생 목록이 없습니다.' +
+          '</td>' +
+        '</tr>';
+    }
+
+    renderSummary(null);
+  }
+
+  function formatDate(value) {
+    if (!value) {
+      return '-';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return '-';
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return year + '.' + month + '.' + day;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+</script>
 </body>
 </html>
