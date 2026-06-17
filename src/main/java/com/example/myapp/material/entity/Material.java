@@ -31,6 +31,9 @@ public class Material {
     /** 과목 (선택) */
     private String subject;
 
+    /** 자료 분류: 'LESSON'(수업자료) | 'REFERENCE'(참고자료) */
+    private String category;
+
     /** 서버에 저장된 실제 파일 경로 */
     private String storagePath;
 
