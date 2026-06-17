@@ -25,7 +25,6 @@ body {
 	padding: 32px 36px;
 }
 
-/* 페이지 타이틀 */
 .page-title {
 	font-size: 22px;
 	font-weight: 600;
@@ -39,7 +38,6 @@ body {
 	margin-bottom: 24px;
 }
 
-/* 상단 2컬럼 */
 .top-grid {
 	display: grid;
 	grid-template-columns: 1fr 360px;
@@ -47,7 +45,6 @@ body {
 	margin-bottom: 20px;
 }
 
-/* 카드 공통 */
 .card {
 	background: #fff;
 	border-radius: 12px;
@@ -62,7 +59,6 @@ body {
 	margin-bottom: 16px;
 }
 
-/* 퀴즈 설정 */
 .setting-row {
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr;
@@ -72,7 +68,7 @@ body {
 
 .setting-row-2 {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: 1fr 1fr 1fr;
 	gap: 14px;
 	margin-bottom: 16px;
 }
@@ -83,7 +79,8 @@ body {
 	margin-bottom: 6px;
 }
 
-select {
+select,
+.datetime-input {
 	width: 100%;
 	height: 36px;
 	border: 1px solid #ddd;
@@ -92,6 +89,10 @@ select {
 	font-size: 13px;
 	color: #1a1a1a;
 	background: #fff;
+	font-family: inherit;
+}
+
+select {
 	appearance: none;
 	background-image:
 		url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
@@ -100,84 +101,19 @@ select {
 	cursor: pointer;
 }
 
-select:focus {
+select:focus,
+.datetime-input:focus {
 	outline: none;
 	border-color: #4f80f7;
 }
 
-/* 토글 행 */
-.toggle-row {
-	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
-	gap: 12px;
-	margin-bottom: 20px;
-}
-
-.toggle-item {
-	border: 1px solid #e8e8e8;
-	border-radius: 10px;
-	padding: 12px 14px;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
-}
-
-.toggle-label {
-	font-size: 12px;
-	font-weight: 500;
-	color: #333;
-	margin-bottom: 2px;
-}
-
-.toggle-desc {
+.schedule-note {
+	margin-top: 6px;
 	font-size: 11px;
-	color: #aaa;
+	color: #999;
+	line-height: 1.4;
 }
 
-.toggle {
-	position: relative;
-	width: 40px;
-	height: 22px;
-	flex-shrink: 0;
-}
-
-.toggle input {
-	opacity: 0;
-	width: 0;
-	height: 0;
-}
-
-.slider {
-	position: absolute;
-	inset: 0;
-	border-radius: 22px;
-	background: #ccc;
-	cursor: pointer;
-	transition: background 0.2s;
-}
-
-.slider::before {
-	content: '';
-	position: absolute;
-	width: 16px;
-	height: 16px;
-	left: 3px;
-	top: 3px;
-	border-radius: 50%;
-	background: #fff;
-	transition: transform 0.2s;
-}
-
-input:checked+.slider {
-	background: #4f80f7;
-}
-
-input:checked+.slider::before {
-	transform: translateX(18px);
-}
-
-/* 퀴즈 생성 버튼 */
 .btn-generate {
 	width: 100%;
 	height: 44px;
@@ -204,7 +140,6 @@ input:checked+.slider::before {
 	height: 16px;
 }
 
-/* 오른쪽 카드 */
 .summary-header {
 	display: flex;
 	align-items: center;
@@ -217,7 +152,6 @@ input:checked+.slider::before {
 	font-weight: 600;
 }
 
-/* 배포된 퀴즈 목록 */
 .saved-quiz-list {
 	display: flex;
 	flex-direction: column;
@@ -265,6 +199,7 @@ input:checked+.slider::before {
 .saved-quiz-meta {
 	font-size: 12px;
 	color: #888;
+	line-height: 1.5;
 }
 
 .badge-published {
@@ -276,11 +211,6 @@ input:checked+.slider::before {
 	font-weight: 600;
 	border-radius: 6px;
 	padding: 2px 8px;
-}
-
-/* 미리보기 섹션 */
-.preview-section {
-	
 }
 
 .preview-header {
@@ -353,7 +283,6 @@ button:disabled:hover {
 	background: inherit;
 }
 
-/* 통계 카드 */
 .stats-row {
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr;
@@ -429,7 +358,6 @@ button:disabled:hover {
 	justify-content: center;
 }
 
-/* 문제 카드 */
 .question-card {
 	background: #fff;
 	border: 0.5px solid #e0e0e0;
@@ -468,14 +396,6 @@ button:disabled:hover {
 	color: #1a1a1a;
 	line-height: 1.5;
 	flex: 1;
-}
-
-.q-eng {
-	font-size: 13px;
-	color: #555;
-	margin-bottom: 10px;
-	margin-left: 32px;
-	font-style: italic;
 }
 
 .q-choices {
@@ -528,22 +448,6 @@ button:disabled:hover {
 	line-height: 1.5;
 }
 
-.q-expand {
-	float: right;
-	background: none;
-	border: none;
-	cursor: pointer;
-	color: #aaa;
-	padding: 0;
-}
-
-.q-divider {
-	height: 0.5px;
-	background: #f0f0f0;
-	margin: 10px 0;
-}
-
-/* 더보기 버튼 */
 .btn-more {
 	display: flex;
 	align-items: center;
@@ -598,18 +502,14 @@ button:disabled:hover {
 		<div th:replace="~{fragments/sidebar :: sidebar('quiz')}"></div>
 
 		<div class="layout-main">
-			<div
-				th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
+			<div th:replace="~{fragments/header :: header(${userName}, ${profileImgUrl})}"></div>
 
 			<main class="page-body">
 				<h1 class="page-title">퀴즈 생성</h1>
-				<p class="page-subtitle">과목, 단원, 난이도를 설정하면 AI가 맞춤형 퀴즈를 자동으로 생성해
-					드립니다.</p>
+				<p class="page-subtitle">과목, 단원, 난이도를 설정하면 AI가 맞춤형 퀴즈를 자동으로 생성해드립니다.</p>
 
-				<!-- 상단 2컬럼 -->
 				<div class="top-grid">
 
-					<!-- 퀴즈 설정 카드 -->
 					<div class="card">
 						<div class="card-title">퀴즈 설정</div>
 
@@ -659,24 +559,28 @@ button:disabled:hover {
 									<option value="30">30분</option>
 								</select>
 							</div>
+
+							<div>
+								<div class="field-label">시작 시간</div>
+								<input id="startDateTimeInput" class="datetime-input" type="datetime-local">
+								<div class="schedule-note">시작 시간에 시간 제한을 더해 종료 시간이 정해집니다.</div>
+							</div>
 						</div>
 
 						<button id="generateQuizBtn" class="btn-generate" type="button">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 								fill="none" stroke="currentColor" stroke-width="2.5"
 								stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
+								<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+							</svg>
 							퀴즈 생성
 						</button>
 					</div>
 
-					<!-- 배포된 퀴즈 목록 카드 -->
 					<div class="card">
 						<div class="summary-header">
 							<div class="summary-title">배포된 퀴즈 목록</div>
-							<button id="deleteQuizBtn" class="btn-delete-quiz" type="button"
-								disabled>삭제</button>
+							<button id="deleteQuizBtn" class="btn-delete-quiz" type="button" disabled>삭제</button>
 						</div>
 
 						<div id="savedQuizList" class="saved-quiz-list">
@@ -685,13 +589,11 @@ button:disabled:hover {
 					</div>
 				</div>
 
-				<!-- 생성된 퀴즈 미리보기 / 퀴즈 상세보기 -->
 				<div class="preview-section">
 					<div class="preview-header">
 						<div>
-							<span id="previewTitleText" class="preview-title">생성된 퀴즈
-								미리보기</span> <span id="previewCountText" class="preview-count">퀴즈
-								생성 전입니다.</span>
+							<span id="previewTitleText" class="preview-title">생성된 퀴즈 미리보기</span>
+							<span id="previewCountText" class="preview-count">퀴즈 생성 전입니다.</span>
 						</div>
 
 						<div class="preview-actions">
@@ -699,37 +601,34 @@ button:disabled:hover {
 								<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13"
 									viewBox="0 0 24 24" fill="none" stroke="currentColor"
 									stroke-width="2.5">
-                <polyline points="1 4 1 10 7 10" />
-                <path d="M3.51 15a9 9 0 1 0 .49-3.52" />
-              </svg>
+									<polyline points="1 4 1 10 7 10" />
+									<path d="M3.51 15a9 9 0 1 0 .49-3.52" />
+								</svg>
 								다시 생성
 							</button>
 
-							<button id="publishQuizBtn" class="btn-outline" type="button"
-								disabled>
+							<button id="publishQuizBtn" class="btn-outline" type="button" disabled>
 								<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13"
 									viewBox="0 0 24 24" fill="none" stroke="currentColor"
 									stroke-width="2.5">
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
+									<line x1="22" y1="2" x2="11" y2="13" />
+									<polygon points="22 2 15 22 11 13 2 9 22 2" />
+								</svg>
 								학생 배포
 							</button>
 
-							<button id="detailQuizBtn" class="btn-primary" type="button"
-								disabled>
+							<button id="detailQuizBtn" class="btn-primary" type="button" disabled>
 								<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13"
 									viewBox="0 0 24 24" fill="none" stroke="currentColor"
 									stroke-width="2.5">
-                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+									<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+									<circle cx="12" cy="12" r="3" />
+								</svg>
 								상세 보기
 							</button>
 						</div>
 					</div>
 
-					<!-- 통계 -->
 					<div class="stats-row">
 						<div class="stat-item">
 							<div class="stat-icon">
@@ -737,8 +636,8 @@ button:disabled:hover {
 								<span class="stat-label">총 문항 수</span>
 							</div>
 							<div>
-								<span id="totalQuestionCount" class="stat-val">0</span> <span
-									class="stat-unit">문항</span>
+								<span id="totalQuestionCount" class="stat-val">0</span>
+								<span class="stat-unit">문항</span>
 							</div>
 						</div>
 
@@ -748,15 +647,15 @@ button:disabled:hover {
 									<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13"
 										viewBox="0 0 24 24" fill="none" stroke="#f59e0b"
 										stroke-width="2.5">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
+										<circle cx="12" cy="12" r="10" />
+										<polyline points="12 6 12 12 16 14" />
+									</svg>
 								</div>
 								<span class="stat-label">시간 제한</span>
 							</div>
 							<div>
-								<span id="timeLimitStat" class="stat-val">15</span> <span
-									class="stat-unit">분</span>
+								<span id="timeLimitStat" class="stat-val">15</span>
+								<span class="stat-unit">분</span>
 							</div>
 						</div>
 
@@ -766,16 +665,15 @@ button:disabled:hover {
 									<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13"
 										viewBox="0 0 24 24" fill="none" stroke="#43a047"
 										stroke-width="2.5">
-                  <path d="M12 20h9" />
-                  <path
-											d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
+										<path d="M12 20h9" />
+										<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+									</svg>
 								</div>
 								<span class="stat-label">객관식 비율</span>
 							</div>
 							<div>
-								<span id="multipleChoiceRatio" class="stat-val">100%</span> <span
-									id="multipleChoiceCount" class="stat-unit">(0/0)</span>
+								<span id="multipleChoiceRatio" class="stat-val">100%</span>
+								<span id="multipleChoiceCount" class="stat-unit">(0/0)</span>
 							</div>
 						</div>
 					</div>
@@ -791,8 +689,8 @@ button:disabled:hover {
 						<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
 							viewBox="0 0 24 24" fill="none" stroke="currentColor"
 							stroke-width="2.5">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
+							<polyline points="6 9 12 15 18 9" />
+						</svg>
 					</button>
 				</div>
 			</main>
