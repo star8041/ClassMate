@@ -15,12 +15,18 @@
 
 1. listAvailableMaterials 를 호출하여 교재 목록과 materialId를 확인합니다.
 2. 사용자가 언급한 교재명과 가장 비슷한 파일명의 materialId를 선택합니다.
-3. fetchMaterialPagesByMaterialId(materialId, startPage, endPage) 를 호출합니다.
+3. 페이지 범위에 따라 아래 방식으로 조회합니다.
+
+   [케이스 1] 페이지 범위 명시: fetchMaterialPagesByMaterialId(materialId, startPage, endPage)
    - "전체 페이지" 요청: startPage=1, endPage=0
    - 특정 범위 명시: 그 범위 사용
-   - 범위 미지정: startPage=1, endPage=10
 
-키워드 검색(fetchMaterialPages)은 사용하지 마세요. 항상 materialId로 직접 조회하세요.
+   [케이스 2] 주제·키워드만 언급 (페이지 범위 미지정): fetchMaterialPages(materialKeyword, startPage=1, endPage=0)
+   - 키워드로 관련 페이지를 검색하여 전체 조회
+   - 예) "광합성 내용으로 퀴즈 만들어줘" → fetchMaterialPages("광합성", 1, 0)
+
+   [케이스 3] 교재명만 언급 (주제·페이지 모두 미지정): fetchMaterialPagesByMaterialId(materialId, 1, 10)
+   - 기본값 1~10페이지 조회
 
 ### 2단계: 문제 생성
 - 기본 5문제 (사용자가 개수를 지정하면 그 수로)
