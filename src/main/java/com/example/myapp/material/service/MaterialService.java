@@ -173,6 +173,7 @@ public class MaterialService {
     @Transactional
     public void delete(Long materialId) {
         Material material = getEntityOrThrow(materialId);
+        materialPageMapper.deleteByMaterialId(materialId);  // FK 제약 해소: material_page 먼저 삭제
         materialMapper.deleteById(materialId);
         deleteVectorsByMaterialId(materialId);
         deleteQuietly(Paths.get(material.getStoragePath()));

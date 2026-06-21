@@ -62,6 +62,13 @@ public class MaterialPageMapper {
                 .list();
     }
 
+    /** 특정 자료의 페이지 전체 삭제 */
+    public int deleteByMaterialId(Long materialId) {
+        return jdbcClient.sql("DELETE FROM material_page WHERE material_id = ?")
+                .param(materialId)
+                .update();
+    }
+
     /** 키워드 포함 페이지 검색 (LIKE) — PAGE_SEARCH 의도 처리 시 사용 */
     public List<MaterialPage> searchByKeyword(Long materialId, String keyword) {
         return jdbcClient.sql("""
